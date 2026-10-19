@@ -1,10 +1,16 @@
 name: release
-# Builds the one-file Windows installer. Push a tag such as v1.0.0 to publish it on the Releases page;
-# running it by hand just builds the installer and attaches it to the run.
+# Builds the one-file Windows installer. Push a tag such as v1.0.0, or run this by hand with a version
+# number (for example 1.0.0), to publish it on the Releases page. Running it by hand with no version
+# just builds the installer and attaches it to the run.
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish, for example 0.1.0 (leave empty to only build)'
+        required: false
+        default: ''
 permissions:
   contents: write
 jobs:
@@ -23,17 +29,21 @@ jobs:
         run: choco install innosetup -y --no-progress
       - name: Build the installer
         shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.0.0' }
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } elseif ($env:INPUT_VERSION) { $env:INPUT_VERSION.TrimStart('v') } else { '0.0.0' }
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$version" installer\BetterTalk.iss
       - uses: actions/upload-artifact@v4
         with:
           name: BetterTalk-Setup
           path: installer/Output/BetterTalk-Setup.exe
       - name: Publish the release
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' || inputs.version != ''
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          gh release create "$env:GITHUB_REF_NAME" installer/Output/BetterTalk-Setup.exe --title "BetterTalk $env:GITHUB_REF_NAME" --notes "Download **BetterTalk-Setup.exe**, double-click it, and follow the prompts. Windows may say it protected your PC because the file is not signed: choose More info, then Run anyway."
+          $tag = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { 'v' + $env:INPUT_VERSION.TrimStart('v') }
+          gh release create $tag installer/Output/BetterTalk-Setup.exe --target $env:GITHUB_SHA --title "BetterTalk $tag" --notes "Download **BetterTalk-Setup.exe**, double-click it, and follow the prompts. Windows may say it protected your PC because the file is not signed: choose More info, then Run anyway."
