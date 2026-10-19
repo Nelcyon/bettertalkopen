@@ -161,6 +161,12 @@
 
                 <Button Content="Edit buttons on screen (tap a button to change its words)…" Margin="0,16,0,0" Padding="12,8"
                         HorizontalAlignment="Left" Click="EditButtons_Click"/>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button Content="Save buttons to a file…" Padding="12,8" Click="ExportButtons_Click"
+                            ToolTip="Saves every button's words (red, orange and phrase buttons) to one file, to copy to another computer"/>
+                    <Button Content="Load buttons from a file…" Padding="12,8" Margin="8,0,0,0" Click="ImportButtons_Click"
+                            ToolTip="Replaces this computer's buttons with the ones saved in a file"/>
+                </StackPanel>
 
                 <TextBlock Style="{StaticResource Label}" Text="Urgent phrases, always shown at the top (one per line)"/>
                 <TextBox x:Name="Pinned" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" VerticalScrollBarVisibility="Auto"/>

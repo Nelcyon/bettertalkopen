@@ -364,6 +364,75 @@ public partial class SettingsWindow : Window
     }
 
     /// <summary>Closes Settings and turns on edit mode, where buttons are changed by tapping them.</summary>
+    /// <summary>Saves all the button words to one file (for another computer, or as a backup).</summary>
+    private void ExportButtons_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save buttons to a file",
+            FileName = "BetterTalk buttons.json",
+            Filter = "BetterTalk buttons (*.json)|*.json",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+        };
+        if (dialog.ShowDialog(this) != true) return;
+        try
+        {
+            ButtonStore.Save(dialog.FileName, _settings.Phrases);
+            MessageBox.Show(this, $"The buttons were saved to {dialog.FileName}. On the other computer, open BetterTalk's Settings and choose \"Load buttons from a file\".",
+                "Buttons saved", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            MessageBox.Show(this, $"The buttons could not be saved: {ex.Message}", "Save buttons", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// <summary>
+    /// Replaces this computer's buttons with ones from a file (saved by "Save buttons to a file", or a
+    /// buttons.json copied from another computer). Asks first, then restarts the app to show them.
+    /// </summary>
+    private void ImportButtons_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Load buttons from a file",
+            Filter = "BetterTalk buttons (*.json)|*.json",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+        };
+        if (dialog.ShowDialog(this) != true) return;
+        Aac.Core.Prediction.PhraseLibrary? loaded;
+        try
+        {
+            loaded = System.Text.Json.JsonSerializer.Deserialize<Aac.Core.Prediction.PhraseLibrary>(File.ReadAllText(dialog.FileName), SettingsStore.JsonOptions);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or NotSupportedException)
+        {
+            MessageBox.Show(this, $"That file could not be read as BetterTalk buttons: {ex.Message}", "Load buttons", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        if (loaded is null || (loaded.Pinned.Count == 0 && loaded.QuickPhrases.Count == 0 && loaded.Categories.Count == 0))
+        {
+            MessageBox.Show(this, "That file has no buttons in it.", "Load buttons", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        var summary = $"{loaded.Pinned.Count} red, {loaded.QuickPhrases.Count} quick and {loaded.Categories.Sum(c => c.Phrases.Count)} phrase buttons";
+        if (MessageBox.Show(this, $"Replace this computer's buttons with the {summary} in this file? The app restarts to show them.",
+                "Load buttons", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        try
+        {
+            ButtonStore.Save(AppPaths.Buttons, loaded);
+            _settings.Phrases = loaded;
+            SettingsStore.Save(AppPaths.Settings, _settings);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            MessageBox.Show(this, $"The buttons could not be loaded: {ex.Message}", "Load buttons", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        Close();
+        _restart();
+    }
+
     private void EditButtons_Click(object sender, RoutedEventArgs e)
     {
         Close();
