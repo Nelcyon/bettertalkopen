@@ -16,7 +16,8 @@ namespace Aac.App;
 /// </summary>
 public static class VoicePacks
 {
-    public static readonly string Root = Path.Combine(AppPaths.MigratedRoot(Environment.SpecialFolder.LocalApplicationData), "voices");
+    public static readonly string Root = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BetterTalk", "voices");
 
     public static string FolderOf(VoicePack pack) => Path.Combine(Root, pack.Id);
 

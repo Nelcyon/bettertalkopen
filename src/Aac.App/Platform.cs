@@ -21,7 +21,7 @@ public static class AppPaths
     /// <summary>The folder this app was called before it was renamed; its contents move to the new name once.</summary>
     internal const string OldFolderName = "QuadStickAac";
 
-    /// <summary>Returns the BetterTalk folder under <paramref name="parent"/>, moving an older QuadStickAac folder there first.</summary>
+    /// <summary>Returns the BetterTalk folder under <paramref name="parent"/>, moving an older QuadStickAac folder there first (settings and buttons only; downloaded voices are never moved).</summary>
     internal static string MigratedRoot(Environment.SpecialFolder parent)
     {
         var folder = Environment.GetFolderPath(parent);

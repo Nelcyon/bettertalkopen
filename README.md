@@ -20,7 +20,7 @@ of free, natural-sounding voices that run entirely offline.
 3. Press **Install**. BetterTalk opens, with icons on the Desktop and in the Start menu.
 
 Nothing else needs installing. To update, run the newest Setup the same way: settings, buttons, learned
-words and voices are kept. To remove it: Windows Settings → Apps → Installed apps → BetterTalk → Uninstall.
+words and any voices he has downloaded are kept. To remove it: Windows Settings → Apps → Installed apps → BetterTalk → Uninstall.
 Natural voices are chosen (and downloaded once) inside the app, under Settings → Voice.
 
 - Action-count benchmark: [docs/benchmarks.md](docs/benchmarks.md)
