@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Only for the notification-area (tray) icon; WinForms names are kept out of the global usings. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- WFO0003 is the WinForms high-DPI hint; DPI awareness here is the WPF app's, set in app.manifest. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+    <!-- Lets the project compile on non-Windows build machines; it only runs on Windows. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>BetterTalk</AssemblyName>
+    <RootNamespace>Aac.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NAudio.WinMM" Version="2.2.1" />
+    <PackageReference Include="org.k2fsa.sherpa.onnx" Version="1.13.8" />
+    <PackageReference Include="System.Speech" Version="10.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The Itch figure: Blender Studio's "Human Base Meshes" male body (CC0 1.0), as a gzipped OBJ. -->
+    <EmbeddedResource Include="Assets/body.obj.gz" LogicalName="body.obj.gz" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Aac.Core\Aac.Core.csproj" />
+  </ItemGroup>
+</Project>

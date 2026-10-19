@@ -1,0 +1,15 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - run: dotnet build BetterTalk.sln -c Release
+      - run: dotnet test tests/Aac.Core.Tests -c Release --no-build
+      - run: dotnet run --project tools/Aac.Bench -c Release --no-build

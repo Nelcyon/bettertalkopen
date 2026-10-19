@@ -1,0 +1,38 @@
+name: release
+# Builds the one-file Windows installer. Push a tag such as v1.0.0 to publish it on the Releases page;
+# running it by hand just builds the installer and attaches it to the run.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Test
+        run: dotnet test tests/Aac.Core.Tests -c Release
+      - name: Publish the app
+        run: dotnet publish src/Aac.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.0.0' }
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$version" installer\BetterTalk.iss
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BetterTalk-Setup
+          path: installer/Output/BetterTalk-Setup.exe
+      - name: Publish the release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$env:GITHUB_REF_NAME" installer/Output/BetterTalk-Setup.exe --title "BetterTalk $env:GITHUB_REF_NAME" --notes "Download **BetterTalk-Setup.exe**, double-click it, and follow the prompts. Windows may say it protected your PC because the file is not signed: choose More info, then Run anyway."
