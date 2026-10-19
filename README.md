@@ -9,6 +9,20 @@ of free, natural-sounding voices that run entirely offline.
 > **Status: prototype.** Use it alongside an existing, proven AAC system, not instead of one, until the
 > user and an AAC-specialist speech-language pathologist have checked that it is reliable for them.
 
+## Download and install
+
+**[Download BetterTalk-Setup.exe](https://github.com/Nelcyon/bettertalkopen/releases/latest/download/BetterTalk-Setup.exe)**
+(Windows 10 or 11, 64-bit). The link always gets the newest version.
+
+1. Double-click the downloaded **BetterTalk-Setup.exe**. No administrator password is needed.
+2. If Windows says "Windows protected your PC", choose **More info**, then **Run anyway**. (The installer is
+   not yet signed with a paid certificate; the source code is all here.)
+3. Press **Install**. BetterTalk opens, with icons on the Desktop and in the Start menu.
+
+Nothing else needs installing. To update, run the newest Setup the same way: settings, buttons, learned
+words and voices are kept. To remove it: Windows Settings → Apps → Installed apps → BetterTalk → Uninstall.
+Natural voices are chosen (and downloaded once) inside the app, under Settings → Voice.
+
 - Action-count benchmark: [docs/benchmarks.md](docs/benchmarks.md)
 
 ## What works in v0.1
@@ -57,8 +71,8 @@ Requirements: Windows 10 or 11 (x64) and the [.NET 10 SDK](https://dotnet.micros
 The SDK is needed to build. You do not need it to run a published copy.
 
 ```powershell
-git clone <this repository> quadstick-aac
-cd quadstick-aac
+git clone https://github.com/Nelcyon/bettertalkopen
+cd bettertalkopen
 dotnet run --project src/Aac.App
 ```
 
@@ -136,7 +150,7 @@ speaker sets too big for a list (VCTK, 109 speakers; LibriTTS, 904).
 
 All natural voices run on this computer through [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx)
 (Apache 2.0), with no account and no internet after the one-time download. They are downloaded from the
-sherpa-onnx model releases into `%LOCALAPPDATA%\BetterTalk\oices`. Each voice's licence is shown in
+sherpa-onnx model releases into `%LOCALAPPDATA%\BetterTalk\voices`. Each voice's licence is shown in
 Settings; all allow personal use, and a few (marked NC or "non-commercial") do not allow commercial use.
 Audio plays through NAudio (MIT). **Stop** cuts any voice off at once. If a natural voice cannot be loaded,
 the Windows voice speaks instead and a notice says why. A natural voice is downloaded before Settings saves

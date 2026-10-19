@@ -28,7 +28,6 @@ ArchitecturesInstallIn64BitMode=x64compatible
 ; Updating over a running copy: close it first, and start it again afterwards.
 CloseApplications=force
 RestartApplications=yes
-LicenseFile=..\LICENSE
 
 [Files]
 Source: "..\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
