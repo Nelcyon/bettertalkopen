@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Aac.App"
-        Title="BetterTalk settings" Width="700" Height="800" MinWidth="520" MinHeight="520"
+        Title="BetterTalk settings" Width="820" Height="800" MinWidth="520" MinHeight="520"
         Background="{DynamicResource DkBg}" Foreground="{DynamicResource DkText}"
         FontFamily="Segoe UI" FontSize="16" WindowStartupLocation="CenterScreen" ShowInTaskbar="True">
     <Window.Resources>
@@ -206,6 +206,21 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- ================= QuadStick card ================= -->
+            <TabItem Header="QuadStick card">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <StackPanel Margin="14,4,14,14">
+                        <TextBlock Style="{StaticResource Intro}"
+                                   Text="Like the paper sip-and-puff card: the tubes across, how hard you sip or puff down. Each square shows what that gesture sends, and what BetterTalk does with it."/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Click a square to change it. This is another way to set the keys in the Hotkeys tab: what you pick here shows there, and the other way round. The card does not change the QuadStick itself, only what BetterTalk does with what it sends."/>
+                        <Grid x:Name="CardGrid" Margin="0,10,0,0"/>
+                        <TextBlock x:Name="CardNote" Style="{StaticResource Hint}" Foreground="{StaticResource DkWarn}"/>
+                        <Button Content="Put the card back to the usual set-up" Padding="12,6" HorizontalAlignment="Left" Margin="0,10,0,0" Click="ResetCard_Click"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- ================= Hotkeys ================= -->
             <TabItem Header="Hotkeys">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -221,7 +236,7 @@
 
                         <TextBlock Style="{StaticResource Label}" Text="While BetterTalk is open"/>
                         <TextBlock Style="{StaticResource Hint}"
-                                   Text="Single keys, so a QuadStick can send each one with one gesture. Letters, Space and the other typing keys are best left for typing."/>
+                                   Text="Single keys, so a QuadStick can send each one with one gesture. Letters, Space and the other typing keys are best left for typing. A mouse button other than the left one works too: click it in the box (for a QuadStick set to send right click, say). Right click given to a key here no longer pans the Itch figure; the figure's controls still do."/>
                         <Grid x:Name="KeyRows" Margin="0,4,0,0"/>
 
                         <TextBlock Style="{StaticResource Label}" Text="The Itch figure"/>

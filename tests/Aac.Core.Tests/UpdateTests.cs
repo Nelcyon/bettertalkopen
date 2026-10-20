@@ -7,7 +7,7 @@ public class UpdateTests
 {
     private const string Answer = """
         {"tag_name":"v0.4.0","draft":false,"html_url":"https://github.com/Nelcyon/bettertalkopen/releases/tag/v0.4.0",
-         "body":"## What's new\r\n- Move mode\r\n",
+         "body":"## What's new\r\n- Move mode\r\n\r\n---\r\nTo install: download it\r\n",
          "assets":[{"name":"notes.txt","browser_download_url":"https://x/notes.txt"},
                    {"name":"BetterTalk-Setup.exe","browser_download_url":"https://x/BetterTalk-Setup.exe"}]}
         """;

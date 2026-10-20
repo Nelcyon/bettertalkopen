@@ -55,13 +55,20 @@ mode, every target is also a large button you can click.
 | Key | Action |
 |---|---|
 | Arrow keys | Move the yellow focus frame |
-| Enter | Select the framed item |
+| Enter | Speak the message; while stepping with the arrows, select the framed item |
 | F9 | Speak the message (F8 does the same, for older key settings) |
 | Esc | Stop voice |
 | Backspace | Delete letter |
+| Delete | Delete word |
+| Ctrl-C / Ctrl-X / Ctrl-V | Copy, cut or paste the whole message |
 | F4 | Undo |
 | Home | Close the open drawer |
 | Any letter key | Typed straight into the message (this also works with the Windows On-Screen Keyboard) |
+
+A right, middle or side mouse button can be one of these keys too (Settings → Hotkeys: click it in the box).
+Settings → **QuadStick card** shows the same keys laid out like a sip-and-puff reference card, with the tubes
+across and soft puff, puff, sip and soft sip down. Each square says what that gesture sends and what BetterTalk
+does with it, and clicking a square changes it.
 
 There is one screen and its layout is fixed: nothing moves or resizes while the user types. From the top: the
 urgent phrases, six green word-suggestion slots (always there, blank when empty), the keyboard, and the message box. The bottom keyboard row has **Quick · Phrases** at the left;

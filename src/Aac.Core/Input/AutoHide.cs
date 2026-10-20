@@ -35,4 +35,11 @@ public static class FocusHighlightPolicy
         FocusHighlight.Never => false,
         _ => lastInputWasNavigationKey,
     };
+
+    /// <summary>
+    /// Select (Enter, a QuadStick's usual sip) presses the framed key while stepping with the arrows; with no frame
+    /// showing, nothing looks selected, so it speaks the message instead.
+    /// </summary>
+    public static InputAction Resolve(InputAction action, bool frameShown) =>
+        action == InputAction.Select && !frameShown ? InputAction.Speak : action;
 }

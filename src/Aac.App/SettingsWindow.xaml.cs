@@ -55,6 +55,8 @@ public partial class SettingsWindow : Window
         SpeakWhen.SelectedIndex = _settings.Speech.SpeakEachWord ? 1 : 0;
         Highlight.SelectedItem = Highlight.Items.Cast<System.Windows.Controls.ComboBoxItem>().First(i => (string)i.Tag == _settings.SelectionHighlight.ToString());
         FillKeyRows();
+        _card = new Dictionary<string, CardCell>(_settings.QuadStickCard);
+        BuildCard();
         ShowUpdateState();
         Closed += (_, _) => _updateCancel.Cancel();
         Debounce.Value = Math.Clamp(_settings.Input.DebounceMs, 0, 1000);
@@ -123,6 +125,7 @@ public partial class SettingsWindow : Window
         if (Enum.TryParse<Aac.Core.Input.FocusHighlight>((string)((System.Windows.Controls.ComboBoxItem)Highlight.SelectedItem).Tag, out var highlight))
             _settings.SelectionHighlight = highlight;
         foreach (var (box, info) in _keyBoxes) SetKey(info.Name, box.Text);
+        _settings.QuadStickCard = _card;
         _settings.Hotkeys = _hotkeyBoxes.Where(b => b.Box.Text.Length > 0).ToDictionary(b => b.Box.Text, b => b.Info.Name);
         _settings.Input.DebounceMs = (int)Debounce.Value;
         _settings.Input.DeleteRepeatDelayMs = (int)RepeatDelay.Value;
@@ -418,14 +421,15 @@ public partial class SettingsWindow : Window
     private void FillKeyRows()
     {
         AddKeyRows(HotkeyRows, ActionCatalog.Hotkeys, _hotkeyBoxes, HotkeyBox_PreviewKeyDown);
-        AddKeyRows(KeyRows, ActionCatalog.Keys.Where(k => k.Group == ActionCatalog.OpenGroup), _keyBoxes, KeyBox_PreviewKeyDown);
-        AddKeyRows(FigureKeyRows, ActionCatalog.Keys.Where(k => k.Group == ActionCatalog.FigureGroup), _keyBoxes, KeyBox_PreviewKeyDown);
+        AddKeyRows(KeyRows, ActionCatalog.Keys.Where(k => k.Group == ActionCatalog.OpenGroup), _keyBoxes, KeyBox_PreviewKeyDown, KeyBox_PreviewMouseDown);
+        AddKeyRows(FigureKeyRows, ActionCatalog.Keys.Where(k => k.Group == ActionCatalog.FigureGroup), _keyBoxes, KeyBox_PreviewKeyDown, KeyBox_PreviewMouseDown);
         foreach (var (box, info) in _hotkeyBoxes)
             box.Text = _settings.Hotkeys.FirstOrDefault(kv => string.Equals(kv.Value, info.Name, StringComparison.OrdinalIgnoreCase)).Key ?? "";
         foreach (var (box, info) in _keyBoxes) box.Text = KeyFor(info.Name) ?? "";
     }
 
-    private static void AddKeyRows(Grid grid, IEnumerable<ActionInfo> actions, List<(TextBox, ActionInfo)> boxes, System.Windows.Input.KeyEventHandler onKey)
+    private static void AddKeyRows(Grid grid, IEnumerable<ActionInfo> actions, List<(TextBox, ActionInfo)> boxes,
+        System.Windows.Input.KeyEventHandler onKey, System.Windows.Input.MouseButtonEventHandler? onMouse = null)
     {
         grid.ColumnDefinitions.Clear();
         // One action per row: the name on the left (it wraps), a same-size key box on the right, so nothing is cut off.
@@ -442,8 +446,14 @@ public partial class SettingsWindow : Window
             Grid.SetColumn(label, col);
             grid.Children.Add(label);
             var box = new TextBox { Margin = new Thickness(4), Width = 200, IsReadOnly = true, Tag = info,
-                ToolTip = "Click here, then press the key you want. Backspace empties it." };
+                ToolTip = onMouse is null ? "Click here, then press the key you want. Backspace empties it."
+                    : "Click here, then press the key you want, or click a mouse button other than the left one in it. Backspace empties it." };
             box.PreviewKeyDown += onKey;
+            if (onMouse is not null)
+            {
+                box.PreviewMouseDown += onMouse;
+                box.ContextMenuOpening += (_, e) => e.Handled = true; // right click is a key choice here, not the copy/paste menu
+            }
             Grid.SetRow(box, row);
             Grid.SetColumn(box, col + 1);
             grid.Children.Add(box);
@@ -504,10 +514,22 @@ public partial class SettingsWindow : Window
         var key = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
         e.Handled = true;
         if (IsModifierKey(key)) { KeyNote.Text = "Keys here are single keys: press the key on its own."; return; }
-        if (key == System.Windows.Input.Key.Back) { box.Text = ""; KeyNote.Text = ""; return; }
+        if (key == System.Windows.Input.Key.Back) { box.Text = ""; KeyNote.Text = ""; RefreshCard(); return; }
         var name = Aac.Core.Input.KeyMap.Normalize(key.ToString());
         KeyNote.Text = TakeFromOthers(_keyBoxes, box, name);
         box.Text = name;
+        RefreshCard();
+    }
+
+    /// <summary>An in-app key box: right, middle or a side mouse button can be its key too (the left one only clicks).</summary>
+    private void KeyBox_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is not TextBox box || MainWindow.MouseKeyName(e.ChangedButton) is not { } name) return;
+        e.Handled = true;
+        box.Focus();
+        KeyNote.Text = TakeFromOthers(_keyBoxes, box, name);
+        box.Text = name;
+        RefreshCard();
     }
 
     /// <summary>Empties any other box in the list that had this key, and says which action lost it.</summary>
@@ -523,6 +545,149 @@ public partial class SettingsWindow : Window
         return lost.Count == 0 ? "" : $"{key} was taken off \"{string.Join("\", \"", lost)}\".";
     }
 
+    // ---------------- QuadStick card ----------------
+
+    private Dictionary<string, CardCell> _card = new();
+    private readonly Dictionary<string, (TextBlock Sends, TextBlock Does)> _cardCells = new();
+
+    /// <summary>The card grid: tube names across the top, sip and puff strengths down the side, one square each.</summary>
+    private void BuildCard()
+    {
+        CardGrid.Children.Clear();
+        CardGrid.ColumnDefinitions.Clear();
+        CardGrid.RowDefinitions.Clear();
+        CardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(92) });
+        foreach (var _ in QuadStickCard.Tubes) CardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 96 });
+        CardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        for (var c = 0; c < QuadStickCard.Tubes.Count; c++)
+        {
+            var head = new TextBlock { Text = QuadStickCard.Tubes[c].Replace("+", " + "), FontWeight = FontWeights.SemiBold, FontSize = 14,
+                TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(2, 0, 2, 6), VerticalAlignment = VerticalAlignment.Bottom };
+            Grid.SetColumn(head, c + 1);
+            CardGrid.Children.Add(head);
+        }
+        for (var r = 0; r < QuadStickCard.Gestures.Count; r++)
+        {
+            var gesture = QuadStickCard.Gestures[r];
+            CardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Auto) });
+            // Puffs in muted red and sips in muted blue, as on the paper cards; the stronger one a little deeper.
+            var tint = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(gesture switch
+            {
+                "Soft puff" => "#3A2730",
+                "Puff" => "#4C2A33",
+                "Sip" => "#22385A",
+                _ => "#1F2F48",
+            });
+            var name = new TextBlock { Text = gesture, FontWeight = FontWeights.SemiBold, FontSize = 14, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
+            Grid.SetRow(name, r + 1);
+            CardGrid.Children.Add(name);
+            for (var c = 0; c < QuadStickCard.Tubes.Count; c++)
+            {
+                var tube = QuadStickCard.Tubes[c];
+                var id = QuadStickCard.CellId(gesture, tube);
+                var sends = new TextBlock { FontWeight = FontWeights.SemiBold, FontSize = 14, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap };
+                var does = new TextBlock { FontSize = 12.5, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) };
+                var square = new Button
+                {
+                    Background = new System.Windows.Media.SolidColorBrush(tint),
+                    Margin = new Thickness(2), Padding = new Thickness(4, 6, 4, 6), MinHeight = 74,
+                    HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Center,
+                    Content = new StackPanel { Children = { sends, does } },
+                };
+                square.Click += (_, _) => EditCardCell(gesture, tube);
+                Grid.SetRow(square, r + 1);
+                Grid.SetColumn(square, c + 1);
+                CardGrid.Children.Add(square);
+                _cardCells[id] = (sends, does);
+            }
+        }
+        RefreshCard();
+    }
+
+    /// <summary>The in-app key box that has this key, if any.</summary>
+    private (TextBox Box, ActionInfo Info)? KeyBoxWith(string key) =>
+        _keyBoxes.Cast<(TextBox Box, ActionInfo Info)?>().FirstOrDefault(b => string.Equals(b!.Value.Box.Text, key, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>What each square sends and does, from the card and the key boxes as they are now.</summary>
+    private void RefreshCard()
+    {
+        if (_cardCells.Count == 0) return;
+        var text = (System.Windows.Media.Brush)FindResource("DkText");
+        var muted = (System.Windows.Media.Brush)FindResource("DkMuted");
+        var green = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xA9, 0xE8, 0xA0)); // soft green: readable on the red and the blue squares
+        foreach (var (id, (sends, does)) in _cardCells)
+        {
+            var cell = _card.GetValueOrDefault(id);
+            sends.Foreground = text;
+            does.Foreground = muted;
+            switch (QuadStickCard.KindOf(cell))
+            {
+                case CardSendKind.Key:
+                    sends.Text = QuadStickCard.Display(cell!.Key!);
+                    if (KeyBoxWith(cell.Key!) is { } bound)
+                    {
+                        does.Text = bound.Info.Name == nameof(InputAction.Select) ? "Speaks (presses the stepped-to key in arrow mode)" : bound.Info.Label;
+                        does.Foreground = green;
+                    }
+                    else does.Text = "Not used yet: click to give it a job";
+                    break;
+                case CardSendKind.LeftClick:
+                    sends.Text = QuadStickCard.Display(cell!.Key!);
+                    does.Text = "Clicks what the pointer is on";
+                    break;
+                case CardSendKind.Clipboard:
+                    sends.Text = QuadStickCard.Display(cell!.Key!);
+                    does.Text = QuadStickCard.ClipboardMeaning(cell.Key!);
+                    does.Foreground = green;
+                    break;
+                case CardSendKind.Elsewhere:
+                    sends.Text = cell!.Note!;
+                    sends.Foreground = muted;
+                    does.Text = "Not for BetterTalk";
+                    break;
+                default:
+                    sends.Text = "—";
+                    sends.Foreground = muted;
+                    does.Text = "";
+                    break;
+            }
+        }
+    }
+
+    private void EditCardCell(string gesture, string tube)
+    {
+        var id = QuadStickCard.CellId(gesture, tube);
+        var cell = _card.GetValueOrDefault(id) ?? new CardCell();
+        var current = QuadStickCard.KindOf(cell) == CardSendKind.Key && KeyBoxWith(cell.Key!) is { } b ? b.Info.Name : null;
+        var editor = new CardCellWindow(gesture, tube, cell, current, _keyBoxes.Select(k => k.Info)) { Owner = this };
+        if (editor.ShowDialog() != true) return;
+        _card[id] = editor.Cell;
+        CardNote.Text = "";
+        if (QuadStickCard.KindOf(editor.Cell) == CardSendKind.Key)
+        {
+            var key = editor.Cell.Key!;
+            if (editor.Action.Length == 0)
+            {
+                foreach (var (box, _) in _keyBoxes)
+                    if (string.Equals(box.Text, key, StringComparison.OrdinalIgnoreCase)) box.Text = "";
+            }
+            else if (_keyBoxes.FirstOrDefault(k => k.Info.Name == editor.Action) is { Box: { } target })
+            {
+                // One key per action: giving this action the gesture's key takes it off the old key, and the key off any other action.
+                CardNote.Text = TakeFromOthers(_keyBoxes, target, key);
+                target.Text = key;
+            }
+        }
+        RefreshCard();
+    }
+
+    private void ResetCard_Click(object sender, RoutedEventArgs e)
+    {
+        _card = QuadStickCard.Default();
+        CardNote.Text = "";
+        RefreshCard();
+    }
+
     /// <summary>Every in-app key back to the defaults; the system-wide hotkeys are cleared (there are none by default).</summary>
     private void ResetKeys_Click(object sender, RoutedEventArgs e)
     {
@@ -531,6 +696,7 @@ public partial class SettingsWindow : Window
             box.Text = Aac.Core.Input.KeyMap.DefaultBindings.FirstOrDefault(kv => string.Equals(kv.Value, info.Name, StringComparison.OrdinalIgnoreCase)).Key ?? "";
         HotkeyNote.Text = "";
         KeyNote.Text = "";
+        RefreshCard();
         Debounce.Value = new Aac.Core.Input.InputGateOptions().DebounceMs;
         RepeatDelay.Value = new Aac.Core.Input.InputGateOptions().DeleteRepeatDelayMs;
         RepeatInterval.Value = new Aac.Core.Input.InputGateOptions().DeleteRepeatIntervalMs;

@@ -109,6 +109,9 @@ public partial class MainWindow : Window
 
         PreviewKeyDown += OnPreviewKeyDown;
         PreviewKeyUp += OnPreviewKeyUp;
+        // A mouse button (not the left one) can be an in-app key too, e.g. right click for Type a space.
+        PreviewMouseDown += (_, e) => { if (MouseKeyName(e.ChangedButton) is { } name && RunKey(name, false)) e.Handled = true; };
+        PreviewMouseUp += (_, e) => { if (MouseKeyName(e.ChangedButton) is { } name && ReleaseKey(name)) e.Handled = true; };
         PreviewTextInput += OnPreviewTextInput;
         Activated += (_, _) => _gate.FocusGained();
         Deactivated += (_, _) => _gate.FocusLost();
@@ -306,37 +309,73 @@ public partial class MainWindow : Window
             return;
         }
         MeasureToLayout("key→layout");
-        var result = _gate.KeyDown(KeyName(e), e.IsRepeat);
-        if (result.Handled) e.Handled = true;
-        if (result.Action is { } action)
+        if (Keyboard.Modifiers == ModifierKeys.Control && ClipboardKey(e.Key)) { e.Handled = true; return; }
+        if (RunKey(KeyName(e), e.IsRepeat)) e.Handled = true;
+    }
+
+    /// <summary>Ctrl-C, Ctrl-X and Ctrl-V (a QuadStick's soft sips) copy, cut and paste the whole message.</summary>
+    private bool ClipboardKey(Key key)
+    {
+        try
         {
-            if (action is InputAction.MoveUp or InputAction.MoveDown or InputAction.MoveLeft or InputAction.MoveRight)
+            switch (key)
             {
-                _lastInputWasNavigationKey = true;
-                UpdateFocusFrame();
+                case Key.C when _session.Draft.Length > 0: Clipboard.SetText(_session.Draft); _session.ShowNotice("Message copied."); return true;
+                case Key.X when _session.Draft.Length > 0: Clipboard.SetText(_session.Draft); _session.HandleAction(InputAction.Clear); _session.ShowNotice("Message cut. Undo brings it back."); return true;
+                case Key.V when Clipboard.ContainsText(): _session.TypeText(Clipboard.GetText()); return true;
+                case Key.C or Key.X or Key.V: return true;
+                default: return false;
             }
-            var pressed = action == InputAction.Select ? _session.FocusedCell?.Id : null;
-            _session.HandleAction(action);
-            if (pressed is not null && FindCellButton(pressed) is { } button) Flash(button);
         }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            return true; // another program has the clipboard open for a moment
+        }
+    }
+
+    internal static string? MouseKeyName(MouseButton button) => button switch
+    {
+        MouseButton.Right => "RightClick",
+        MouseButton.Middle => "MiddleClick",
+        MouseButton.XButton1 => "SideButton1",
+        MouseButton.XButton2 => "SideButton2",
+        _ => null, // the left button presses BetterTalk's buttons and is never a key
+    };
+
+    /// <summary>A key (or mouse button) pressed in BetterTalk: its bound action, if any. True when it was taken.</summary>
+    private bool RunKey(string name, bool isRepeat)
+    {
+        var result = _gate.KeyDown(name, isRepeat);
+        Apply(result.Action);
+        return result.Handled;
+    }
+
+    /// <summary>A key (or mouse button) let go: some actions happen on release. True when it was taken.</summary>
+    private bool ReleaseKey(string name)
+    {
+        var result = _gate.KeyUp(name);
+        Apply(result.Action);
+        PerfLog.Set("message length", _session.Draft.Length);
+        return result.Handled;
+    }
+
+    private void Apply(InputAction? action)
+    {
+        if (action is not { } found) return;
+        var a = FocusHighlightPolicy.Resolve(found, ShowFocusFrame);
+        if (a is InputAction.MoveUp or InputAction.MoveDown or InputAction.MoveLeft or InputAction.MoveRight)
+        {
+            _lastInputWasNavigationKey = true;
+            UpdateFocusFrame();
+        }
+        var pressed = a == InputAction.Select ? _session.FocusedCell?.Id : null;
+        _session.HandleAction(a);
+        if (pressed is not null && FindCellButton(pressed) is { } button) Flash(button);
     }
 
     private void OnPreviewKeyUp(object sender, KeyEventArgs e)
     {
-        var result = _gate.KeyUp(KeyName(e));
-        if (result.Handled) e.Handled = true;
-        if (result.Action is { } action)
-        {
-            if (action is InputAction.MoveUp or InputAction.MoveDown or InputAction.MoveLeft or InputAction.MoveRight)
-            {
-                _lastInputWasNavigationKey = true;
-                UpdateFocusFrame();
-            }
-            var pressed = action == InputAction.Select ? _session.FocusedCell?.Id : null;
-            _session.HandleAction(action);
-            if (pressed is not null && FindCellButton(pressed) is { } button) Flash(button);
-        }
-        PerfLog.Set("message length", _session.Draft.Length);
+        if (ReleaseKey(KeyName(e))) e.Handled = true;
     }
 
     /// <summary>Plain typing (physical keys, Windows on-screen keyboard, QuadStick text macros) goes into the message.</summary>
@@ -543,6 +582,9 @@ public partial class MainWindow : Window
             w.Cover.MouseLeftButtonUp += (_, _) => EndDrag();
             w.Cover.LostMouseCapture += (_, _) => EndDrag();
             w.Moved += rect => { _layout.SetFloat(kind, rect); SaveLayout(); };
+            // A mouse button bound as a key works over a pulled-out panel too.
+            w.PreviewMouseDown += (_, e) => { if (MouseKeyName(e.ChangedButton) is { } name && RunKey(name, false)) e.Handled = true; };
+            w.PreviewMouseUp += (_, e) => { if (MouseKeyName(e.ChangedButton) is { } name && ReleaseKey(name)) e.Handled = true; };
             w.SetScale(_scale?.ScaleX ?? 1.0);
             w.SetArranging(_arranging);
             w.ShowFocusFrame = ShowFocusFrame;

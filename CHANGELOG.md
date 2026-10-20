@@ -2,6 +2,21 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.3.3
+
+- **QuadStick card.** A new Settings tab laid out like a paper sip-and-puff card: the tubes across, soft puff,
+  puff, sip and soft sip down. Each square shows what that gesture sends and what BetterTalk does with it, in red
+  for puffs and blue for sips. Click a square to change it. It starts from a common QuadStick set-up, and it is
+  another view of the keys in the Hotkeys tab, so a change in one shows in the other.
+- **Enter speaks.** Enter (a sip on many cards) now speaks the message. While you step through the keys with the
+  arrows, it still presses the key in the frame.
+- **Copy, cut and paste.** Ctrl-C copies the whole message, Ctrl-X cuts it (Undo brings it back) and Ctrl-V
+  pastes into it.
+- **Mouse buttons as keys.** The keys in Settings → Hotkeys ("While BetterTalk is open" and the Itch figure) can
+  be a right, middle or side mouse button: click it in the box. Handy when a QuadStick sends a right click, for
+  example to type a space. The left button always just presses buttons.
+- The update notes in Settings no longer end with install instructions you don't need.
+
 ## 0.3.2
 
 - **The Itch arrow buttons can be moved.** Up, Down, Left and Right are now part of the words said out loud:

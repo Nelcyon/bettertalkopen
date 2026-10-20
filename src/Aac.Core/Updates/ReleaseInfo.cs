@@ -35,7 +35,11 @@ public sealed partial record ReleaseInfo(Version Version, string Tag, string Not
                     if (asset.TryGetProperty("name", out var name) && string.Equals(name.GetString(), InstallerName, StringComparison.OrdinalIgnoreCase)
                         && asset.TryGetProperty("browser_download_url", out var url))
                         installer = url.GetString();
-            return new ReleaseInfo(version, tag, notes.Replace("\r\n", "\n").Trim(), installer, page);
+            // Below a "---" line the release page has install steps for first-time visitors: not shown in the app.
+            notes = notes.Replace("\r\n", "\n");
+            var footer = notes.IndexOf("\n---", StringComparison.Ordinal);
+            if (footer >= 0) notes = notes[..footer];
+            return new ReleaseInfo(version, tag, notes.Trim(), installer, page);
         }
         catch (JsonException)
         {

@@ -91,7 +91,7 @@ public static class ActionCatalog
         new ActionInfo(nameof(InputAction.Itch), "Open or close Itch", OpenGroup),
         new ActionInfo(nameof(InputAction.Home), "Close the open panel", OpenGroup),
         new ActionInfo(nameof(InputAction.ToggleWindow), "Hide BetterTalk", OpenGroup),
-        new ActionInfo(nameof(InputAction.Select), "Press the selected key", OpenGroup),
+        new ActionInfo(nameof(InputAction.Select), "Press the selected key (speaks when no key is selected)", OpenGroup),
         new ActionInfo(nameof(InputAction.MoveUp), "Move the selection up", OpenGroup),
         new ActionInfo(nameof(InputAction.MoveDown), "Move the selection down", OpenGroup),
         new ActionInfo(nameof(InputAction.MoveLeft), "Move the selection left", OpenGroup),
@@ -225,6 +225,10 @@ public sealed class KeyMap
 
     public IReadOnlyDictionary<string, InputAction> Bindings => _map;
 
+    /// <summary>
+    /// The mouse buttons an in-app key can be (a QuadStick or switch box can send them instead of keys). The left
+    /// button never: it presses BetterTalk's own buttons.
+    /// </summary>
     /// <summary>WPF reports Enter as "Return" and Backspace as "Back"; accept the common spellings.</summary>
     public static string Normalize(string key) => key.Trim() switch
     {

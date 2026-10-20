@@ -28,6 +28,9 @@ public sealed class AppSettings
     /// </summary>
     public Dictionary<string, string> Hotkeys { get; set; } = new();
 
+    /// <summary>The QuadStick card in Settings: card square ("Sip|Right") → what that gesture sends. See <see cref="Aac.Core.Input.QuadStickCard"/>.</summary>
+    public Dictionary<string, CardCell> QuadStickCard { get; set; } = Aac.Core.Input.QuadStickCard.Default();
+
     /// <summary>Which corner of the screen the window sits in. Panels and drawers always open away from it.</summary>
     public WindowCorner Anchor { get; set; } = WindowCorner.TopLeft;
     /// <summary>The screen the window sits on, by its Windows device name (e.g. \\.\DISPLAY2); null or unknown means the main screen.</summary>

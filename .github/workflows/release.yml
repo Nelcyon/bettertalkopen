@@ -52,6 +52,6 @@ jobs:
           $start = [Array]::IndexOf($lines, "## $version")
           $section = @()
           if ($start -ge 0) { for ($i = $start + 1; $i -lt $lines.Count -and -not $lines[$i].StartsWith('## '); $i++) { $section += $lines[$i] } }
-          $notes = (($section -join "`n").Trim()) + "`n`n---`nTo install: download **BetterTalk-Setup.exe**, double-click it, and follow the prompts. Windows may say it protected your PC because the file is not signed: choose More info, then Run anyway. Already have BetterTalk? Settings → Updates → Check for updates."
+          $notes = (($section -join "`n").Trim()) + "`n`n---`nTo install: download **BetterTalk-Setup.exe**, double-click it, and follow the prompts. Windows may say it protected your PC because the file is not signed: choose More info, then Run anyway."
           Set-Content -Path release-notes.md -Value $notes -Encoding utf8
           gh release create $tag installer/Output/BetterTalk-Setup.exe --target $env:GITHUB_SHA --title "BetterTalk $tag" --notes-file release-notes.md
