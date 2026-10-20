@@ -62,8 +62,9 @@ urgent phrases, six green word-suggestion slots (always there, blank when empty)
 each opens its drawer between the keyboard and the message box (one at a time; pressing it again or Home
 closes it). The window grows downward by the drawer's height while one is open and shrinks back after, so
 the keys never move or change size and there is no empty gap. Speak is the wide
-key where Enter would be, with a small red **Stop** segment attached. **Hide** (yellow, ◀) sits on its own in
-the bottom-right corner. The message box at the bottom is three lines tall and scrolls to the newest words.
+key where Enter would be, with a small red **Stop** segment attached. The **Settings** key (⚙) at the right end of the bottom row opens Settings, and **Hide**
+(yellow, ◀) ends the row in the bottom-right corner (it is not shown when BetterTalk hides by itself).
+Settings can also be opened from the BetterTalk icon near the clock: right-click it for the menu. The message box at the bottom is three lines tall and scrolls to the newest words.
 Problems such as a missing voice show for five seconds over the message box; there is no status text.
 
 ## Run it on Windows

@@ -200,6 +200,8 @@ public sealed class CommunicationSession : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
     /// <summary>Raised when the user asks to hide/show the window (handled by the host app).</summary>
     public event EventHandler? WindowToggleRequested;
+    /// <summary>The Settings key was selected: the host opens its Settings window.</summary>
+    public event EventHandler? SettingsRequested;
     /// <summary>Raised when what the app has learned changes, so the host can save it.</summary>
     public event EventHandler? LearningChanged;
     /// <summary>In edit mode, pressing a red, orange or phrase button (or "＋ Add") asks the host to edit it.</summary>
@@ -668,6 +670,7 @@ public sealed class CommunicationSession : INotifyPropertyChanged
             case CommandId.Undo: Undo(); break;
             case CommandId.ForgetLearning: ForgetLearning(); break;
             case CommandId.HideWindow: WindowToggleRequested?.Invoke(this, EventArgs.Empty); break;
+            case CommandId.OpenSettings: SettingsRequested?.Invoke(this, EventArgs.Empty); break;
             case CommandId.ClosePanel: CloseDrawer(); break;
             case CommandId.Itch: OpenItch(!ItchOpen); break;
             case >= CommandId.ItchTurnLeft and <= CommandId.ItchControls: ItchCommand(command); break;
@@ -835,15 +838,16 @@ public sealed class CommunicationSession : INotifyPropertyChanged
             rows.Add(KeyRow($"keys-{i}", keys.ToArray()));
         }
 
-        // Bottom row: the three drawer buttons at the left, Undo, a five-key space bar and Clear, then a
-        // free-standing Hide at the right edge, a key's width apart from the rest.
+        // Bottom row: the three drawer buttons at the left, Undo, a five-key space bar and Clear, then
+        // Settings and, last, Hide at the right edge (the row is 12 keys wide with Hide, 11 without).
         rows.Add(KeyRow("edit",
             Menu("go-quick", "Quick", CommandId.GoQuick, "⚡", on: Drawer == Drawer.Quick),
             Menu("go-phrases", "Phrases", CommandId.GoPhrases, "☰", on: Drawer == Drawer.Phrases),
             Cmd("undo", "Undo", CommandId.Undo, icon: "↶"),
             Cmd("space", "Space", CommandId.Space, icon: "␣", span: 6),
-            Cmd("clear", "Clear", CommandId.Clear, icon: "✕"))
-            .WithHide(_options.ShowHideKey ? Cmd("hide", "Hide", CommandId.HideWindow, icon: "◀") with { Gap = 1 } : null));
+            Cmd("clear", "Clear", CommandId.Clear, icon: "✕"),
+            Cmd("settings", "Settings", CommandId.OpenSettings, icon: "⚙"))
+            .WithHide(_options.ShowHideKey ? Cmd("hide", "Hide", CommandId.HideWindow, icon: "◀") : null));
 
         foreach (var (cells, i) in DrawerContent().Select((c, i) => (c, i)))
             rows.Add(Row($"{DrawerRowPrefix}{i}", cells));

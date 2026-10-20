@@ -9,8 +9,8 @@ using Forms = System.Windows.Forms;
 namespace Aac.App;
 
 /// <summary>
-/// The icon in the notification area (taskbar tray). The app lives here while hidden; its menu
-/// shows the window, opens settings, or exits.
+/// The icon in the notification area (taskbar tray). The app lives here while hidden; its right-click menu
+/// shows or hides the window, opens Settings, switches on button editing, opens the help page, or exits.
 /// </summary>
 public sealed class TrayIcon : IDisposable
 {
@@ -22,25 +22,43 @@ public sealed class TrayIcon : IDisposable
     public TrayIcon(Action show, Action hide, Action openSettings, Action openSettingsFile, Action exit, Action<bool> setEditMode)
     {
         _image = DrawIcon();
-        var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("Show talk window", null, (_, _) => show());
-        menu.Items.Add("Hide talk window", null, (_, _) => hide());
+        var menu = new Forms.ContextMenuStrip { ShowItemToolTips = true };
+        menu.Items.Add(new Forms.ToolStripMenuItem("Show BetterTalk", null, (_, _) => show())
+            { ToolTipText = "Opens the BetterTalk window (you can also left-click this icon)" });
+        menu.Items.Add(new Forms.ToolStripMenuItem("Hide BetterTalk", null, (_, _) => hide())
+            { ToolTipText = "Tucks the window away. BetterTalk keeps running and waits here" });
         menu.Items.Add(new Forms.ToolStripSeparator());
-        _editItem = new Forms.ToolStripMenuItem("Edit buttons (change, add or delete words)") { CheckOnClick = true };
+        menu.Items.Add(new Forms.ToolStripMenuItem("Settings…", null, (_, _) => openSettings())
+            { Font = new Drawing.Font(menu.Font, Drawing.FontStyle.Bold), ToolTipText = "Voice, speed, window and button options" });
+        _editItem = new Forms.ToolStripMenuItem("Change the words on the buttons") { CheckOnClick = true,
+            ToolTipText = "Tick this, then tap any button on the screen to rename, add or delete it. Untick it when you are done" };
         _editItem.CheckedChanged += (_, _) => setEditMode(_editItem.Checked);
         menu.Items.Add(_editItem);
-        menu.Items.Add("Settings…", null, (_, _) => openSettings());
-        menu.Items.Add("Open settings file", null, (_, _) => openSettingsFile());
         menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("Exit BetterTalk", null, (_, _) => exit());
+        menu.Items.Add(new Forms.ToolStripMenuItem("Help and downloads (opens the BetterTalk web page)", null, (_, _) => OpenHelpPage()));
+        var advanced = new Forms.ToolStripMenuItem("For helpers") { ToolTipText = "Options for the person setting BetterTalk up" };
+        advanced.DropDownItems.Add(new Forms.ToolStripMenuItem("Open the settings file in Notepad", null, (_, _) => openSettingsFile())
+            { ToolTipText = "Every setting as plain text. Close BetterTalk's Settings window before editing it" });
+        menu.Items.Add(advanced);
+        menu.Items.Add(new Forms.ToolStripSeparator());
+        menu.Items.Add(new Forms.ToolStripMenuItem("Exit BetterTalk", null, (_, _) => exit())
+            { ToolTipText = "Closes BetterTalk completely. It will not open from the corner until you start it again" });
         _icon = new Forms.NotifyIcon
         {
             Icon = _image,
-            Text = "BetterTalk",
+            Text = "BetterTalk: click to open, right-click for the menu",
             ContextMenuStrip = menu,
             Visible = true,
         };
         _icon.MouseClick += (_, e) => { if (e.Button == Forms.MouseButtons.Left) show(); };
+    }
+
+    private const string HelpPage = "https://github.com/Nelcyon/bettertalkopen";
+
+    private static void OpenHelpPage()
+    {
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(HelpPage) { UseShellExecute = true }); }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { }
     }
 
     /// <summary>Keeps the menu's tick in step when edit mode is switched on or off elsewhere.</summary>

@@ -89,7 +89,7 @@
                     <Setter Property="BorderBrush" Value="{StaticResource SpeakOutline}"/>
                     <Setter Property="Background" Value="{StaticResource StopFill}"/>
                 </DataTrigger>
-                <!-- Hide stands on its own in the bottom-right corner: a yellow button with dark text. -->
+                <!-- Hide ends the bottom row, at the bottom-right corner: a yellow button with dark text. -->
                 <DataTrigger Binding="{Binding Cell.Command}" Value="{x:Static board:CommandId.HideWindow}">
                     <Setter Property="Background" Value="{StaticResource HideFill}"/>
                     <Setter Property="BorderBrush" Value="{StaticResource HideBorder}"/>

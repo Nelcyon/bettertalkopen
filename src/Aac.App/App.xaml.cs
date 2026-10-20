@@ -116,6 +116,7 @@ public partial class App : Application
         // For checking the Settings window on a test copy (it is otherwise opened from the tray icon).
         if (Environment.GetEnvironmentVariable("BETTERTALK_OPEN_SETTINGS") == "1" && Environment.GetEnvironmentVariable("BETTERTALK_DATA_DIR") is { Length: > 0 })
             Dispatcher.BeginInvoke(OpenSettings, DispatcherPriority.ApplicationIdle);
+        session.SettingsRequested += (_, _) => OpenSettings();
         session.EditRequested += (_, edit) => EditPhrase(session, window, edit);
         session.PhrasesChanged += (_, _) => SavePhrases();
         if (settings.OpenFromTopLeftCorner) _corner = new HotCorner(settings.CornerTrigger, settings.CornerDwellMs, window.OnHotCorner);
@@ -137,7 +138,7 @@ public partial class App : Application
         if (on)
         {
             window.ShowFromTray();
-            session.ShowNotice("Edit mode: tap a red, orange or phrase button to change its words, or ＋ Add. Turn it off in the tray menu.");
+            session.ShowNotice("Edit mode: tap a button to change its words, or ＋ Add. To stop, right-click the BetterTalk icon near the clock and untick Change the words on the buttons.");
         }
         else session.ShowNotice("Edit mode off.");
     }

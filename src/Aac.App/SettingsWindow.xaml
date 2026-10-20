@@ -2,30 +2,56 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Aac.App"
-        Title="BetterTalk settings" Width="640" Height="820" MinWidth="480" MinHeight="500"
+        Title="BetterTalk settings" Width="700" Height="800" MinWidth="520" MinHeight="520"
         FontFamily="Segoe UI" FontSize="16" WindowStartupLocation="CenterScreen" ShowInTaskbar="True">
     <Window.Resources>
+        <!-- A setting's name, and the plain-words explanation shown under it. -->
         <Style TargetType="TextBlock" x:Key="Label">
-            <Setter Property="Margin" Value="0,12,0,4"/>
+            <Setter Property="Margin" Value="0,18,0,2"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
+        <Style TargetType="TextBlock" x:Key="Hint">
+            <Setter Property="Foreground" Value="#555"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,2,0,6"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="Intro">
+            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
         <Style TargetType="CheckBox">
-            <Setter Property="Margin" Value="0,10,0,0"/>
+            <Setter Property="Margin" Value="0,16,0,0"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontSize" Value="16"/>
         </Style>
     </Window.Resources>
     <DockPanel Margin="18">
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
-            <Button Content="Open settings file" Padding="12,6" Margin="0,0,20,0" Click="OpenFile_Click"/>
-            <Button Content="Cancel" Padding="16,6" Margin="10,0,0,0" IsCancel="True" Click="Cancel_Click"/>
-            <Button Content="Save and restart" Padding="16,6" Margin="10,0,0,0" IsDefault="True" FontWeight="SemiBold" Click="Save_Click"/>
+        <TextBlock DockPanel.Dock="Top" Style="{StaticResource Intro}" Margin="0,0,0,10"
+                   Text="Change how BetterTalk sounds, looks and behaves. Nothing changes until you press Save and restart."/>
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+            <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,8"
+                       Text="BetterTalk restarts to apply your changes. The message you are writing, your buttons and what it has learned are kept."/>
+            <DockPanel LastChildFill="False">
+                <Button DockPanel.Dock="Left" Content="Open settings file (advanced)" Padding="12,6" Click="OpenFile_Click"
+                        ToolTip="Opens the raw settings in Notepad. Only for helpers who know what they are changing."/>
+                <Button DockPanel.Dock="Right" Content="Save and restart" Padding="18,6" Margin="10,0,0,0" IsDefault="True" FontWeight="SemiBold" Click="Save_Click"/>
+                <Button DockPanel.Dock="Right" Content="Cancel" Padding="18,6" Margin="10,0,0,0" IsCancel="True" Click="Cancel_Click"/>
+            </DockPanel>
         </StackPanel>
-        <TextBlock DockPanel.Dock="Bottom" Foreground="#555" TextWrapping="Wrap" Margin="0,10,0,0"
-                   Text="The app restarts to apply changes. The unfinished message and everything learned are kept."/>
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-                <TextBlock Style="{StaticResource Label}" Text="Voice"/>
-                <!-- Downloaded voices are shaded green and have a delete button on their left (in the open list only). -->
+
+        <TabControl>
+            <!-- ================= Voice and speaking ================= -->
+            <TabItem Header="Voice &amp; speaking">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="14,4,14,14">
+                        <TextBlock Style="{StaticResource Label}" Text="Voice"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Pick the voice that speaks your messages. Voices shaded green are already on this computer. Picking any other one downloads it once (this needs internet), then it works without internet. You will hear a sample straight away."/>
                 <ComboBox x:Name="Voice" SelectionChanged="Voice_SelectionChanged" MaxDropDownHeight="520" TextSearch.TextPath="Label">
                     <ComboBox.ItemContainerStyle>
                         <Style TargetType="ComboBoxItem">
@@ -73,107 +99,177 @@
                         </local:VoiceRowTemplates>
                     </ComboBox.ItemTemplateSelector>
                 </ComboBox>
-                <DockPanel Margin="0,6,0,0" LastChildFill="True">
-                    <Button x:Name="VoiceTest" DockPanel.Dock="Left" Content="&#x25B6; Hear it again" Padding="12,4" Click="VoiceTest_Click"/>
-                    <ProgressBar x:Name="VoiceProgress" Height="12" Margin="10,0,0,0" Minimum="0" Maximum="1" Visibility="Collapsed" VerticalAlignment="Center"/>
-                </DockPanel>
-                <TextBlock x:Name="VoiceInfo" Foreground="#555" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                        <DockPanel Margin="0,6,0,0" LastChildFill="True">
+                            <Button x:Name="VoiceTest" DockPanel.Dock="Left" Content="&#x25B6; Hear it again" Padding="12,4" Click="VoiceTest_Click"/>
+                            <ProgressBar x:Name="VoiceProgress" Height="12" Margin="10,0,0,0" Minimum="0" Maximum="1" Visibility="Collapsed" VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <TextBlock x:Name="VoiceInfo" Style="{StaticResource Hint}" Margin="0,4,0,0"/>
 
-                <TextBlock Style="{StaticResource Label}">
-                    <Run Text="Speaking speed: "/><Run Text="{Binding Value, ElementName=Rate, StringFormat=N0}"/>
-                </TextBlock>
-                <Slider x:Name="Rate" Minimum="-10" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True"/>
+                        <TextBlock Style="{StaticResource Label}">
+                            <Run Text="Speaking speed: "/><Run Text="{Binding Value, ElementName=Rate, StringFormat=N0}"/>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource Hint}" Text="0 is the normal speed. Lower numbers are slower, higher numbers are faster."/>
+                        <Slider x:Name="Rate" Minimum="-10" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True"/>
 
-                <TextBlock Style="{StaticResource Label}">
-                    <Run Text="Volume: "/><Run Text="{Binding Value, ElementName=Volume, StringFormat=N0}"/>
-                </TextBlock>
-                <Slider x:Name="Volume" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True"/>
+                        <TextBlock Style="{StaticResource Label}">
+                            <Run Text="Volume: "/><Run Text="{Binding Value, ElementName=Volume, StringFormat=N0}"/><Run Text=" out of 100"/>
+                        </TextBlock>
+                        <Slider x:Name="Volume" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True"/>
 
-                <TextBlock Style="{StaticResource Label}">
-                    <Run Text="Text size: "/><Run Text="{Binding Value, ElementName=TextSize, StringFormat=N0}"/>
-                </TextBlock>
-                <Slider x:Name="TextSize" Minimum="16" Maximum="60" TickFrequency="2" IsSnapToTickEnabled="True"/>
+                        <TextBlock Style="{StaticResource Label}" Text="When should it speak?"/>
+                        <ComboBox x:Name="SpeakWhen">
+                            <ComboBoxItem Content="Only when I press Speak (it reads the whole message)" Tag="Message"/>
+                            <ComboBoxItem Content="Each word as soon as I finish it (Speak still reads the whole message)" Tag="EachWord"/>
+                        </ComboBox>
 
-                <TextBlock Style="{StaticResource Label}" Text="When to speak"/>
-                <ComboBox x:Name="SpeakWhen">
-                    <ComboBoxItem Content="When I press Speak (reads the whole message)" Tag="Message"/>
-                    <ComboBoxItem Content="Each word as I finish it (Speak still reads the whole message)" Tag="EachWord"/>
-                </ComboBox>
+                        <CheckBox x:Name="QuickSpeak" Content="Speak quick and urgent phrases as soon as I press them"/>
+                        <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,6"
+                                   Text="Turn this off to put the phrase in the message box first, so you can check it and then press Speak."/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
 
-                <TextBlock Style="{StaticResource Label}" Text="Selection highlight (pressed keys always flash)"/>
-                <ComboBox x:Name="Highlight">
-                    <ComboBoxItem Content="While using arrow keys or switches" Tag="WhileUsingKeys"/>
-                    <ComboBoxItem Content="Always" Tag="Always"/>
-                    <ComboBoxItem Content="Never (flash only)" Tag="Never"/>
-                </ComboBox>
+            <!-- ================= Screen and window ================= -->
+            <TabItem Header="Screen &amp; window">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="14,4,14,14">
+                        <TextBlock Style="{StaticResource Label}">
+                            <Run Text="Text size: "/><Run Text="{Binding Value, ElementName=TextSize, StringFormat=N0}"/>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource Hint}" Text="How big the letters are. Bigger is easier to read from a distance."/>
+                        <Slider x:Name="TextSize" Minimum="16" Maximum="60" TickFrequency="2" IsSnapToTickEnabled="True"/>
 
-                <TextBlock Style="{StaticResource Label}" Text="Itch doll keys (click a box, then press the key or QuadStick button)"/>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition/>
-                        <RowDefinition/>
-                        <RowDefinition/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Text="Turn left " VerticalAlignment="Center"/>
-                    <TextBox x:Name="KeyTurnLeft" Grid.Column="1" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                    <TextBlock Text="  Turn right " Grid.Column="2" VerticalAlignment="Center"/>
-                    <TextBox x:Name="KeyTurnRight" Grid.Column="3" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                    <TextBlock Text="Closer " Grid.Row="1" VerticalAlignment="Center"/>
-                    <TextBox x:Name="KeyCloser" Grid.Row="1" Grid.Column="1" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                    <TextBlock Text="  Farther " Grid.Row="1" Grid.Column="2" VerticalAlignment="Center"/>
-                    <TextBox x:Name="KeyFarther" Grid.Row="1" Grid.Column="3" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                    <TextBlock Text="Move up " Grid.Row="2" VerticalAlignment="Center"/>
-                    <TextBox x:Name="KeyMoveUp" Grid.Row="2" Grid.Column="1" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                    <TextBlock Text="  Move down " Grid.Row="2" Grid.Column="2" VerticalAlignment="Center"/>
-                    <TextBox x:Name="KeyMoveDown" Grid.Row="2" Grid.Column="3" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                    <TextBlock Text="Move left " Grid.Row="3" VerticalAlignment="Center"/>
-                    <TextBox x:Name="KeyMoveLeft" Grid.Row="3" Grid.Column="1" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                    <TextBlock Text="  Move right " Grid.Row="3" Grid.Column="2" VerticalAlignment="Center"/>
-                    <TextBox x:Name="KeyMoveRight" Grid.Row="3" Grid.Column="3" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                </Grid>
-                <TextBlock Text="The mouse also works: left-drag to turn and tilt the doll, right-drag to move it, the wheel zooms in on whatever is under the pointer, and a left click marks the spot."
-                           Foreground="#555" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                        <TextBlock Style="{StaticResource Label}" Text="Yellow selection frame"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="A yellow frame shows which key is selected when you move around with the arrow keys or a switch. A key you press always flashes green, whatever you choose here."/>
+                        <ComboBox x:Name="Highlight">
+                            <ComboBoxItem Content="Show it only while I use arrow keys or switches" Tag="WhileUsingKeys"/>
+                            <ComboBoxItem Content="Always show it" Tag="Always"/>
+                            <ComboBoxItem Content="Never show it (keys only flash when pressed)" Tag="Never"/>
+                        </ComboBox>
 
-                <TextBlock Style="{StaticResource Label}" Text="Open from the top-left corner of the screen"/>
-                <ComboBox x:Name="Corner">
-                    <ComboBoxItem Content="With a click in the corner" Tag="Click"/>
-                    <ComboBoxItem Content="By resting the mouse in the corner" Tag="Rest"/>
-                    <ComboBoxItem Content="Off" Tag="Off"/>
-                </ComboBox>
-                <CheckBox x:Name="AutoHide" Content="Hide when the mouse leaves the window (the Hide key is then not shown)"/>
-                <TextBlock Style="{StaticResource Label}">
-                    <Run Text="Seconds before hiding: "/><Run Text="{Binding Value, ElementName=AutoHideSeconds, StringFormat=N0}"/>
-                </TextBlock>
-                <Slider x:Name="AutoHideSeconds" Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True"
-                        IsEnabled="{Binding IsChecked, ElementName=AutoHide}"/>
-                <CheckBox x:Name="LockSize" Content="Lock the window size (no resizing or maximizing)"/>
-                <CheckBox x:Name="StartHidden" Content="Start hidden in the taskbar tray"/>
-                <CheckBox x:Name="AlwaysOnTop" Content="Keep the window on top of other programs"/>
-                <CheckBox x:Name="QuickSpeak" Content="Quick and urgent phrases speak with one selection"/>
-                <CheckBox x:Name="Learn" Content="Learn from what is said (stays on this computer, encrypted)"/>
+                        <TextBlock Style="{StaticResource Label}" Text="Opening BetterTalk from the corner of the screen"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="BetterTalk can open when you use the top-left corner of the main screen, wherever you are in Windows."/>
+                        <ComboBox x:Name="Corner">
+                            <ComboBoxItem Content="Click in the top-left corner to open it" Tag="Click"/>
+                            <ComboBoxItem Content="Rest the mouse in the top-left corner to open it" Tag="Rest"/>
+                            <ComboBoxItem Content="Do not open from the corner" Tag="Off"/>
+                        </ComboBox>
 
-                <Button Content="Edit buttons on screen (tap a button to change its words)…" Margin="0,16,0,0" Padding="12,8"
-                        HorizontalAlignment="Left" Click="EditButtons_Click"/>
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Button Content="Save buttons to a file…" Padding="12,8" Click="ExportButtons_Click"
-                            ToolTip="Saves every button's words (red, orange and phrase buttons) to one file, to copy to another computer"/>
-                    <Button Content="Load buttons from a file…" Padding="12,8" Margin="8,0,0,0" Click="ImportButtons_Click"
-                            ToolTip="Replaces this computer's buttons with the ones saved in a file"/>
-                </StackPanel>
+                        <CheckBox x:Name="AutoHide" Content="Hide BetterTalk by itself when the mouse leaves it"/>
+                        <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,0"
+                                   Text="While this is on, the yellow Hide button on the keyboard is not shown. Open it again from the corner, from the tray icon near the clock, or with Ctrl+Shift+F12."/>
+                        <TextBlock Style="{StaticResource Label}">
+                            <Run Text="Seconds before it hides: "/><Run Text="{Binding Value, ElementName=AutoHideSeconds, StringFormat=N0}"/>
+                        </TextBlock>
+                        <Slider x:Name="AutoHideSeconds" Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True"
+                                IsEnabled="{Binding IsChecked, ElementName=AutoHide}"/>
 
-                <TextBlock Style="{StaticResource Label}" Text="Urgent phrases, always shown at the top (one per line)"/>
-                <TextBox x:Name="Pinned" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" VerticalScrollBarVisibility="Auto"/>
+                        <CheckBox x:Name="AlwaysOnTop" Content="Keep BetterTalk on top of other programs"/>
+                        <CheckBox x:Name="LockSize" Content="Lock the window size"/>
+                        <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,0"
+                                   Text="Stops the window being made bigger, smaller or full screen by accident."/>
+                        <CheckBox x:Name="StartHidden" Content="Start hidden (do not show the window when BetterTalk starts)"/>
+                        <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,6"
+                                   Text="It then waits as an icon near the clock until you open it (from the corner, by clicking that icon, or with Ctrl+Shift+F12)."/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
 
-                <TextBlock Style="{StaticResource Label}" Text="Quick phrases on the Quick page (one per line)"/>
-                <TextBox x:Name="Quick" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="180" VerticalScrollBarVisibility="Auto"/>
-            </StackPanel>
-        </ScrollViewer>
+            <!-- ================= Buttons and phrases ================= -->
+            <TabItem Header="Buttons &amp; phrases">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="14,4,14,14">
+                        <TextBlock Style="{StaticResource Intro}"
+                                   Text="The red buttons along the top are urgent phrases that are always one press away. The orange buttons open from Quick and Phrases at the bottom of the keyboard."/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="Change buttons on the screen"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Closes this window and lets you tap any button to change its words, or add or delete one. To stop changing buttons, right-click the BetterTalk icon near the clock and untick &quot;Change the words on the buttons&quot;."/>
+                        <Button Content="Change buttons on the screen…" Padding="12,8" HorizontalAlignment="Left" Click="EditButtons_Click"/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="Back up or move your buttons"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Save all your buttons to one file, and load that file on another computer to get the same buttons there. Your buttons are also kept safely on this computer all the time."/>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Save buttons to a file…" Padding="12,8" Click="ExportButtons_Click"
+                                    ToolTip="Saves every button's words (red, orange and phrase buttons) to one file, to copy to another computer"/>
+                            <Button Content="Load buttons from a file…" Padding="12,8" Margin="8,0,0,0" Click="ImportButtons_Click"
+                                    ToolTip="Replaces this computer's buttons with the ones saved in a file"/>
+                        </StackPanel>
+
+                        <TextBlock Style="{StaticResource Label}" Text="Urgent phrases (the red buttons)"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="Type one phrase per line. Each line becomes a red button across the top."/>
+                        <TextBox x:Name="Pinned" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" VerticalScrollBarVisibility="Auto"/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="Quick phrases (the Quick page)"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="Type one phrase per line. They appear when you press Quick."/>
+                        <TextBox x:Name="Quick" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="180" VerticalScrollBarVisibility="Auto"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ================= Itch doll ================= -->
+            <TabItem Header="Itch doll">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="14,4,14,14">
+                        <TextBlock Style="{StaticResource Intro}"
+                                   Text="The Itch button opens a 3D figure. Click the spot on the figure where it itches and BetterTalk writes the exact place for the person helping."/>
+                        <TextBlock Style="{StaticResource Label}" Text="Moving the figure with the mouse"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Hold the left button and drag to turn it and tilt it. Hold the right button and drag to move it around. Use the mouse wheel to zoom in on whatever the pointer is over. A left click marks the spot."/>
+                        <TextBlock Style="{StaticResource Label}" Text="Moving the figure with keys or QuadStick buttons"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Click a box below, then press the key (or the QuadStick button that sends a key) you want for that move. Backspace empties a box."/>
+                        <Grid Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Turn left " VerticalAlignment="Center"/>
+                            <TextBox x:Name="KeyTurnLeft" Grid.Column="1" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
+                            <TextBlock Text="  Turn right " Grid.Column="2" VerticalAlignment="Center"/>
+                            <TextBox x:Name="KeyTurnRight" Grid.Column="3" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
+                            <TextBlock Text="Closer " Grid.Row="1" VerticalAlignment="Center"/>
+                            <TextBox x:Name="KeyCloser" Grid.Row="1" Grid.Column="1" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
+                            <TextBlock Text="  Farther " Grid.Row="1" Grid.Column="2" VerticalAlignment="Center"/>
+                            <TextBox x:Name="KeyFarther" Grid.Row="1" Grid.Column="3" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
+                            <TextBlock Text="Move up " Grid.Row="2" VerticalAlignment="Center"/>
+                            <TextBox x:Name="KeyMoveUp" Grid.Row="2" Grid.Column="1" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
+                            <TextBlock Text="  Move down " Grid.Row="2" Grid.Column="2" VerticalAlignment="Center"/>
+                            <TextBox x:Name="KeyMoveDown" Grid.Row="2" Grid.Column="3" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
+                            <TextBlock Text="Move left " Grid.Row="3" VerticalAlignment="Center"/>
+                            <TextBox x:Name="KeyMoveLeft" Grid.Row="3" Grid.Column="1" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
+                            <TextBlock Text="  Move right " Grid.Row="3" Grid.Column="2" VerticalAlignment="Center"/>
+                            <TextBox x:Name="KeyMoveRight" Grid.Row="3" Grid.Column="3" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ================= Privacy ================= -->
+            <TabItem Header="Privacy">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="14,4,14,14">
+                        <TextBlock Style="{StaticResource Intro}"
+                                   Text="BetterTalk works completely offline. It never records sound and never sends anything anywhere. The only time it uses the internet is to download a voice you choose."/>
+                        <CheckBox x:Name="Learn" Content="Learn the words and phrases I use"/>
+                        <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,0"
+                                   Text="BetterTalk remembers what you say so it can suggest your own words first and list your most-used messages. It is stored scrambled (encrypted) so only this Windows account can read it, and it never leaves this computer."/>
+                        <TextBlock Style="{StaticResource Hint}" Margin="22,4,0,0"
+                                   Text="To erase everything it has learned: press Phrases on the main screen, then select Forget learning twice."/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
     </DockPanel>
 </Window>

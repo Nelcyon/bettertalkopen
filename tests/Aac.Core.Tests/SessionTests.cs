@@ -471,12 +471,11 @@ public class SessionTests
         Assert.Equal((CommandId.DeleteWord, KeyPart.End), (top[11].Command, top[11].Part));
 
         var edit = rig.Session.Rows.First(r => r.Name == "edit").Cells.Select(c => c.Cell).ToList();
-        Assert.Equal(new[] { CommandId.GoQuick, CommandId.GoPhrases, CommandId.Undo, CommandId.Space, CommandId.Clear, CommandId.HideWindow },
+        Assert.Equal(new[] { CommandId.GoQuick, CommandId.GoPhrases, CommandId.Undo, CommandId.Space, CommandId.Clear, CommandId.OpenSettings, CommandId.HideWindow },
             edit.Select(c => c.Command));
         Assert.True(edit.Single(c => c.Command == CommandId.Space).Span > 1);
-        var hide = edit[^1];
-        Assert.True(hide.Gap > 0);                         // Hide stands apart from the other keys...
-        Assert.Equal(12, edit.Sum(c => c.Gap + c.Span)); // ...with its right edge on the keyboard's right edge
+        Assert.Equal(CommandId.HideWindow, edit[^1].Command);
+        Assert.Equal(12, edit.Sum(c => c.Gap + c.Span)); // Settings and Hide end exactly on the keyboard's right edge
     }
 
     [Fact]
@@ -540,6 +539,16 @@ public class SessionTests
                 Click(rig, c => c.Command == CommandId.Space);
         rig.Session.HandleAction(InputAction.MoveUp);
         Assert.Contains(rig.Session.FocusedCell?.Payload, new[] { "c", "v", "b", "n" });
+    }
+
+    [Fact]
+    public void Settings_key_asks_the_host_to_open_settings_and_stays_when_hide_is_off()
+    {
+        var rig = new Rig(new SessionOptions { ShowHideKey = false });
+        var asked = 0;
+        rig.Session.SettingsRequested += (_, _) => asked++;
+        ClickCommand(rig, CommandId.OpenSettings);
+        Assert.Equal(1, asked);
     }
 
     [Fact]
