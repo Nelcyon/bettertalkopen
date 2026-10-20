@@ -197,6 +197,7 @@ public sealed class CommunicationSession : INotifyPropertyChanged
         _speech = speech;
         _predictor = predictor;
         _phrases = phrases;
+        _phrases.Upgrade();
         _options = options;
         ItchControlsOpen = options.ItchControlsOpen;
         _clock = clock;
@@ -435,8 +436,10 @@ public sealed class CommunicationSession : INotifyPropertyChanged
     /// said at once. Wider words get more room, so every button can show its text at a readable size.
     /// </summary>
     private IEnumerable<Cell> SpokenCells() =>
-        ItchArrows.Select(d => new Cell($"dir-{d.Word}", $"{d.Arrow} {d.Word}", CellKind.Spoken, Payload: d.Word, Span: 1.2))
-            .Concat(_phrases.Spoken.Select(w => new Cell(SpokenWordPrefix + w, w, CellKind.Spoken, Payload: w, Hint: EditHint(true), Span: SpokenSpan(w))))
+        _phrases.Spoken.Select(w => ItchArrows.FirstOrDefault(d => string.Equals(d.Word, w, StringComparison.OrdinalIgnoreCase)) is { Arrow: { } arrow }
+                // A direction word gets its arrow; it can be moved, renamed or deleted like any other word.
+                ? new Cell($"dir-{w}", $"{arrow} {w}", CellKind.Spoken, Payload: w, Hint: EditHint(true), Span: 1.2)
+                : new Cell(SpokenWordPrefix + w, w, CellKind.Spoken, Payload: w, Hint: EditHint(true), Span: SpokenSpan(w)))
             .Concat(EditMode ? new[] { AddCell("spoken") with { Span = 1.4 } } : Array.Empty<Cell>());
 
     private static double SpokenSpan(string word) => Math.Clamp(0.6 + word.Length * 0.12, 1.0, 2.4);
@@ -729,7 +732,7 @@ public sealed class CommunicationSession : INotifyPropertyChanged
             case CellKind.Prediction: ApplyPrediction(cell.Payload!); break;
             case CellKind.Pinned when EditMode: EditRequested?.Invoke(this, new PhraseEdit(PhraseList.Urgent, null, cell.Payload)); break;
             case CellKind.QuickPhrase when EditMode: EditRequested?.Invoke(this, new PhraseEdit(PhraseList.Quick, null, cell.Payload)); break;
-            case CellKind.Spoken when EditMode && cell.Id.StartsWith(SpokenWordPrefix, StringComparison.Ordinal):
+            case CellKind.Spoken when EditMode && (cell.Id.StartsWith(SpokenWordPrefix, StringComparison.Ordinal) || cell.Id.StartsWith("dir-", StringComparison.Ordinal)):
                 EditRequested?.Invoke(this, new PhraseEdit(PhraseList.Spoken, null, cell.Payload));
                 break;
             case CellKind.Spoken: SayOutLoud(cell.Payload!); break;

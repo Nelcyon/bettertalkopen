@@ -115,7 +115,7 @@ public class SpokenPanelTests
         Assert.True(open[^1].IsOn);
         var words = open.SkipLast(1).ToList();
         Assert.All(words, c => Assert.Equal(CellKind.Spoken, c.Kind));
-        Assert.Equal(new[] { "Up", "Down", "Left", "Right" }.Concat(PhraseLibrary.DefaultSpokenPhrases), words.Select(c => c.Payload));
+        Assert.Equal(PhraseLibrary.DefaultSpokenPhrases, words.Select(c => c.Payload)); // the arrows lead the list
         Assert.Equal(new[] { "▲ Up", "▼ Down", "◀ Left", "▶ Right" }, words.Take(4).Select(c => c.Label));
         foreach (var old in new[] { "Harder", "Gentler", "Right there!", "A little more" })
             Assert.DoesNotContain(words, c => c.Payload == old);
@@ -155,7 +155,7 @@ public class SpokenPanelTests
     }
 
     [Fact]
-    public void Spoken_words_can_be_renamed_added_and_deleted_in_edit_mode_but_the_arrows_cannot()
+    public void Spoken_words_and_the_arrows_can_be_changed_in_edit_mode()
     {
         var rig = new Rig();
         PhraseEdit? asked = null;
@@ -181,12 +181,12 @@ public class SpokenPanelTests
         Assert.DoesNotContain(Spoken(rig), c => c.Cell.Payload == "Stop");
         Assert.Equal(3, saved);
 
-        // The arrows are fixed words: in edit mode they are still said, never edited (like "Most used" phrases).
+        // The arrows are part of the list too: in edit mode they open the edit box, so they can be moved.
         asked = null;
-        rig.Clock.AdvanceMs(1000);
         rig.Session.ActivateCell("dir-Up");
-        Assert.Null(asked);
-        Assert.Equal("Up", Assert.Single(rig.Engine.Spoken).DisplayText);
+        Assert.Equal(new PhraseEdit(PhraseList.Spoken, null, "Up"), asked);
+        Assert.True(rig.Session.MoveButton(asked!, +2));
+        Assert.Equal("dir-Up", Spoken(rig).ElementAt(2).Cell.Id);
     }
 
     [Fact]
@@ -233,4 +233,18 @@ public class ButtonOrderTests
 
     private static IEnumerable<string?> Strip(Rig rig) =>
         rig.Session.Rows[0].Cells.Select(c => c.Cell).Where(c => c.Kind == CellKind.Pinned).Select(c => c.Payload);
+}
+
+public class SpokenArrowUpgradeTests
+{
+    [Fact]
+    public void A_button_file_from_before_gets_the_arrows_at_the_front_once()
+    {
+        var old = new PhraseLibrary { SpokenPhrases = new() { "Keep going", "Stop" } };
+        old.Upgrade();
+        Assert.Equal(new[] { "Up", "Down", "Left", "Right", "Keep going", "Stop" }, old.Spoken);
+        old.SpokenPhrases!.Remove("Up"); // deleted on purpose later: it stays deleted
+        old.Upgrade();
+        Assert.DoesNotContain("Up", old.Spoken);
+    }
 }

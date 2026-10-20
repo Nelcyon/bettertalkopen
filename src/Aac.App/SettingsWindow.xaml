@@ -288,7 +288,7 @@
 
                         <TextBlock Style="{StaticResource Label}" Text="Words said out loud (top strip while Itch is open)"/>
                         <TextBlock Style="{StaticResource Hint}"
-                                   Text="Type one per line. While Itch is open they replace the red urgent buttons along the top, and each is said the moment it is pressed, to guide the person scratching. Up, Down, Left and Right are always there."/>
+                                   Text="Type one per line. While Itch is open they replace the red urgent buttons along the top, and each is said the moment it is pressed, to guide the person scratching. Up, Down, Left and Right are in the list too and get their arrows; move or remove them like any other line."/>
                         <TextBox x:Name="SpokenWords" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" VerticalScrollBarVisibility="Auto"/>
                     </StackPanel>
                 </ScrollViewer>

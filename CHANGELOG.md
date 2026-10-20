@@ -2,6 +2,14 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.3.2
+
+- **The Itch arrow buttons can be moved.** Up, Down, Left and Right are now part of the words said out loud:
+  in button edit mode, tap one and use ◀ Earlier / Later ▶ to put it where you like (or rename or remove it).
+- **Reorder any button.** In button edit mode the edit box has ◀ Earlier and Later ▶, for the red buttons,
+  Quick, Phrases and the Itch words.
+- No more little tooltips popping up when the pointer rests on a button.
+
 ## 0.3.1
 
 - **Updates in Settings.** Check for updates shows what is new, then you choose. Updating keeps a snapshot of

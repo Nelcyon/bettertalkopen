@@ -11,7 +11,7 @@ public sealed class PhraseLibrary
 {
     public static readonly IReadOnlyList<string> DefaultPinnedPhrases = new[] { "Help!", "I need the bathroom.", "I'm in pain.", "Yes.", "No." };
     /// <summary>Said to the person scratching, from the panel beside the Itch figure. Plain words that read right on their own.</summary>
-    public static readonly IReadOnlyList<string> DefaultSpokenPhrases = new[] { "Keep going", "Scratch harder", "Scratch softer", "That's the spot", "Stop", "Thanks, that's better" };
+    public static readonly IReadOnlyList<string> DefaultSpokenPhrases = new[] { "Up", "Down", "Left", "Right", "Keep going", "Scratch harder", "Scratch softer", "That's the spot", "Stop", "Thanks, that's better" };
 
     /// <summary>
     /// Urgent phrases shown in a slim strip on every page, spoken with one selection.
@@ -27,10 +27,26 @@ public sealed class PhraseLibrary
     public List<string>? SpokenPhrases { get; set; }
     public IReadOnlyList<string> Spoken => SpokenPhrases ?? DefaultSpokenPhrases;
 
+    /// <summary>1 once the direction words (Up, Down, Left, Right) are part of the spoken list and can be moved like the others.</summary>
+    public int SpokenListVersion { get; set; }
+
+    /// <summary>Button files from before the arrows could be moved get them at the front of their spoken words, once.</summary>
+    public void Upgrade()
+    {
+        if (SpokenListVersion >= 1) return;
+        if (SpokenPhrases is { } words)
+        {
+            var missing = new[] { "Up", "Down", "Left", "Right" }.Where(d => !words.Contains(d, StringComparer.OrdinalIgnoreCase)).ToList();
+            words.InsertRange(0, missing);
+        }
+        SpokenListVersion = 1;
+    }
+
     public static PhraseLibrary CreateDefault() => new()
     {
         PinnedPhrases = DefaultPinnedPhrases.ToList(),
         SpokenPhrases = DefaultSpokenPhrases.ToList(),
+        SpokenListVersion = 1,
         QuickPhrases = new()
         {
             "Yes.", "No.", "Wait.", "Stop.", "I need help.",
