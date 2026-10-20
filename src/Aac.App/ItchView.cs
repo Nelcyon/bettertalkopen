@@ -32,19 +32,25 @@ public sealed class ItchView : Grid
     private readonly HashSet<Model3D> _bodyModels = new();
     private readonly GeometryModel3D _marker;
     private readonly ModelVisual3D _markerVisual = new();
+    /// <summary>
+    /// The controller icon, discreetly in the figure's upper corner on the side the controls panel is: it shows or
+    /// hides the controls (a button for every movement), and is lit while they are shown.
+    /// </summary>
     private readonly Button _controls = new()
     {
+        Content = new TextBlock { Text = "🎮", FontFamily = new FontFamily("Segoe UI Emoji, Segoe UI Symbol"), FontSize = 26 },
         HorizontalAlignment = HorizontalAlignment.Right,
         VerticalAlignment = VerticalAlignment.Top,
         Margin = new Thickness(8),
-        Padding = new Thickness(16, 8, 16, 8),
-        FontSize = 30,
+        Padding = new Thickness(8, 4, 8, 4),
         Foreground = Brushes.White,
-        Background = new SolidColorBrush(Color.FromArgb(0xE0, 0x2F, 0x5F, 0x95)),
-        BorderBrush = new SolidColorBrush(Color.FromRgb(0x8D, 0xB8, 0xEA)),
-        BorderThickness = new Thickness(2),
+        Background = new SolidColorBrush(Color.FromArgb(0x70, 0x20, 0x20, 0x20)),
+        BorderBrush = new SolidColorBrush(Color.FromArgb(0x90, 0x8D, 0xB8, 0xEA)),
+        BorderThickness = new Thickness(1),
+        Opacity = 0.75,
         Focusable = false,
         Cursor = Cursors.Hand,
+        // No tooltip: little pop-ups get in the way when the pointer rests on a button.
     };
     private CommunicationSession? _session;
 
@@ -98,7 +104,6 @@ public sealed class ItchView : Grid
 
         Children.Add(_viewport);
 
-        // The small Controls button floats over the figure's top-right corner.
         _controls.Click += (_, _) => _session?.ToggleItchControls();
         Children.Add(_controls);
 
@@ -238,8 +243,12 @@ public sealed class ItchView : Grid
     {
         if (_session is null || ActualWidth <= 0) return;
 
-        // The arrow points the way the controls panel will go: ◀ folds it away, ▶ opens it to the right.
-        _controls.Content = "Controls " + (_session.ItchControlsOpen ? "◀" : "▶");
+        // The controller icon sits at the figure's upper corner beside the controls panel; it is lit while the controls show.
+        var open = _session.ItchControlsOpen;
+        _controls.HorizontalAlignment = ItchViewHost.PanelsOnLeft ? HorizontalAlignment.Left : HorizontalAlignment.Right;
+        _controls.Opacity = open ? 1 : 0.7;
+        _controls.BorderBrush = open ? new SolidColorBrush(Color.FromRgb(0x8D, 0xB8, 0xEA)) : new SolidColorBrush(Color.FromArgb(0x90, 0x8D, 0xB8, 0xEA));
+        _controls.BorderThickness = new Thickness(open ? 3 : 1);
         PlaceCamera();
     }
 
@@ -578,6 +587,9 @@ public sealed class ItchView : Grid
 public sealed class ItchViewHost : ContentControl
 {
     private static ItchView? _shared;
+
+    /// <summary>True when the controls panel sits to the left of the figure (a window anchored at the right of the screen).</summary>
+    public static bool PanelsOnLeft { get; set; }
 
     /// <summary>The figure view, made the first time it is needed (or ahead of time by <see cref="Prepare"/>).</summary>
     public static ItchView Shared => _shared ??= new ItchView();

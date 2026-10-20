@@ -20,6 +20,27 @@
         <SolidColorBrush x:Key="SplitKey" Color="#FF7A1A"/>
         <SolidColorBrush x:Key="MenuFill" Color="#1C3350"/>
         <SolidColorBrush x:Key="MenuBorder" Color="#3E6A9E"/>
+        <!-- Buttons that move the Itch figure: a blue of their own, so they read as tools rather than words. -->
+        <!-- The words that replace the urgent strip while Itch is open; App.xaml.cs swaps these for the look chosen in Settings. -->
+        <SolidColorBrush x:Key="SpokenFill" Color="#15405E"/>
+        <SolidColorBrush x:Key="SpokenBorder" Color="#D9534F"/>
+        <!-- Each kind of movement of the Itch figure has its own colour: turn and the views are blue (below). -->
+        <SolidColorBrush x:Key="TiltFill" Color="#0F4A47"/>
+        <SolidColorBrush x:Key="TiltBorder" Color="#3FB5A8"/>
+        <SolidColorBrush x:Key="SlideFill" Color="#3B2A66"/>
+        <SolidColorBrush x:Key="SlideBorder" Color="#9B7FE0"/>
+        <SolidColorBrush x:Key="ZoomFill" Color="#4A4310"/>
+        <SolidColorBrush x:Key="ZoomBorder" Color="#D2BC3E"/>
+        <SolidColorBrush x:Key="EditRed" Color="#E02424"/>
+        <!-- Button edit mode: a yellow and black diagonal "construction" border on every button that can be changed. -->
+        <LinearGradientBrush x:Key="HazardStripes" MappingMode="Absolute" SpreadMethod="Repeat" StartPoint="0,0" EndPoint="18,18">
+            <GradientStop Color="#FFD400" Offset="0"/>
+            <GradientStop Color="#FFD400" Offset="0.5"/>
+            <GradientStop Color="#111111" Offset="0.5"/>
+            <GradientStop Color="#111111" Offset="1"/>
+        </LinearGradientBrush>
+        <SolidColorBrush x:Key="ToolFill" Color="#15405E"/>
+        <SolidColorBrush x:Key="ToolBorder" Color="#4A8BD0"/>
         <SolidColorBrush x:Key="ChipFill" Color="#26313D"/>
         <SolidColorBrush x:Key="OnFill" Color="#2F5F95"/>
         <SolidColorBrush x:Key="OnBorder" Color="#8DB8EA"/>

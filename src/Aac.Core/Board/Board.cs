@@ -13,6 +13,10 @@ public enum CellKind
     Pinned,
     /// <summary>A menu button (page switch, sentences, stop, hide); runs its command, drawn apart from the letter keys.</summary>
     Menu,
+    /// <summary>A word in the strip that replaces the urgent phrases while Itch is open: said the moment it is pressed.</summary>
+    Spoken,
+    /// <summary>A button that moves the Itch figure (turn, zoom): a tool, drawn in blue so it never looks like words to say.</summary>
+    Tool,
 }
 
 public enum CommandId
@@ -41,7 +45,16 @@ public enum CommandId
     ItchZoomIn,
     ItchZoomOut,
     ItchCentre,
+    /// <summary>Folds the controls panel beside the figure away, or brings it back (the controller icon over the figure).</summary>
     ItchControls,
+    /// <summary>Look at the figure from above (down on it) or from below, one step at a time.</summary>
+    ItchTiltAbove,
+    ItchTiltBelow,
+    /// <summary>Slide the figure up, down, left or right across the view, one step at a time.</summary>
+    ItchPanUp,
+    ItchPanDown,
+    ItchPanLeft,
+    ItchPanRight,
     OpenSettings,
 }
 
@@ -51,10 +64,11 @@ public enum CommandId
 /// button shows the icon large with <see cref="Caption"/> (or the label) small beneath it.
 /// <see cref="Span"/> is the cell's width in key units and <see cref="Gap"/> empty units before it
 /// (the stagger of a real keyboard's rows). <see cref="IsOn"/> marks a toggle that is currently on
-/// (the open drawer's button, the selected phrase category).
+/// (the open drawer's button, the selected phrase category). <see cref="Tone"/> names the colour family of a
+/// button that belongs to a group (Turn, Tilt, Slide, Zoom), so each kind of movement looks different.
 /// </summary>
 public sealed record Cell(string Id, string Label, CellKind Kind, CommandId Command = CommandId.None, string? Payload = null, string? Hint = null, bool IsEnabled = true,
-    string? Icon = null, string? Caption = null, double Span = 1, KeyPart Part = KeyPart.Whole, double Gap = 0, bool IsOn = false)
+    string? Icon = null, string? Caption = null, double Span = 1, KeyPart Part = KeyPart.Whole, double Gap = 0, bool IsOn = false, string? Tone = null)
 {
     public string? ShownCaption => Icon is null ? null : Caption ?? Label;
 }

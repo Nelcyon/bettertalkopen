@@ -22,6 +22,7 @@ public partial class App : Application
     private AppSettings? _settings;
     private TrayIcon? _tray;
     private HotCorner? _corner;
+    private CornerSpot? _cornerSpot;
     private SettingsWindow? _settingsWindow;
     private bool _restart;
 
@@ -31,6 +32,15 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Settings → Updates → Go back started this copy of the older version: put it back, then start it.
+        if (e.Args.Length > 0 && e.Args[0] == Updater.RestoreArgument)
+        {
+            try { Updater.RestoreFromSnapshot(e.Args); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception) { LogError(ex); }
+            Shutdown();
+            return;
+        }
 
         // One copy only: launching again (desktop shortcut, Start menu) just brings the running one forward.
         // A test copy with its own data folder (BETTERTALK_DATA_DIR) runs alongside the real one instead of handing over to it.
@@ -62,6 +72,8 @@ public partial class App : Application
         var predictorLoad = Task.Run(WordPredictor.CreateDefault);
         var notices = new List<string>();
         var settings = _settings = SettingsStore.Load(AppPaths.Settings, out var settingsProblem);
+        // The first start on this computer (no settings file yet) runs the set-up guide once the window is up.
+        var firstRun = settingsProblem is null && !File.Exists(AppPaths.Settings);
         if (settingsProblem is not null) notices.Add(settingsProblem);
         else if (!File.Exists(AppPaths.Settings)) SettingsStore.Save(AppPaths.Settings, settings);
         settings.Phrases = ButtonStore.Load(AppPaths.Buttons, settings.Phrases, out var buttonsProblem);
@@ -81,6 +93,7 @@ public partial class App : Application
             var data = _learned.Load();
             _predictor.ImportPersonal(data);
             _memory.Import(data);
+            SaveLearning(); // a file from an older version is rewritten at once without the text of one-off messages
         }
 
         var drafts = new DraftStore(AppPaths.Draft, protector);
@@ -106,12 +119,22 @@ public partial class App : Application
             settings.Privacy.RecoverUnfinishedMessage ? drafts : null,
             _memory);
         session.LearningChanged += (_, _) => SaveLearning();
+        session.ItchControlsChanged += (_, _) =>
+        {
+            // The 🎮 icon's choice is kept, so folded-away controls stay folded after a restart.
+            settings.ItchControlsOpen = session.ItchControlsOpen;
+            try { SettingsStore.Save(AppPaths.Settings, settings); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { LogError(ex); }
+        };
         if (notices.Count > 0) session.ShowNotice(string.Join(" ", notices));
 
+        ApplySpokenLook(settings.SpokenButtonLook);
         var window = new MainWindow(session, gate, settings);
         MainWindow = window;
+        window.EditDoneRequested += () => SetEditMode(session, window, false);
+        window.LockUiRequested += () => SetArranging(session, window, false);
         _tray = new TrayIcon(window.ShowFromTray, window.HideToTray, OpenSettings, OpenSettingsFile, () => Quit(restart: false, "Exit chosen in the tray menu"),
-            on => SetEditMode(session, window, on));
+            on => SetEditMode(session, window, on), on => SetArranging(session, window, on), window.PutAllPanelsBack, OpenSetupGuide);
         _session = session;
         // For checking the Settings window on a test copy (it is otherwise opened from the tray icon).
         if (Environment.GetEnvironmentVariable("BETTERTALK_OPEN_SETTINGS") == "1" && Environment.GetEnvironmentVariable("BETTERTALK_DATA_DIR") is { Length: > 0 })
@@ -119,8 +142,15 @@ public partial class App : Application
         session.SettingsRequested += (_, _) => OpenSettings();
         session.EditRequested += (_, edit) => EditPhrase(session, window, edit);
         session.PhrasesChanged += (_, _) => SavePhrases();
-        if (settings.OpenFromTopLeftCorner) _corner = new HotCorner(settings.CornerTrigger, settings.CornerDwellMs, window.OnHotCorner);
+        if (settings.OpenFromCorner)
+        {
+            _cornerSpot = new CornerSpot(settings);
+            _corner = new HotCorner(settings.CornerTrigger, settings.CornerDwellMs, _cornerSpot.Contains, window.OnHotCorner);
+        }
+        StartupEntry.Apply(settings.StartWithWindows);
         if (!settings.StartHidden) window.Show();
+        if (firstRun || Environment.GetEnvironmentVariable("BETTERTALK_SETUP_GUIDE") == "1")
+            Dispatcher.BeginInvoke(OpenSetupGuide, DispatcherPriority.ApplicationIdle);
         // Get the Itch figure ready in the background, so opening Itch is quick even the first time.
         ItchView.Preload().ContinueWith(_ => Dispatcher.BeginInvoke(ItchViewHost.Prepare, DispatcherPriority.ApplicationIdle),
             TaskScheduler.Default);
@@ -138,15 +168,26 @@ public partial class App : Application
         if (on)
         {
             window.ShowFromTray();
-            session.ShowNotice("Edit mode: tap a button to change its words, or ＋ Add. To stop, right-click the BetterTalk icon near the clock and untick Change the words on the buttons.");
+            session.ShowNotice("Button edit mode: tap a button to change its words or move it along its row, or ＋ Add. Press Done editing at the bottom when you finish.");
         }
         else session.ShowNotice("Edit mode off.");
+    }
+
+    /// <summary>Move mode ("Unlock UI") on or off (the tray menu or Settings), with the tray's tick kept in step.</summary>
+    private void SetArranging(CommunicationSession session, MainWindow window, bool on)
+    {
+        if (_tray is not null) _tray.ArrangingChecked = on;
+        if (on) window.ShowFromTray();
+        window.SetArranging(on);
+        session.ShowNotice(on
+            ? "UI unlocked: drag any outlined panel to move it; it snaps to the edges of the others. Press Lock UI at the bottom when you are done."
+            : "UI locked. The panels stay where you put them.");
     }
 
     /// <summary>Opens the edit box for a button and applies the result.</summary>
     private static void EditPhrase(CommunicationSession session, MainWindow window, PhraseEdit edit)
     {
-        var dialog = new PhraseEditWindow(edit) { Owner = window.IsVisible ? window : null };
+        var dialog = new PhraseEditWindow(edit, session) { Owner = window.IsVisible ? window : null };
         if (dialog.ShowDialog() == true && dialog.Result is { } text) session.ApplyEdit(edit, text);
     }
 
@@ -175,9 +216,54 @@ public partial class App : Application
             return;
         }
         _settingsWindow = new SettingsWindow(_settings, () => Quit(restart: true, "restart to apply new settings"),
-            () => { if (_session is not null && MainWindow is MainWindow w) SetEditMode(_session, w, true); });
+            () => { if (_session is not null && MainWindow is MainWindow w) SetEditMode(_session, w, true); },
+            on => { if (_session is not null && MainWindow is MainWindow w) SetArranging(_session, w, on); },
+            MainWindow is MainWindow { IsArranging: true },
+            () => { if (MainWindow is MainWindow w) w.PutAllPanelsBack(); },
+            OpenSetupGuide, () => Quit(restart: false, "closing for an update or going back to the version before"));
         _settingsWindow.Show();
         _settingsWindow.Activate();
+    }
+
+    private SetupGuideWindow? _guide;
+
+    /// <summary>The set-up guide, over the main window; Finish there saves the settings and restarts the app.</summary>
+    /// <summary>Colours the spoken words in the top strip (while Itch is open) as chosen in Settings.</summary>
+    private void ApplySpokenLook(SpokenLook look)
+    {
+        var (fill, border) = look switch
+        {
+            SpokenLook.OrangeBlueOutline => ("QuickFill", "ToolBorder"),
+            SpokenLook.LikeItchButton => ("MenuFill", "MenuBorder"),
+            _ => ("ToolFill", "SpokenBorder"),
+        };
+        Resources["SpokenFill"] = Resources[fill];
+        Resources["SpokenBorder"] = Resources[border];
+    }
+
+    private void OpenSetupGuide()
+    {
+        if (_settings is null || MainWindow is not MainWindow window) return;
+        if (_guide is { IsVisible: true })
+        {
+            _guide.Activate();
+            return;
+        }
+        var settings = _settings;
+        _settingsWindow?.Close();
+        window.ShowFromTray();
+        _guide = new SetupGuideWindow(settings, window, () =>
+        {
+            try { SettingsStore.Save(AppPaths.Settings, settings); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                LogError(ex);
+                _session?.ShowNotice($"The choices could not be saved ({ex.Message}).");
+                return;
+            }
+            Quit(restart: true, "restart after the set-up guide");
+        });
+        _guide.Show();
     }
 
     internal static void OpenSettingsFile()
@@ -200,6 +286,7 @@ public partial class App : Application
         if (_showSignal is not null && MainWindow is not null) LogLifecycle($"exit: {_exitReason} (code {e.ApplicationExitCode})");
         SaveLearning();
         _corner?.Dispose();
+        _cornerSpot?.Dispose();
         _tray?.Dispose();
         (_engine as IDisposable)?.Dispose();
         base.OnExit(e);

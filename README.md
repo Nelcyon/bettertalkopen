@@ -24,6 +24,12 @@ Windows voice to start with, and the user can pick and download natural voices t
 app, under Settings → Voice. To update, run the newest Setup the same way: settings, buttons and learned
 words are kept. To remove it: Windows Settings → Apps → Installed apps → BetterTalk → Uninstall.
 
+The first time BetterTalk starts on a computer, a short **set-up guide** asks how the user chooses buttons,
+how BetterTalk should come back after hiding (a click or a rest in its corner, a hotkey), which screen and
+corner it sits in (the window moves as you choose), whether it hides by itself, and which voice to use.
+Skip keeps the usual choices; the guide can be run again from Settings → Screen & window or the tray's
+Set-up and tools menu.
+
 - Action-count benchmark: [docs/benchmarks.md](docs/benchmarks.md)
 
 ## What works in v0.1
@@ -35,7 +41,7 @@ words are kept. To remove it: Windows Settings → Apps → Installed apps → B
 | Phrases | Categories: Needs, Questions, Social, Opinions, Entertainment, Computer & games, Personal. Choosing a phrase loads it into the message and moves the focus to Speak. It is not spoken until the user presses Speak. |
 | Speech | **Speak** says the whole message, once per press. A cooldown stops a bounced or repeated press from replaying it, and the message clears after speaking (Undo brings it back, silently). Optional word-by-word mode ("When to speak" in Settings) also says each word once as soon as Space, punctuation or a word suggestion finishes it; deleting, Undo and loaded phrases never re-speak. **Stop voice** works at any time. Nothing is spoken by focus changes or at startup. Speech is offline, using the Windows SAPI voices. |
 | Safe input | A held key or auto-repeat cannot trigger an action twice. A key held while switching from another program does nothing. Presses in the first 0.4 s after the window gains focus are ignored. Bounced presses are debounced. You can also require a key to be held before it counts. |
-| Works alongside other programs | **Ctrl+Shift+F12** shows or hides the app from anywhere (you can change this shortcut). **F11** toggles fullscreen. |
+| Works alongside other programs | Hide it with the yellow Hide button, open it from the corner or the tray icon, or give any key you like to show, hide or speak in Settings → Hotkeys (nothing is set to begin with). Keys such as Space, delete and speak only work while BetterTalk is in use, never system-wide. **F11** toggles fullscreen. |
 | Recovery | The unfinished message is saved encrypted (Windows DPAPI, readable only by this Windows user). After a crash it comes back, and it is never spoken on its own. Errors are logged without any message text, in `%APPDATA%\BetterTalk\errors.log`; `app.log` in the same folder records each start and exit with its reason (tray Exit, settings restart, Windows shutting down, a crash), so a window that vanished can be explained. |
 | Measurement | Counts the actions used for each message, without storing the text. `tools/Aac.Bench` simulates the representative tasks. |
 
@@ -63,7 +69,7 @@ each opens its drawer between the keyboard and the message box (one at a time; p
 closes it). The window grows downward by the drawer's height while one is open and shrinks back after, so
 the keys never move or change size and there is no empty gap. Speak is the wide
 key where Enter would be, with a small red **Stop** segment attached. The **Settings** key (⚙) at the right end of the bottom row opens Settings, and **Hide**
-(yellow, ◀) ends the row in the bottom-right corner (it is not shown when BetterTalk hides by itself).
+(yellow, ◀) ends the row in the bottom-right corner (always shown, whether or not auto-hide is on).
 Settings can also be opened from the BetterTalk icon near the clock: right-click it for the menu. The message box at the bottom is three lines tall and scrolls to the newest words.
 Problems such as a missing voice show for five seconds over the message box; there is no status text.
 
@@ -160,10 +166,13 @@ it, so the app never starts without its voice.
 
 ## Itch: show exactly where it itches
 
-**Itch** at the right end of the red row opens a full-height panel to the right of the keyboard with a
-realistic 3D body, and a controls panel to the right of that. The **Controls ◀ / ▶**
-button floating over the figure's top-right corner folds the controls away or brings them back. The window
-grows or shrinks by exactly the panels' width, so the keyboard and message box never move.
+**Itch** at the right end of the top strip opens a full-height panel beside the keyboard with a realistic 3D
+body on its own. Beside it, in a panel of its own, are the controls, **Move the figure**: a button for every
+movement, so left clicks alone are enough; the small controller icon 🎮 in the figure's upper corner shows or
+hides them. At the same time the red urgent buttons along the top turn into the words that are said out loud with one press, to
+guide the person scratching (the **Itch ▶ / ◀** arrow shows which way the panel opens and folds); **Itch**
+again brings the urgent buttons back. The window grows or shrinks by exactly the panels' width, so the
+keyboard and message box never move.
 
 - The user **clicks the spot on the figure** (QuadStick mouse mode). A red dot marks it and the message box gets
   a sentence for the person scratching, as exact as the click: "I have an itch on my left inner thigh, just
@@ -173,15 +182,42 @@ grows or shrinks by exactly the panels' width, so the keyboard and message box n
   - Mouse: **left-drag** turns it (side to side) and tilts it (up and down); **right-drag** moves it, the body
     following the pointer exactly; the **wheel** zooms in on whatever is under the pointer (up to 10x, enough
     to pick a finger).
-  - Buttons: **Turn** ⟲ / ⟳ (an eighth of a turn each), **Front**, **Back**, **Closer**, **Farther** and
-    **Centre** (the whole body again).
-  - Programmable keys (Settings → Itch doll keys): turn left/right (F6, F7), closer/farther (Page Up,
-    Page Down) and move up/down/left/right (number pad 8, 2, 4, 6).
+  - Buttons, one for each way of moving it, laid out like a remote control and coloured by kind: **Turn left /
+    right** ⟲ ⟳ (an eighth of a turn each, blue) with **Front** and **Back**; **From above / From below** ⇩ ⇧
+    (teal); a cross of **Up, Down, Left, Right** arrows (purple) around **Whole body**, which brings the whole
+    body back, centred; **Closer** and **Farther** (gold). Dragging, right-dragging and the wheel work as before.
+  - Keys (Settings → Hotkeys, under "The Itch figure"): turn left/right (F6, F7), closer/farther (Page Up,
+    Page Down) and move up/down/left/right (number pad 8, 2, 4, 6); from above / from below can be given keys too.
   - However far it is moved, the view stays on the body, so the figure never goes off screen.
-- To guide the person scratching, each press is said out loud: **Up, Down, Left, Right**, **A little more,
-  Harder, Gentler, Right there!, Stop, Thank you**.
+- To guide the person scratching, the top strip shows words that are said out loud with one press: **Up, Down,
+  Left, Right** and, out of the box, **Keep going, Scratch harder, Scratch softer, That's the spot, Stop,
+  Thanks, that's better**. Change those words in Settings → Buttons & phrases, or tap them while "Change the
+  words on the buttons" is on. Settings → Itch doll picks how they look: blue with a red outline (the usual),
+  orange with a blue outline, or the colours of the Itch button.
 
-**Itch** again closes the panels.
+**Itch** again closes the panel and brings the urgent buttons back.
+
+### Updates
+
+Settings → **Updates** → **Check for updates** asks GitHub for the newest release and shows what is new in it
+(its section of `CHANGELOG.md`); **Full feature list** shows its README. Nothing is checked or downloaded unless
+you press the button. **Update to …** first keeps a snapshot of the version you have, with its settings,
+buttons, panel layout and learned words (in `%LOCALAPPDATA%\BetterTalk\Snapshot`), then downloads the installer
+and runs it quietly; BetterTalk closes and starts again as the new version, with your data kept as always.
+**Go back to version …** restores that snapshot: the old program and its setup, as they were before the update.
+Only the newest snapshot is kept.
+
+### Moving the panels (Unlock UI)
+
+Out of the box the panels sit beside the keyboard and the window grows for them. Only the keyboard and the
+panels are drawn: the window around them is see-through, so a panel is exactly as big as what is in it.
+**Unlock UI to move the panels** (the tray menu), or unticking **Lock UI** in Settings → Screen & window, turns
+on move mode: every panel gets a dashed outline, its buttons and the figure stop reacting, and pressing anywhere
+on a panel drags it, anywhere on any screen. A dragged panel snaps to the edges of the keyboard, the other
+panels and the screen, and slides along an edge it is held against. A panel that has been dragged out can be
+resized by its edges (the controls panel always stays as tall as its buttons). **Lock UI** on the label at the
+bottom ends move mode; **Put panels back** returns everything beside the keyboard. Floating panels never take
+the keyboard from BetterTalk, and they hide and show with it. The arrangement is kept in `layout.json`.
 
 The body is the male "realistic" base mesh from Blender Studio's
 [Human Base Meshes](https://www.blender.org/download/demo-files/#assets) bundle v1.4.1, released under
@@ -201,16 +237,16 @@ still in `src/Aac.Core/Generation` (unused) in case it is revisited.
 | Setting | Default | Meaning |
 |---|---|---|
 | `Privacy.RecoverUnfinishedMessage` | on | Saves only the current unfinished message, encrypted. It is deleted once the message is spoken or cleared. |
-| `Privacy.LearnFromSpokenMessages` | **on** | Learns the user's words, word pairs and messages from what the user speaks. Words the user uses get suggested first, and messages said twice appear under "★ Most used" on the Phrases page. Stored encrypted in `%APPDATA%\BetterTalk\learned.bin`. "Forget learning" on the Phrases page (select it twice) erases it. |
+| `Privacy.LearnFromSpokenMessages` | **on** | Learns the user's words, word pairs and repeated messages from what the user speaks. Words the user uses get suggested first, and messages said twice appear under "★ Most used" on the Phrases page. It is not a log: a message said once is kept only as a salted one-way fingerprint (no text), word pairs are saved only once they have been said twice, messages that look private (a password or pin, a run of four or more digits, an email address) are never learned from, only the day is stored, and anything unused for a year is forgotten. Stored encrypted in `%APPDATA%\BetterTalk\learned.bin` (Windows DPAPI, so only this Windows account can read it). "Forget learning" on the Phrases page (select it twice) erases it. |
 | `Generation.ShareRecentMessagesWithLocalAi` | **off** | Gives the local model the user's last five spoken messages as background. |
 
-The app never records audio, never uses a cloud service, and keeps no history of spoken messages on disk.
+The app never records audio, never uses a cloud service, and keeps no history of spoken messages on disk: what it learns is described above, and the error log never contains message text.
 
 ## Layout
 
 ```
 src/Aac.Core      UI-independent logic: speech safety, input gate, prediction, sentence options, session
-src/Aac.App       WPF window, SAPI speech, DPAPI encryption, global shortcut
+src/Aac.App       WPF window, floating panels, set-up guide, SAPI speech, DPAPI encryption, hotkeys
 tests/            xUnit tests for Aac.Core
 tools/Aac.Bench   simulated-user action counts
 ```

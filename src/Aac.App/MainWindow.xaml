@@ -4,16 +4,39 @@
         xmlns:board="clr-namespace:Aac.Core.Board;assembly=Aac.Core"
         xmlns:local="clr-namespace:Aac.App"
         Title="BetterTalk" Width="1100" Height="700" MinWidth="360" MinHeight="260"
-        Background="{StaticResource Bg}" Foreground="{StaticResource Fg}"
+        AllowsTransparency="True" Background="Transparent" Foreground="{StaticResource Fg}"
         FontFamily="Segoe UI" WindowStartupLocation="Manual" ResizeMode="CanResize"
-        WindowStyle="None" BorderBrush="#333333" BorderThickness="1">
+        WindowStyle="None">
     <!-- No title bar: the window sits flush in the top-left corner. Its edges can still be dragged to resize
-         (unless the size is locked); Alt+F4, Hide, the tray and Ctrl+Shift+F12 hide it. -->
+         (unless the size is locked); Alt+F4, Hide, the tray and any hotkey set in Settings hide it. -->
     <WindowChrome.WindowChrome>
         <WindowChrome x:Name="Chrome" CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0"
                       UseAeroCaptionButtons="False" CornerRadius="0"/>
     </WindowChrome.WindowChrome>
     <Window.Resources>
+        <!-- The buttons on the edit-mode and move-mode labels: dark and rounded, never Windows' plain white ones. -->
+        <Style x:Key="BadgeButton" TargetType="Button">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#0D1624"/>
+            <Setter Property="BorderBrush" Value="White"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Face" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="2"
+                                CornerRadius="8" Padding="{TemplateBinding Padding}" Margin="0,3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Face" Property="Background" Value="#1F3556"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="CellButton" TargetType="Button">
             <Setter Property="Focusable" Value="False"/>
             <Setter Property="Margin" Value="5"/>
@@ -60,6 +83,32 @@
                 <DataTrigger Binding="{Binding Cell.Kind}" Value="{x:Static board:CellKind.Prediction}">
                     <Setter Property="Background" Value="{StaticResource PredictFill}"/>
                 </DataTrigger>
+                <!-- Moving the figure: blue tools. Words said out loud (the top strip while Itch is open): the look chosen in
+                     Settings (SpokenFill / SpokenBorder), sized like the urgent phrases they replace. -->
+                <DataTrigger Binding="{Binding Cell.Kind}" Value="{x:Static board:CellKind.Tool}">
+                    <Setter Property="Background" Value="{StaticResource ToolFill}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource ToolBorder}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Cell.Tone}" Value="tilt">
+                    <Setter Property="Background" Value="{StaticResource TiltFill}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource TiltBorder}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Cell.Tone}" Value="slide">
+                    <Setter Property="Background" Value="{StaticResource SlideFill}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource SlideBorder}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Cell.Tone}" Value="zoom">
+                    <Setter Property="Background" Value="{StaticResource ZoomFill}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource ZoomBorder}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Cell.Kind}" Value="{x:Static board:CellKind.Spoken}">
+                    <Setter Property="Background" Value="{StaticResource SpokenFill}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource SpokenBorder}"/>
+                    <Setter Property="BorderThickness" Value="3"/>
+                    <Setter Property="FontSize" Value="24"/>
+                    <Setter Property="Margin" Value="4,2"/>
+                    <Setter Property="Padding" Value="2,0"/>
+                </DataTrigger>
                 <!-- The two halves of a split key (backspace: letter | word) share one orange outline. -->
                 <DataTrigger Binding="{Binding Cell.Part}" Value="{x:Static board:KeyPart.Start}">
                     <Setter Property="BorderBrush" Value="{StaticResource SplitKey}"/>
@@ -98,6 +147,16 @@
                 <DataTrigger Binding="{Binding Cell.IsEnabled}" Value="False">
                     <Setter Property="Opacity" Value="0.45"/>
                 </DataTrigger>
+                <!-- Button edit mode: the buttons that can be changed (they carry the "tap to change" hint) and the ＋ Add
+                     buttons get a yellow and black diagonal border, like a construction sign. -->
+                <DataTrigger Binding="{Binding Cell.Hint}" Value="✎ tap to change">
+                    <Setter Property="BorderBrush" Value="{StaticResource HazardStripes}"/>
+                    <Setter Property="BorderThickness" Value="6"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Cell.Command}" Value="{x:Static board:CommandId.AddPhrase}">
+                    <Setter Property="BorderBrush" Value="{StaticResource HazardStripes}"/>
+                    <Setter Property="BorderThickness" Value="6"/>
+                </DataTrigger>
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding Cell.Command}" Value="{x:Static board:CommandId.StopVoice}"/>
@@ -135,7 +194,6 @@
         <DataTemplate x:Key="CellTemplate">
             <Button Style="{StaticResource CellButton}" Tag="{Binding Cell.Id}" Click="Cell_Click"
                     PreviewMouseLeftButtonDown="Cell_PressStart" PreviewMouseLeftButtonUp="Cell_PressEnd" MouseLeave="Cell_PressEnd"
-                    ToolTip="{Binding Cell.Label}"
                     AutomationProperties.Name="{Binding Cell.Label}" AutomationProperties.HelpText="{Binding Cell.Hint}">
                 <Grid x:Name="CellContent">
                     <!-- Text cells: the label as large as fits, centred, with any hint beneath. -->
@@ -176,7 +234,7 @@
             </DataTemplate.Triggers>
         </DataTemplate>
 
-        <!-- Rows are buttons, except the Itch view row, which is the 3D figure. -->
+        <!-- Rows are buttons, except the Itch view row (the 3D figure) and titled rows (a heading over a panel's buttons). -->
         <local:RowTemplateSelector x:Key="RowTemplates">
             <local:RowTemplateSelector.Buttons>
                 <DataTemplate>
@@ -195,6 +253,18 @@
                     <local:ItchViewHost/>
                 </DataTemplate>
             </local:RowTemplateSelector.ItchFigure>
+            <!-- A heading: what the buttons under it do, in a line, with a line of explanation when it needs one. -->
+            <local:RowTemplateSelector.Title>
+                <DataTemplate>
+                    <Viewbox Stretch="Uniform" StretchDirection="DownOnly" Margin="8,2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Title}" FontSize="26" FontWeight="Bold" TextAlignment="Center" Foreground="{StaticResource Fg}"/>
+                            <TextBlock Text="{Binding Subtitle}" FontSize="18" TextAlignment="Center" Foreground="{StaticResource Muted}" Margin="0,2,0,0"
+                                       Visibility="{Binding Subtitle, Converter={x:Static local:VisibleIfSet.Instance}}"/>
+                        </StackPanel>
+                    </Viewbox>
+                </DataTemplate>
+            </local:RowTemplateSelector.Title>
         </local:RowTemplateSelector>
     </Window.Resources>
 
@@ -205,39 +275,58 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        <!-- The keyboard is in the middle column. The Itch panels take the columns on the side the window grows
+             toward: the right for a window anchored at the left of the screen, the left for one anchored at the
+             right (see MainWindow.MirrorLayout). -->
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Itch: a panel on the right, full height; the keyboard and message box keep the left side. -->
-        <Border x:Name="ItchPanel" Grid.Column="1" Grid.RowSpan="2" Visibility="Collapsed" Margin="8,0,0,0"
+        <!-- Itch: a full-height panel beside the keyboard holding just the figure. The controls (Move the figure) are a
+             panel of their own beyond it. With the UI unlocked (move mode) either can be dragged anywhere, into a window
+             of its own (see MainWindow.SyncPanels); a cover over each (ItchCoverHost, MoveCoverHost) then takes the presses. -->
+        <Border x:Name="ItchPanel" Grid.Column="3" Grid.RowSpan="2" Visibility="Collapsed" Margin="8,0,0,0" Background="{StaticResource Bg}"
                 BorderBrush="{StaticResource MenuBorder}" BorderThickness="2" CornerRadius="12" Padding="2">
-            <ItemsControl x:Name="ItchBoard" Focusable="False" ItemTemplateSelector="{StaticResource RowTemplates}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <local:BoardRowsPanel/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
-        </Border>
-        <!-- The figure's controls: their own panel to the right of it, opened and closed from under the figure. -->
-        <Border x:Name="ItchControlsPanel" Grid.Column="2" Grid.RowSpan="2" Visibility="Collapsed" Margin="8,0,0,0"
-                BorderBrush="{StaticResource MenuBorder}" BorderThickness="2" CornerRadius="12" Padding="2">
-            <ItemsControl x:Name="ItchControlsBoard" Focusable="False" ItemTemplateSelector="{StaticResource RowTemplates}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <local:BoardRowsPanel/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
+            <Grid>
+                <ItemsControl x:Name="ItchBoard" Focusable="False" ItemTemplateSelector="{StaticResource RowTemplates}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <local:BoardRowsPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+                <ContentControl x:Name="ItchCoverHost" Focusable="False"/>
+            </Grid>
         </Border>
 
+        <!-- The controls: a button for every movement of the figure, in a panel beyond the figure that the controller icon
+             over the figure's corner folds away and back. As tall as its buttons need (MainWindow.FitMovePanel). -->
+        <Border x:Name="MovePanel" Grid.Column="4" Grid.RowSpan="2" Visibility="Collapsed" Margin="8,0,0,0" VerticalAlignment="Top"
+                Background="{StaticResource Bg}" BorderBrush="{StaticResource MenuBorder}" BorderThickness="2" CornerRadius="12" Padding="2">
+            <Grid>
+                <ItemsControl x:Name="MoveBoard" Focusable="False" ItemTemplateSelector="{StaticResource RowTemplates}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <local:BoardRowsPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+                <ContentControl x:Name="MoveCoverHost" Focusable="False"/>
+            </Grid>
+        </Border>
+
+        <!-- The window itself is see-through: only the keyboard (this background) and the panels are drawn, so a panel is
+             exactly as big as what is in it and nothing stretches beside or below it. -->
+        <Border x:Name="KeyboardBack" Grid.Column="2" Grid.RowSpan="2" Margin="-14" Panel.ZIndex="-1"
+                Background="{StaticResource Bg}" BorderBrush="#333333" BorderThickness="1"/>
 
         <!-- One screen: urgent strip, word suggestions, keyboard and (below it) the open drawer. Itch opens as
              a full-height panel on the right; the window grows wider for it, so nothing on the left moves. -->
-        <Grid Grid.Row="0" Margin="0,0,0,8">
+        <Grid x:Name="BoardHost" Grid.Row="0" Grid.Column="2" Margin="0,0,0,8">
             <ItemsControl x:Name="Board" Focusable="False" ItemTemplateSelector="{StaticResource RowTemplates}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -249,7 +338,7 @@
         </Grid>
 
         <!-- The message, at the bottom in a fixed-height box: longer text shows more lines, then scrolls to the newest. -->
-        <Border x:Name="MessagePanel" Grid.Row="1" CornerRadius="12" Padding="16,10" BorderThickness="5">
+        <Border x:Name="MessagePanel" Grid.Row="1" Grid.Column="2" CornerRadius="12" Padding="16,10" BorderThickness="5">
             <Border.Style>
                 <Style TargetType="Border">
                     <Setter Property="Background" Value="#111111"/>
@@ -287,9 +376,49 @@
             </Grid>
         </Border>
         <!-- Problems (voice missing, settings unreadable, a crash) show here for a few seconds, over the message box. -->
-        <Border x:Name="NoticeBanner" Grid.Row="1" Visibility="Collapsed" CornerRadius="12" Padding="16,10"
+        <Border x:Name="NoticeBanner" Grid.Row="1" Grid.Column="2" Visibility="Collapsed" CornerRadius="12" Padding="16,10"
                 Background="{StaticResource NoticeFill}" BorderBrush="{StaticResource Focus}" BorderThickness="3" IsHitTestVisible="False">
             <TextBlock x:Name="NoticeText" FontSize="24" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.LiveSetting="Assertive"/>
+        </Border>
+
+        <!-- Button edit mode can never be forgotten: a red frame round the whole window, and a label on its bottom edge
+             (over the message box's border only, not its text) with a Done button, so there is always a way out. -->
+        <Border x:Name="EditFrame" Grid.RowSpan="2" Grid.ColumnSpan="5" Margin="-14" BorderBrush="{StaticResource EditRed}" BorderThickness="6"
+                IsHitTestVisible="False" Panel.ZIndex="50">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding EditMode}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+        </Border>
+        <Border x:Name="EditBadge" Grid.RowSpan="2" Grid.ColumnSpan="5" Margin="0,0,0,-14" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                Background="{StaticResource EditRed}" CornerRadius="10,10,0,0" Padding="16,2,6,2" Panel.ZIndex="51">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding EditMode}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="BUTTON EDIT MODE" FontSize="17" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                <TextBlock Text="tap a striped button to change its words or its place" FontSize="15" Foreground="White" VerticalAlignment="Center" Margin="12,0,14,0"/>
+                <Button Style="{StaticResource BadgeButton}" Content="Done editing" FontSize="16" FontWeight="Bold" Padding="16,2" Click="EditDone_Click"/>
+            </StackPanel>
+        </Border>
+        <!-- Move mode (UI unlocked): a label on the bottom edge with Lock UI, so there is always a way back. -->
+        <Border x:Name="MoveBadge" Grid.RowSpan="2" Grid.Column="2" Margin="0,0,0,-14" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                Background="#2F5F95" BorderBrush="#7CC4FF" BorderThickness="2,2,2,0" CornerRadius="10,10,0,0" Padding="16,2,6,2" Panel.ZIndex="51" Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="UI UNLOCKED" FontSize="17" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                <TextBlock Text="drag a panel to move it · drag its edge to resize" FontSize="15" Foreground="White" VerticalAlignment="Center" Margin="12,0,14,0"/>
+                <Button Style="{StaticResource BadgeButton}" Content="Put panels back" FontSize="16" Padding="12,2" Margin="0,0,6,0" Click="PutBack_Click"/>
+                <Button Style="{StaticResource BadgeButton}" Content="🔒 Lock UI" FontSize="16" FontWeight="Bold" Padding="16,2" Click="LockUi_Click"/>
+            </StackPanel>
         </Border>
     </Grid>
 </Window>

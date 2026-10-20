@@ -26,6 +26,8 @@ public enum PhraseList
     Urgent,
     Quick,
     Category,
+    /// <summary>The words of the "Speak out loud" panel beside the Itch figure.</summary>
+    Spoken,
 }
 
 /// <summary>A request to change a button: <see cref="OldText"/> is null when adding a new one.</summary>
@@ -43,10 +45,20 @@ public sealed class SessionOptions
     public bool SpeakEachWord { get; set; }
     /// <summary>Repeated clicks on the same on-screen target within this window are ignored.</summary>
     public int PointerDebounceMs { get; set; } = 400;
-    /// <summary>Draw the Hide key. Off when the window hides by itself as the mouse leaves.</summary>
+    /// <summary>Draw the Hide key. On by default, whether or not the window also hides by itself as the mouse leaves.</summary>
     public bool ShowHideKey { get; set; } = true;
     /// <summary>Shorter repeat guard for the on-screen delete keys.</summary>
     public int DeletePointerDebounceMs { get; set; } = 40;
+    /// <summary>
+    /// The drawer (Quick or Phrases) opens above the board instead of below it: for a window anchored at the
+    /// bottom of the screen, so the window grows upward and the keyboard stays where it is. The rows come first
+    /// in <see cref="CommunicationSession.Rows"/> then, so moving up from the urgent strip reaches the drawer.
+    /// </summary>
+    public bool DrawerAbove { get; set; }
+    /// <summary>The Itch figure opens on the right of the keyboard (a window anchored at the left), so the Itch button's arrow points right.</summary>
+    public bool ItchOpensRight { get; set; } = true;
+    /// <summary>Whether the controls panel shows beside the figure; the 🎮 icon changes it and it is remembered.</summary>
+    public bool ItchControlsOpen { get; set; } = true;
     /// <summary>The same guard for panel buttons (Itch, Quick, Phrases, Controls): short enough to close and reopen at once, long enough to stop a bounce.</summary>
     public int TogglePointerDebounceMs { get; set; } = 120;
 
@@ -57,7 +69,9 @@ public sealed class SessionOptions
         SpeakEachWord = s.Speech.SpeakEachWord,
         LearnFromSpokenMessages = s.Privacy.LearnFromSpokenMessages,
         WrapNavigation = s.WrapNavigation,
-        ShowHideKey = !s.AutoHideWhenMouseLeaves,
+        DrawerAbove = !Layout.Anchoring.IsTop(s.Anchor),
+        ItchOpensRight = Layout.Anchoring.IsLeft(s.Anchor),
+        ItchControlsOpen = s.ItchControlsOpen,
     };
 }
 
@@ -92,8 +106,11 @@ public sealed class CellView : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 }
 
-/// <summary>A board row. <see cref="Units"/> fixes its width in key units (keyboard rows share one key size); null means the cells fill it.</summary>
-public sealed record RowView(string Name, IReadOnlyList<CellView> Cells, double? Units = null)
+/// <summary>
+/// A board row. <see cref="Units"/> fixes its width in key units (keyboard rows share one key size); null means
+/// the cells fill it. A row with a <see cref="Title"/> has no cells: it is a heading over the rows below it.
+/// </summary>
+public sealed record RowView(string Name, IReadOnlyList<CellView> Cells, double? Units = null, string? Title = null, string? Subtitle = null)
 {
     /// <summary>This row with the Hide key added at its end, or unchanged when <paramref name="hide"/> is null.</summary>
     public RowView WithHide(Cell? hide) => hide is null ? this : this with { Cells = Cells.Append(new CellView(hide)).ToList() };
@@ -121,12 +138,14 @@ public sealed class CommunicationSession : INotifyPropertyChanged
     public const string PinnedRow = "pinned";
     /// <summary>Rows named with this prefix belong to the Itch (figure) panel, shown to the right of the keyboard.</summary>
     public const string ItchRowPrefix = "itch-";
-    /// <summary>Rows named with this prefix belong to the Itch controls panel, to the right of the figure.</summary>
-    public const string ItchControlsPrefix = "itchctl-";
     /// <summary>The row the host fills with the 3D mannequin while Itch is open (it has no cells).</summary>
     public const string ItchViewRow = "itch-view";
-    /// <summary>The slim row above the figure holding the small Controls button.</summary>
-    public const string ItchBarRow = "itch-bar";
+    /// <summary>The heading over the buttons that move the figure, under the figure itself.</summary>
+    public const string ItchMoveTitleRow = "itch-title-move";
+    /// <summary>The rows of buttons that move the figure are named with this prefix (slimmer rows than keys).</summary>
+    public const string ItchMoveRowPrefix = "itch-move-";
+    /// <summary>Ids of the editable Speak out loud words (the strip while Itch is open) start with this; the arrow words are fixed.</summary>
+    private const string SpokenWordPrefix = "say-";
     /// <summary>Drawer rows are named with this prefix and a number; they sit below the keyboard.</summary>
     public const string DrawerRowPrefix = "drawer-";
     /// <summary>The drawer slot always holds this many rows of space, so opening or closing it never moves the keyboard.</summary>
@@ -179,6 +198,7 @@ public sealed class CommunicationSession : INotifyPropertyChanged
         _predictor = predictor;
         _phrases = phrases;
         _options = options;
+        ItchControlsOpen = options.ItchControlsOpen;
         _clock = clock;
         _draftStore = draftStore;
         _memory = phraseMemory ?? new PhraseMemory();
@@ -230,15 +250,22 @@ public sealed class CommunicationSession : INotifyPropertyChanged
 
     /// <summary>One press of Turn turns the figure this far: an eighth of a turn, so the sides come up in two presses.</summary>
     public const double ItchTurnStep = 45;
+    /// <summary>One press of From above / From below tilts the view this many degrees (the most is <see cref="ItchMaxPitch"/>).</summary>
+    public const double ItchTiltStep = 15;
 
-    /// <summary>Whether the controls panel beside the figure is expanded (it starts open).</summary>
-    public bool ItchControlsOpen { get; private set; } = true;
+    /// <summary>
+    /// Whether the controls panel (Move the figure) beside the figure is shown. It stays the way the 🎮 icon left it,
+    /// also the next time Itch opens and after a restart (<see cref="ItchControlsChanged"/>).
+    /// </summary>
+    public bool ItchControlsOpen { get; private set; }
+
+    /// <summary>The controls panel was shown or folded away, so the choice can be saved.</summary>
+    public event EventHandler? ItchControlsChanged;
 
     public void OpenItch(bool open)
     {
         if (ItchOpen == open) return;
         ItchOpen = open;
-        if (open) ItchControlsOpen = true;
         Rebuild();
         if (open) FocusCommand(CommandId.ItchTurnRight);
         else FocusCommand(CommandId.Itch);
@@ -327,7 +354,7 @@ public sealed class CommunicationSession : INotifyPropertyChanged
 
     private void RaiseView() => ItchViewChanged?.Invoke(this, EventArgs.Empty);
 
-    /// <summary>Folds the controls panel beside the figure away or brings it back (the button over the figure).</summary>
+    /// <summary>Folds the controls panel away or brings it back (the controller icon over the figure).</summary>
     public void ToggleItchControls() => ItchCommand(CommandId.ItchControls);
 
     /// <summary>Turns the figure by a number of degrees (dragging on it, or the Turn buttons).</summary>
@@ -347,52 +374,85 @@ public sealed class CommunicationSession : INotifyPropertyChanged
             case CommandId.ItchBack: ItchYaw = 180; ItchPitch = 0; RaiseView(); break;
             case CommandId.ItchZoomIn: ZoomItch(2); break;
             case CommandId.ItchZoomOut: ZoomItch(-2); break;
-            case CommandId.ItchCentre: ItchZoom = 1; ItchPitch = 0; ItchTarget = ItchHome; RaiseView(); break;
             case CommandId.ItchControls:
                 ItchControlsOpen = !ItchControlsOpen;
-                Rebuild();
-                if (ItchControlsOpen) FocusCommand(CommandId.ItchTurnRight);
-                RaiseAll(); // the window folds the panel away (or back) and the button's arrow flips
+                ItchControlsChanged?.Invoke(this, EventArgs.Empty);
+                Rebuild(); // focus stays where it was, or moves to the nearest buttons when its rows went away
+                RaiseAll(); // the window folds the panel away (or back)
                 break;
+            case CommandId.ItchTiltAbove: TiltItch(ItchTiltStep); break;
+            case CommandId.ItchTiltBelow: TiltItch(-ItchTiltStep); break;
+            case CommandId.ItchPanUp: PanItchStep(0, 1); break;
+            case CommandId.ItchPanDown: PanItchStep(0, -1); break;
+            case CommandId.ItchPanLeft: PanItchStep(-1, 0); break;
+            case CommandId.ItchPanRight: PanItchStep(1, 0); break;
+            case CommandId.ItchCentre: ItchZoom = 1; ItchPitch = 0; ItchTarget = ItchHome; RaiseView(); break;
         }
     }
 
     /// <summary>
-    /// Rows of the Itch panels: the small Controls button and the figure; then (when expanded) turning the
-    /// figure, and the words the user says to guide the person scratching.
+    /// Rows of the Itch screen. The figure's panel holds just the figure. Beside it, the controls panel (while
+    /// shown) is "Move the figure" with a button for every movement. The words said out loud take the urgent
+    /// strip's place at the top while Itch is open (see <see cref="Rebuild"/>).
     /// </summary>
     private void AddItchRows(List<RowView> rows)
     {
-        // The figure fills its panel; the small Controls button floats over its top-right corner (drawn by the host).
+        // The figure fills its panel.
         rows.Add(new RowView(ItchViewRow, Array.Empty<CellView>()));
         if (!ItchControlsOpen) return;
-        // Turning: big buttons, an eighth of a turn each, plus straight to the front or back.
-        rows.Add(Row("itchctl-turn",
-            Cmd("itch-turn-left", "Turn the figure left", CommandId.ItchTurnLeft, icon: "⟲", caption: "Turn"),
-            Cmd("itch-front", "Show the front", CommandId.ItchFront, icon: "☺", caption: "Front"),
-            Cmd("itch-back", "Show the back", CommandId.ItchBack, icon: "◍", caption: "Back"),
-            Cmd("itch-turn-right", "Turn the figure right", CommandId.ItchTurnRight, icon: "⟳", caption: "Turn")));
-        rows.Add(Row("itchctl-zoom",
-            Cmd("itch-zoom-in", "Closer", CommandId.ItchZoomIn, icon: "＋", caption: "Closer"),
-            Cmd("itch-zoom-out", "Farther", CommandId.ItchZoomOut, icon: "－", caption: "Farther"),
-            Cmd("itch-centre", "Show the whole body again", CommandId.ItchCentre, icon: "⌂", caption: "Centre"),
-            Cmd("itch-say", "Say where it itches", CommandId.Speak, enabled: Draft.Trim().Length > 0 && !IsSpeaking, icon: "🔊", caption: "Say it")));
-        // Said out loud with one press, to guide the person scratching.
-        rows.Add(Row("itchctl-arrows", ItchArrows.Select(d => new Cell($"dir-{d.Word}", d.Word, CellKind.QuickPhrase, Payload: d.Word, Icon: d.Arrow)).ToArray()));
-        foreach (var (chunk, i) in ItchDirections.Chunk(3).Select((c, i) => (c, i)))
-            rows.Add(Row($"itchctl-say-{i}", chunk.Select(d => new Cell($"dir-{d}", d, CellKind.QuickPhrase, Payload: d)).ToArray()));
+        rows.Add(new RowView(ItchMoveTitleRow, Array.Empty<CellView>(), Title: "Move the figure"));
+        // Every movement has its own buttons, so the figure can be handled with left clicks alone (dragging and
+        // the wheel still work). Laid out like a remote control, one colour for each kind of movement:
+        //   Turn (blue, wide)  .  Front / Back
+        //   From above (teal)  .  Slide: a cross of four arrows around Whole body (purple)  .  Closer / Farther (gold)
+        // The cross sits between two columns of wide buttons; every row adds up to eight units.
+        const double pad = 1.2, side = 2.0, gapAround = 0.2;
+        rows.Add(MoveRow("turn",
+            Tool("itch-turn-left", "Turn the figure left", CommandId.ItchTurnLeft, "⟲", "Turn left", 2.6, tone: "turn"),
+            Tool("itch-front", "Show the front", CommandId.ItchFront, "☺", "Front", 1.4, tone: "view"),
+            Tool("itch-back", "Show the back", CommandId.ItchBack, "◍", "Back", 1.4, tone: "view"),
+            Tool("itch-turn-right", "Turn the figure right", CommandId.ItchTurnRight, "⟳", "Turn right", 2.6, tone: "turn")));
+        rows.Add(MoveRow("up",
+            Tool("itch-tilt-above", "Look at the figure from above", CommandId.ItchTiltAbove, "⇩", "From above", side, tone: "tilt"),
+            Tool("itch-pan-up", "Slide the figure up", CommandId.ItchPanUp, "▲", "Up", pad, gap: gapAround + pad, tone: "slide"),
+            Tool("itch-zoom-in", "Closer", CommandId.ItchZoomIn, "＋", "Closer", side, gap: gapAround + pad, tone: "zoom")));
+        rows.Add(MoveRow("middle",
+            Tool("itch-tilt-below", "Look at the figure from below", CommandId.ItchTiltBelow, "⇧", "From below", side, tone: "tilt"),
+            Tool("itch-pan-left", "Slide the figure left", CommandId.ItchPanLeft, "◀", "Left", pad, gap: gapAround, tone: "slide"),
+            Tool("itch-centre", "Show the whole body again", CommandId.ItchCentre, "⌂", "Whole body", pad, tone: "view"),
+            Tool("itch-pan-right", "Slide the figure right", CommandId.ItchPanRight, "▶", "Right", pad, tone: "slide"),
+            Tool("itch-zoom-out", "Farther", CommandId.ItchZoomOut, "－", "Farther", side, gap: gapAround, tone: "zoom")));
+        rows.Add(MoveRow("down",
+            Tool("itch-pan-down", "Slide the figure down", CommandId.ItchPanDown, "▼", "Down", pad, gap: side + gapAround + pad, tone: "slide")));
     }
 
-    /// <summary>The direction words, each with its arrow.</summary>
+    /// <summary>The Itch button's words: a small arrow points the way the figure's panel opens (or folds back).</summary>
+    private string ItchClosedLabel => _options.ItchOpensRight ? "Itch ▶" : "◀ Itch";
+    private string ItchOpenLabel => _options.ItchOpensRight ? "Itch ◀" : "▶ Itch";
+
+    /// <summary>
+    /// The strip while Itch is open: the four direction words with their arrows, then the editable words, each
+    /// said at once. Wider words get more room, so every button can show its text at a readable size.
+    /// </summary>
+    private IEnumerable<Cell> SpokenCells() =>
+        ItchArrows.Select(d => new Cell($"dir-{d.Word}", $"{d.Arrow} {d.Word}", CellKind.Spoken, Payload: d.Word, Span: 1.2))
+            .Concat(_phrases.Spoken.Select(w => new Cell(SpokenWordPrefix + w, w, CellKind.Spoken, Payload: w, Hint: EditHint(true), Span: SpokenSpan(w))))
+            .Concat(EditMode ? new[] { AddCell("spoken") with { Span = 1.4 } } : Array.Empty<Cell>());
+
+    private static double SpokenSpan(string word) => Math.Clamp(0.6 + word.Length * 0.12, 1.0, 2.4);
+
+    /// <summary>A button that moves the figure: a large symbol with a one-word caption, drawn in the tool colour.</summary>
+    private static Cell Tool(string id, string label, CommandId cmd, string icon, string caption, double span = 1, double gap = 0, string? tone = null) =>
+        new(id, label, CellKind.Tool, cmd, Icon: icon, Caption: caption, Span: span, Gap: gap, Tone: tone);
+
+    /// <summary>The Move-the-figure rows are eight units wide, so every button keeps one size from row to row.</summary>
+    private const double MoveUnits = 8;
+    private static RowView MoveRow(string name, params Cell[] cells) => new(ItchMoveRowPrefix + name, cells.Select(c => new CellView(c)).ToList(), MoveUnits);
+
+    /// <summary>The direction words, each with its arrow: fixed, said out loud with one press.</summary>
     public static readonly IReadOnlyList<(string Arrow, string Word)> ItchArrows = new[]
     {
         ("▲", "Up"), ("▼", "Down"), ("◀", "Left"), ("▶", "Right"),
-    };
-
-    /// <summary>Said with one press, to guide the person scratching.</summary>
-    public static readonly IReadOnlyList<string> ItchDirections = new[]
-    {
-        "A little more", "Harder", "Gentler", "Right there!", "Stop", "Thank you",
     };
 
     /// <summary>While on, phrase buttons are edited instead of spoken or loaded.</summary>
@@ -406,15 +466,37 @@ public sealed class CommunicationSession : INotifyPropertyChanged
         RaiseAll();
     }
 
+    private List<string>? EditableList(PhraseEdit edit) => edit.List switch
+    {
+        PhraseList.Urgent => _phrases.PinnedPhrases ??= PhraseLibrary.DefaultPinnedPhrases.ToList(),
+        PhraseList.Quick => _phrases.QuickPhrases,
+        PhraseList.Spoken => _phrases.SpokenPhrases ??= PhraseLibrary.DefaultSpokenPhrases.ToList(),
+        _ => _phrases.Categories.FirstOrDefault(c => c.Name == edit.Category)?.Phrases,
+    };
+
+    /// <summary>Where the button is in its row: (1-based position, how many), or null when it is not there.</summary>
+    public (int Position, int Count)? PlaceOf(PhraseEdit edit) =>
+        EditableList(edit) is { } list && edit.OldText is { } text && list.IndexOf(text) is var at and >= 0 ? (at + 1, list.Count) : null;
+
+    /// <summary>Moves a button earlier (negative) or later (positive) among its row's buttons; false at either end.</summary>
+    public bool MoveButton(PhraseEdit edit, int by)
+    {
+        if (EditableList(edit) is not { } list || edit.OldText is not { } text) return false;
+        var at = list.IndexOf(text);
+        var to = at + by;
+        if (at < 0 || to < 0 || to >= list.Count || by == 0) return false;
+        list.RemoveAt(at);
+        list.Insert(to, text);
+        Rebuild();
+        RaiseAll();
+        PhrasesChanged?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
     /// <summary>Renames, adds (when <see cref="PhraseEdit.OldText"/> is null) or, with empty text, deletes a button.</summary>
     public void ApplyEdit(PhraseEdit edit, string? newText)
     {
-        var list = edit.List switch
-        {
-            PhraseList.Urgent => _phrases.PinnedPhrases ??= PhraseLibrary.DefaultPinnedPhrases.ToList(),
-            PhraseList.Quick => _phrases.QuickPhrases,
-            _ => _phrases.Categories.FirstOrDefault(c => c.Name == edit.Category)?.Phrases,
-        };
+        var list = EditableList(edit);
         if (list is null) return;
         var text = newText?.Trim() ?? "";
         var at = edit.OldText is null ? -1 : list.IndexOf(edit.OldText);
@@ -490,6 +572,17 @@ public sealed class CommunicationSession : INotifyPropertyChanged
             case InputAction.DollMoveDown when ItchOpen: PanItchStep(0, -1); break;
             case InputAction.DollMoveLeft when ItchOpen: PanItchStep(-1, 0); break;
             case InputAction.DollMoveRight when ItchOpen: PanItchStep(1, 0); break;
+            case InputAction.DollTiltAbove when ItchOpen: ItchCommand(CommandId.ItchTiltAbove); break;
+            case InputAction.DollTiltBelow when ItchOpen: ItchCommand(CommandId.ItchTiltBelow); break;
+            case InputAction.DollFront when ItchOpen: ItchCommand(CommandId.ItchFront); break;
+            case InputAction.DollBack when ItchOpen: ItchCommand(CommandId.ItchBack); break;
+            case InputAction.DollWholeBody when ItchOpen: ItchCommand(CommandId.ItchCentre); break;
+            case InputAction.DeleteWord: DeleteWord(); break;
+            case InputAction.Space: RunCommand(CommandId.Space); break;
+            case InputAction.Clear: RunCommand(CommandId.Clear); break;
+            case InputAction.Quick: Toggle(Drawer.Quick); break;
+            case InputAction.Phrases: Toggle(Drawer.Phrases); break;
+            case InputAction.Itch: OpenItch(!ItchOpen); break;
         }
         RaiseAll();
     }
@@ -548,7 +641,7 @@ public sealed class CommunicationSession : INotifyPropertyChanged
         {
             case SpeakOutcome.Started:
                 CompleteMessage(text, _messageKind);
-                if (_options.LearnFromSpokenMessages)
+                if (_options.LearnFromSpokenMessages && !PhraseMemory.LooksPrivate(text))
                 {
                     _predictor.Learn(text);
                     _memory.Record(text, _clock.Now);
@@ -631,11 +724,15 @@ public sealed class CommunicationSession : INotifyPropertyChanged
         if (cell.Command != CommandId.ForgetLearning) _forgetArmedAt = null;
         switch (cell.Kind)
         {
-            case CellKind.Command or CellKind.Menu: RunCommand(cell.Command); break;
+            case CellKind.Command or CellKind.Menu or CellKind.Tool: RunCommand(cell.Command); break;
             case CellKind.Letter: SetDraft(Draft + cell.Payload, typed: true); _messageKind = MessageKind.Typed; break;
             case CellKind.Prediction: ApplyPrediction(cell.Payload!); break;
             case CellKind.Pinned when EditMode: EditRequested?.Invoke(this, new PhraseEdit(PhraseList.Urgent, null, cell.Payload)); break;
             case CellKind.QuickPhrase when EditMode: EditRequested?.Invoke(this, new PhraseEdit(PhraseList.Quick, null, cell.Payload)); break;
+            case CellKind.Spoken when EditMode && cell.Id.StartsWith(SpokenWordPrefix, StringComparison.Ordinal):
+                EditRequested?.Invoke(this, new PhraseEdit(PhraseList.Spoken, null, cell.Payload));
+                break;
+            case CellKind.Spoken: SayOutLoud(cell.Payload!); break;
             case CellKind.Phrase when EditMode && _openCategory != FrequentCategory:
                 EditRequested?.Invoke(this, new PhraseEdit(PhraseList.Category, _openCategory, cell.Payload));
                 break;
@@ -673,12 +770,13 @@ public sealed class CommunicationSession : INotifyPropertyChanged
             case CommandId.OpenSettings: SettingsRequested?.Invoke(this, EventArgs.Empty); break;
             case CommandId.ClosePanel: CloseDrawer(); break;
             case CommandId.Itch: OpenItch(!ItchOpen); break;
-            case >= CommandId.ItchTurnLeft and <= CommandId.ItchControls: ItchCommand(command); break;
+            case >= CommandId.ItchTurnLeft and <= CommandId.ItchPanRight: ItchCommand(command); break;
             case CommandId.AddPhrase:
                 EditRequested?.Invoke(this, FocusedCell?.Payload switch
                 {
                     "urgent" => new PhraseEdit(PhraseList.Urgent, null, null),
                     "quick" => new PhraseEdit(PhraseList.Quick, null, null),
+                    "spoken" => new PhraseEdit(PhraseList.Spoken, null, null),
                     _ => new PhraseEdit(PhraseList.Category, _openCategory, null),
                 });
                 break;
@@ -715,6 +813,22 @@ public sealed class CommunicationSession : INotifyPropertyChanged
             StatusText = "Press Speak to say it.";
             return;
         }
+        var outcome = _speech.SpeakQuickPhrase(text);
+        if (outcome == SpeakOutcome.Started)
+        {
+            CompleteMessage(text, MessageKind.Quick);
+            StatusText = $"Saying: {text}";
+        }
+        else if (outcome == SpeakOutcome.CoolingDown) StatusText = "Already said that just now.";
+        else if (outcome == SpeakOutcome.Busy) StatusText = "Still speaking.";
+    }
+
+    /// <summary>
+    /// A Speak out loud word is always said straight away, whatever the quick-phrase setting: it guides someone in the
+    /// moment, and the message being written stays as it is.
+    /// </summary>
+    private void SayOutLoud(string text)
+    {
         var outcome = _speech.SpeakQuickPhrase(text);
         if (outcome == SpeakOutcome.Started)
         {
@@ -802,12 +916,16 @@ public sealed class CommunicationSession : INotifyPropertyChanged
         var hasText = Draft.Trim().Length > 0;
         var rows = new List<RowView>();
 
-        // Urgent phrases stay one selection away, in a slim strip at the very top, with Itch at its right end.
-        var itch = new Cell("itch", "Itch", CellKind.Menu, CommandId.Itch, IsOn: ItchOpen);
-        rows.Add(Row(PinnedRow, _phrases.Pinned.Select(p => new Cell($"pin-{p}", p, CellKind.Pinned, Payload: p, Hint: EditHint(true)))
-            .Concat(EditMode ? new[] { AddCell("urgent") } : Array.Empty<Cell>())
-            .Append(itch).ToArray()));
-
+        // The top strip is "action bar 1": the urgent phrases, one selection away, with Itch at its right end.
+        // While Itch is open the Itch button stays where it is and the strip becomes "action bar 2": the words said
+        // out loud to guide the person scratching, drawn like the Itch button. Pressing Itch again brings the urgent
+        // phrases back. The strip keeps its height, so the keyboard never moves.
+        var itch = new Cell("itch", ItchOpen ? ItchOpenLabel : ItchClosedLabel, CellKind.Menu, CommandId.Itch, Span: ItchOpen ? 1.5 : 1, IsOn: ItchOpen);
+        var strip = ItchOpen
+            ? SpokenCells()
+            : _phrases.Pinned.Select(p => new Cell($"pin-{p}", p, CellKind.Pinned, Payload: p, Hint: EditHint(true)))
+                .Concat(EditMode ? new[] { AddCell("urgent") } : Array.Empty<Cell>());
+        rows.Add(Row(PinnedRow, strip.Append(itch).ToArray()));
 
         // Green row: only predicted words, always six slots (blank and disabled when empty) so it never moves.
         var words = _predictor.Predict(Draft, SuggestionSlots);
@@ -849,8 +967,9 @@ public sealed class CommunicationSession : INotifyPropertyChanged
             Cmd("settings", "Settings", CommandId.OpenSettings, icon: "⚙"))
             .WithHide(_options.ShowHideKey ? Cmd("hide", "Hide", CommandId.HideWindow, icon: "◀") : null));
 
-        foreach (var (cells, i) in DrawerContent().Select((c, i) => (c, i)))
-            rows.Add(Row($"{DrawerRowPrefix}{i}", cells));
+        var drawerRows = DrawerContent().Select((cells, i) => Row($"{DrawerRowPrefix}{i}", cells)).ToList();
+        if (_options.DrawerAbove) rows.InsertRange(0, drawerRows);
+        else rows.AddRange(drawerRows);
 
         // Itch opens beside the keyboard (the host draws these rows in a panel on the right).
         if (ItchOpen) AddItchRows(rows);

@@ -29,6 +29,148 @@ public enum InputAction
     DollMoveDown,
     DollMoveLeft,
     DollMoveRight,
+    /// <summary>Look at the doll from above or from below (only while Itch is open).</summary>
+    DollTiltAbove,
+    DollTiltBelow,
+    /// <summary>Show the doll from the front or the back, or the whole body again (only while Itch is open).</summary>
+    DollFront,
+    DollBack,
+    DollWholeBody,
+    DeleteWord,
+    /// <summary>Type a space: lets a sip, a chin switch or any other key stand in for the on-screen Space key.</summary>
+    Space,
+    Clear,
+    /// <summary>Open or close the Quick, Phrases or Itch panel.</summary>
+    Quick,
+    Phrases,
+    Itch,
+}
+
+/// <summary>What a system-wide hotkey (one that works while another program has focus) can do.</summary>
+public enum HotkeyAction
+{
+    /// <summary>Show the window if it is hidden or behind another program, otherwise hide it.</summary>
+    ShowOrHide,
+    Show,
+    Hide,
+    /// <summary>Show the window with the Itch figure open.</summary>
+    ShowWithItch,
+}
+
+/// <summary>One action with the words the Settings window shows for it.</summary>
+public sealed record ActionInfo(string Name, string Label, string Group);
+
+/// <summary>The actions a person can give keys to, in the order and groups the Settings window lists them.</summary>
+public static class ActionCatalog
+{
+    public const string AnywhereGroup = "Anywhere in Windows";
+    public const string OpenGroup = "While BetterTalk is open";
+    public const string FigureGroup = "The Itch figure";
+
+    /// <summary>System-wide hotkeys (see <see cref="HotkeySpec"/> for what keys are allowed).</summary>
+    public static readonly IReadOnlyList<ActionInfo> Hotkeys = new[]
+    {
+        new ActionInfo(nameof(HotkeyAction.ShowOrHide), "Show or hide BetterTalk", AnywhereGroup),
+        new ActionInfo(nameof(HotkeyAction.Show), "Show BetterTalk", AnywhereGroup),
+        new ActionInfo(nameof(HotkeyAction.Hide), "Hide BetterTalk", AnywhereGroup),
+        new ActionInfo(nameof(HotkeyAction.ShowWithItch), "Show BetterTalk with the Itch figure open", AnywhereGroup),
+    };
+
+    /// <summary>Keys that work while the window has focus (single keys, so a QuadStick gesture can send each).</summary>
+    public static readonly IReadOnlyList<ActionInfo> Keys = new[]
+    {
+        new ActionInfo(nameof(InputAction.Speak), "Speak the message", OpenGroup),
+        new ActionInfo(nameof(InputAction.StopVoice), "Stop speaking", OpenGroup),
+        new ActionInfo(nameof(InputAction.DeleteLetter), "Delete a letter", OpenGroup),
+        new ActionInfo(nameof(InputAction.DeleteWord), "Delete a word", OpenGroup),
+        new ActionInfo(nameof(InputAction.Space), "Type a space", OpenGroup),
+        new ActionInfo(nameof(InputAction.Undo), "Undo", OpenGroup),
+        new ActionInfo(nameof(InputAction.Clear), "Clear the message", OpenGroup),
+        new ActionInfo(nameof(InputAction.Quick), "Open or close Quick", OpenGroup),
+        new ActionInfo(nameof(InputAction.Phrases), "Open or close Phrases", OpenGroup),
+        new ActionInfo(nameof(InputAction.Itch), "Open or close Itch", OpenGroup),
+        new ActionInfo(nameof(InputAction.Home), "Close the open panel", OpenGroup),
+        new ActionInfo(nameof(InputAction.ToggleWindow), "Hide BetterTalk", OpenGroup),
+        new ActionInfo(nameof(InputAction.Select), "Press the selected key", OpenGroup),
+        new ActionInfo(nameof(InputAction.MoveUp), "Move the selection up", OpenGroup),
+        new ActionInfo(nameof(InputAction.MoveDown), "Move the selection down", OpenGroup),
+        new ActionInfo(nameof(InputAction.MoveLeft), "Move the selection left", OpenGroup),
+        new ActionInfo(nameof(InputAction.MoveRight), "Move the selection right", OpenGroup),
+        new ActionInfo(nameof(InputAction.DollTurnLeft), "Turn the figure left", FigureGroup),
+        new ActionInfo(nameof(InputAction.DollTurnRight), "Turn the figure right", FigureGroup),
+        new ActionInfo(nameof(InputAction.DollFront), "Show the front", FigureGroup),
+        new ActionInfo(nameof(InputAction.DollBack), "Show the back", FigureGroup),
+        new ActionInfo(nameof(InputAction.DollCloser), "Closer", FigureGroup),
+        new ActionInfo(nameof(InputAction.DollFarther), "Farther", FigureGroup),
+        new ActionInfo(nameof(InputAction.DollWholeBody), "Show the whole body", FigureGroup),
+        new ActionInfo(nameof(InputAction.DollMoveUp), "Move the view up", FigureGroup),
+        new ActionInfo(nameof(InputAction.DollMoveDown), "Move the view down", FigureGroup),
+        new ActionInfo(nameof(InputAction.DollMoveLeft), "Move the view left", FigureGroup),
+        new ActionInfo(nameof(InputAction.DollMoveRight), "Move the view right", FigureGroup),
+        new ActionInfo(nameof(InputAction.DollTiltAbove), "Look at the figure from above", FigureGroup),
+        new ActionInfo(nameof(InputAction.DollTiltBelow), "Look at the figure from below", FigureGroup),
+    };
+}
+
+[Flags]
+public enum HotkeyModifiers
+{
+    None = 0,
+    Alt = 1,
+    Control = 2,
+    Shift = 4,
+    Win = 8,
+}
+
+/// <summary>
+/// A system-wide hotkey written as "Ctrl+Shift+F12": modifiers and one key. It needs a modifier or an
+/// F-key, so a plain letter or arrow (which a QuadStick sends for typing) is never taken from every program.
+/// </summary>
+public static class HotkeySpec
+{
+    public static bool TryParse(string? spec, out HotkeyModifiers modifiers, out string key, out string? problem)
+    {
+        modifiers = HotkeyModifiers.None;
+        key = "";
+        problem = null;
+        if (string.IsNullOrWhiteSpace(spec)) { problem = "No key."; return false; }
+        foreach (var part in spec.Split('+', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            switch (part.ToLowerInvariant())
+            {
+                case "ctrl" or "control": modifiers |= HotkeyModifiers.Control; break;
+                case "shift": modifiers |= HotkeyModifiers.Shift; break;
+                case "alt": modifiers |= HotkeyModifiers.Alt; break;
+                case "win" or "windows": modifiers |= HotkeyModifiers.Win; break;
+                default:
+                    if (key.Length > 0) { problem = $"\"{spec}\" has more than one key."; return false; }
+                    key = KeyMap.Normalize(part);
+                    break;
+            }
+        }
+        if (key.Length == 0) { problem = $"\"{spec}\" has no key, only Ctrl, Alt, Shift or Win."; return false; }
+        if (modifiers == HotkeyModifiers.None && !IsFunctionKey(key))
+        {
+            problem = $"\"{spec}\" would take that key from every program. Add Ctrl, Alt, Shift or Win, or use an F-key.";
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>F1 to F24.</summary>
+    public static bool IsFunctionKey(string key) =>
+        key.Length is 2 or 3 && (key[0] is 'F' or 'f') && int.TryParse(key.AsSpan(1), out var n) && n is >= 1 and <= 24;
+
+    public static string Format(HotkeyModifiers modifiers, string key)
+    {
+        var parts = new List<string>(5);
+        if (modifiers.HasFlag(HotkeyModifiers.Control)) parts.Add("Ctrl");
+        if (modifiers.HasFlag(HotkeyModifiers.Alt)) parts.Add("Alt");
+        if (modifiers.HasFlag(HotkeyModifiers.Shift)) parts.Add("Shift");
+        if (modifiers.HasFlag(HotkeyModifiers.Win)) parts.Add("Win");
+        parts.Add(key);
+        return string.Join("+", parts);
+    }
 }
 
 /// <summary>Maps key names (WPF <c>Key.ToString()</c> spelling, e.g. "Left", "F9", "Enter") to actions.</summary>
@@ -64,6 +206,7 @@ public sealed class KeyMap
         ["NumPad2"] = nameof(InputAction.DollMoveDown),
         ["NumPad4"] = nameof(InputAction.DollMoveLeft),
         ["NumPad6"] = nameof(InputAction.DollMoveRight),
+        ["Delete"] = nameof(InputAction.DeleteWord),
     };
 
     public static KeyMap FromDictionary(IEnumerable<KeyValuePair<string, string>> bindings)

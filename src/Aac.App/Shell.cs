@@ -18,8 +18,10 @@ public sealed class TrayIcon : IDisposable
     private readonly Drawing.Icon _image;
 
     private readonly Forms.ToolStripMenuItem _editItem;
+    private readonly Forms.ToolStripMenuItem _arrangeItem;
 
-    public TrayIcon(Action show, Action hide, Action openSettings, Action openSettingsFile, Action exit, Action<bool> setEditMode)
+    public TrayIcon(Action show, Action hide, Action openSettings, Action openSettingsFile, Action exit, Action<bool> setEditMode,
+        Action<bool> setArranging, Action putPanelsBack, Action setupGuide)
     {
         _image = DrawIcon();
         var menu = new Forms.ContextMenuStrip { ShowItemToolTips = true };
@@ -34,9 +36,17 @@ public sealed class TrayIcon : IDisposable
             ToolTipText = "Tick this, then tap any button on the screen to rename, add or delete it. Untick it when you are done" };
         _editItem.CheckedChanged += (_, _) => setEditMode(_editItem.Checked);
         menu.Items.Add(_editItem);
+        _arrangeItem = new Forms.ToolStripMenuItem("Unlock UI to move the panels") { CheckOnClick = true,
+            ToolTipText = "Tick this, then drag the outlined Itch panels anywhere; they snap to each other's edges. Press Lock UI (or untick this) when you are done" };
+        _arrangeItem.CheckedChanged += (_, _) => setArranging(_arrangeItem.Checked);
+        menu.Items.Add(_arrangeItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(new Forms.ToolStripMenuItem("Help and downloads (opens the BetterTalk web page)", null, (_, _) => OpenHelpPage()));
-        var advanced = new Forms.ToolStripMenuItem("For helpers") { ToolTipText = "Options for the person setting BetterTalk up" };
+        var advanced = new Forms.ToolStripMenuItem("Set-up and tools") { ToolTipText = "Options for the person setting BetterTalk up" };
+        advanced.DropDownItems.Add(new Forms.ToolStripMenuItem("Run the set-up guide", null, (_, _) => setupGuide())
+            { ToolTipText = "A few questions that set the main choices at once: pointing, opening, screen and corner, hiding, voice" });
+        advanced.DropDownItems.Add(new Forms.ToolStripMenuItem("Put the panels back beside the keyboard", null, (_, _) => putPanelsBack())
+            { ToolTipText = "Every Itch panel back beside the keyboard at its usual width" });
         advanced.DropDownItems.Add(new Forms.ToolStripMenuItem("Open the settings file in Notepad", null, (_, _) => openSettingsFile())
             { ToolTipText = "Every setting as plain text. Close BetterTalk's Settings window before editing it" });
         menu.Items.Add(advanced);
@@ -63,6 +73,9 @@ public sealed class TrayIcon : IDisposable
 
     /// <summary>Keeps the menu's tick in step when edit mode is switched on or off elsewhere.</summary>
     public bool EditModeChecked { set { if (_editItem.Checked != value) _editItem.Checked = value; } }
+
+    /// <summary>Keeps the menu's tick in step when move mode is switched on or off elsewhere.</summary>
+    public bool ArrangingChecked { set { if (_arrangeItem.Checked != value) _arrangeItem.Checked = value; } }
 
     /// <summary>A speech bubble drawn at runtime, so no image file has to ship with the app.</summary>
     private static Drawing.Icon DrawIcon()
@@ -97,16 +110,16 @@ public sealed class TrayIcon : IDisposable
 }
 
 /// <summary>
-/// Opens the app from the top-left corner of the main screen. In click mode a left click released with
-/// the pointer in the corner fires (a low-level mouse hook, so even very fast clicks count; the click
+/// Opens the app from the corner of the screen it sits in (see <see cref="CornerSpot"/>). In click mode a
+/// left click released with the pointer in the corner fires (a low-level mouse hook, so even very fast clicks count; the click
 /// still reaches whatever is under it). The hook runs on its own background thread with its own message
 /// loop: Windows waits for a low-level hook before moving the cursor, so it must never wait on the
 /// app's UI thread. In rest mode the pointer has to stay in the corner for the dwell time.
 /// </summary>
 public sealed class HotCorner : IDisposable
 {
-    private const int CornerPixels = 3;
     private const int WhMouseLl = 14, WmLButtonUp = 0x0202, WmQuit = 0x0012;
+    private readonly Func<int, int, bool> _inCorner;
     private readonly Action _onTrigger;
     private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
     private readonly int _dwellMs;
@@ -117,8 +130,9 @@ public sealed class HotCorner : IDisposable
     private DateTime? _enteredAt;
     private bool _fired;
 
-    public HotCorner(Aac.Core.Storage.CornerTrigger trigger, int dwellMs, Action onTrigger)
+    public HotCorner(Aac.Core.Storage.CornerTrigger trigger, int dwellMs, Func<int, int, bool> inCorner, Action onTrigger)
     {
+        _inCorner = inCorner;
         _onTrigger = onTrigger;
         _dwellMs = Math.Max(0, dwellMs);
         if (trigger == Aac.Core.Storage.CornerTrigger.Click)
@@ -153,8 +167,6 @@ public sealed class HotCorner : IDisposable
         finally { UnhookWindowsHookEx(hook); }
     }
 
-    private static bool InCorner(int x, int y) => x <= CornerPixels && y <= CornerPixels;
-
     private IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam)
     {
         // Runs for every mouse event on the PC: only a cheap check, never blocking work. An error here must
@@ -165,7 +177,7 @@ public sealed class HotCorner : IDisposable
             {
                 var info = Marshal.PtrToStructure<MouseHookInfo>(lParam);
                 if (PerfLog.Enabled) PerfLog.Record("mouse hook delay", unchecked((uint)Environment.TickCount - info.Time));
-                if (wParam == WmLButtonUp && InCorner(info.X, info.Y)) _dispatcher.BeginInvoke(_onTrigger);
+                if (wParam == WmLButtonUp && _inCorner(info.X, info.Y)) _dispatcher.BeginInvoke(_onTrigger);
             }
         }
         catch (Exception ex)
@@ -179,7 +191,7 @@ public sealed class HotCorner : IDisposable
     private void Tick()
     {
         if (!GetCursorPos(out var p)) return;
-        if (!InCorner(p.X, p.Y))
+        if (!_inCorner(p.X, p.Y))
         {
             _enteredAt = null;
             _fired = false;

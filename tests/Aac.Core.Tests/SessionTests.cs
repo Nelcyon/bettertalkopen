@@ -581,17 +581,19 @@ public class StorageTests
         var dir = Directory.CreateTempSubdirectory();
         try
         {
-            Assert.True(new AppSettings().OpenFromTopLeftCorner);
+            Assert.True(new AppSettings().OpenFromCorner);
             Assert.Equal(CornerTrigger.Click, new AppSettings().CornerTrigger);
 
             var path = Path.Combine(dir.FullName, "settings.json");
             File.WriteAllText(path, "{ \"FontSize\": 30 }"); // written before the corner existed
             var old = SettingsStore.Load(path, out _);
-            Assert.True(old.OpenFromTopLeftCorner);
+            Assert.True(old.OpenFromCorner);
             Assert.Equal(CornerTrigger.Click, old.CornerTrigger);
 
-            File.WriteAllText(path, "{ \"OpenFromTopLeftCorner\": true, \"CornerTrigger\": \"Rest\" }");
-            Assert.Equal(CornerTrigger.Rest, SettingsStore.Load(path, out _).CornerTrigger);
+            File.WriteAllText(path, "{ \"OpenFromTopLeftCorner\": true, \"CornerTrigger\": \"Rest\" }"); // the setting's older name
+            var rest = SettingsStore.Load(path, out _);
+            Assert.True(rest.OpenFromCorner);
+            Assert.Equal(CornerTrigger.Rest, rest.CornerTrigger);
         }
         finally { dir.Delete(true); }
     }
@@ -651,6 +653,7 @@ public class StorageTests
             var p = WordPredictor.CreateDefault();
             var memory = new PhraseMemory();
             p.Learn("play zelda tonight");
+            p.Learn("play zelda tonight"); // word pairs are only saved once they have been said twice
             memory.Record("Play Zelda tonight", DateTimeOffset.UnixEpoch);
             memory.Record("play zelda tonight", DateTimeOffset.UnixEpoch);
             var data = new PersonalData();

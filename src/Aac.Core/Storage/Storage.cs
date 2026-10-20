@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Aac.Core.Abstractions;
 using Aac.Core.Input;
+using Aac.Core.Layout;
 using Aac.Core.Prediction;
 using Aac.Core.Speech;
 
@@ -20,22 +21,43 @@ public sealed class AppSettings
     /// <summary>Key name → action name. See <see cref="KeyMap.DefaultBindings"/>.</summary>
     public Dictionary<string, string> KeyBindings { get; set; } = new(KeyMap.DefaultBindings);
 
-    /// <summary>System-wide shortcut that shows or hides the app from any other program. Empty disables it.</summary>
-    public string GlobalHotkey { get; set; } = "Ctrl+Shift+F12";
+    /// <summary>
+    /// System-wide hotkeys, "Ctrl+Shift+F12" → a <see cref="HotkeyAction"/> name; they work while any other
+    /// program has focus. None by default: the person assigns them in Settings → Hotkeys. (Older versions had
+    /// a fixed Ctrl+Shift+F12 in a GlobalHotkey setting, which is now ignored.)
+    /// </summary>
+    public Dictionary<string, string> Hotkeys { get; set; } = new();
 
-    /// <summary>The top-left corner of the screen opens the app there (see <see cref="CornerTrigger"/>).</summary>
-    public bool OpenFromTopLeftCorner { get; set; } = true;
+    /// <summary>Which corner of the screen the window sits in. Panels and drawers always open away from it.</summary>
+    public WindowCorner Anchor { get; set; } = WindowCorner.TopLeft;
+    /// <summary>The screen the window sits on, by its Windows device name (e.g. \\.\DISPLAY2); null or unknown means the main screen.</summary>
+    public string? Screen { get; set; }
+
+    /// <summary>The corner the window sits in opens the app (see <see cref="CornerTrigger"/>).</summary>
+    public bool OpenFromCorner { get; set; } = true;
+    /// <summary>The older name of <see cref="OpenFromCorner"/>, still read from settings files written before the window could be anchored elsewhere.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    public bool? OpenFromTopLeftCorner { get => null; set { if (value is { } on) OpenFromCorner = on; } }
+    /// <summary>How close to the corner, in pixels, the pointer has to be: 3 means a 4-pixel square.</summary>
+    public int CornerPixels { get; set; } = 3;
     /// <summary>Click: a click with the pointer in the corner opens it. Rest: just resting the pointer there does.</summary>
     public CornerTrigger CornerTrigger { get; set; } = CornerTrigger.Click;
     /// <summary>For <see cref="CornerTrigger.Rest"/>: how long the pointer must stay, so a quick pass does not open it.</summary>
     public int CornerDwellMs { get; set; } = 300;
     /// <summary>Start hidden in the notification area (taskbar tray) instead of showing the window.</summary>
     public bool StartHidden { get; set; }
+    /// <summary>Start BetterTalk when the person signs in to Windows (a Run entry for this Windows account).</summary>
+    public bool StartWithWindows { get; set; }
     /// <summary>Hide to the tray once the mouse pointer has been off the window for <see cref="AutoHideAfterMs"/>.</summary>
-    public bool AutoHideWhenMouseLeaves { get; set; } = true;
+    public bool AutoHideWhenMouseLeaves { get; set; } = false;
+    /// <summary>The Itch controls panel is shown (the 🎮 icon over the figure folds it away); remembered.</summary>
+    public bool ItchControlsOpen { get; set; } = true;
     public int AutoHideAfterMs { get; set; } = 2000;
     /// <summary>When the selection highlight shows; pressed keys always flash briefly.</summary>
     public FocusHighlight SelectionHighlight { get; set; } = FocusHighlight.WhileUsingKeys;
+    /// <summary>How the words that replace the urgent strip while Itch is open are coloured.</summary>
+    public SpokenLook SpokenButtonLook { get; set; } = SpokenLook.BlueRedOutline;
     /// <summary>Stop the window being resized or maximized (its saved size is kept); fullscreen (F11) is ignored too.</summary>
     public bool LockWindowSize { get; set; }
 
@@ -202,6 +224,27 @@ public static class ButtonStore
     }
 }
 
+/// <summary>layout.json: how the Itch panels are arranged. A missing or unreadable file means the usual arrangement.</summary>
+public static class LayoutStore
+{
+    public static PanelLayout Load(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+                return JsonSerializer.Deserialize<PanelLayout>(File.ReadAllText(path), SettingsStore.JsonOptions) ?? new PanelLayout();
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException or NotSupportedException) { }
+        return new PanelLayout();
+    }
+
+    public static void Save(string path, PanelLayout layout)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        AtomicFile.Write(path, Encoding.UTF8.GetBytes(JsonSerializer.Serialize(layout, SettingsStore.JsonOptions)));
+    }
+}
+
 internal static class AtomicFile
 {
     /// <summary>Write to a temp file then replace, so a crash mid-write never leaves a truncated file.</summary>
@@ -248,4 +291,15 @@ public sealed class PersonalModelStore
     {
         if (File.Exists(_path)) File.Delete(_path);
     }
+}
+
+/// <summary>How the spoken words in the top strip (shown while Itch is open) are coloured, so they read as the Itch menu.</summary>
+public enum SpokenLook
+{
+    /// <summary>Blue buttons with a red outline: the colour of the Itch screen, the outline of the urgent strip they replace.</summary>
+    BlueRedOutline,
+    /// <summary>Orange buttons (the colour of quick phrases) with a blue outline.</summary>
+    OrangeBlueOutline,
+    /// <summary>The same colours as the Itch button.</summary>
+    LikeItchButton,
 }

@@ -6,9 +6,10 @@ namespace Aac.App;
 
 /// <summary>
 /// Stacks the board rows: the urgent strip gets a slimmer share and every other keyboard row an equal one
-/// of the height that is left after <see cref="DrawerHeight"/>. The drawer (Sentences, Quick or Phrases)
-/// gets exactly <see cref="DrawerHeight"/> below the keyboard. The window grows by that much when a drawer
-/// opens, so the keyboard keeps its size and place; with no drawer open there is no gap at all.
+/// of the height that is left after <see cref="DrawerHeight"/>. The drawer (Quick or Phrases) gets exactly
+/// <see cref="DrawerHeight"/>, below the keyboard (or above it, when the session puts its rows first for a
+/// window anchored at the bottom of the screen). The window grows by that much when a drawer opens, so the
+/// keyboard keeps its size and place; with no drawer open there is no gap at all.
 /// </summary>
 public sealed class BoardRowsPanel : Panel
 {
@@ -27,15 +28,23 @@ public sealed class BoardRowsPanel : Panel
         set => SetValue(DrawerHeightProperty, value);
     }
 
-    private static string? NameOf(UIElement child) => (child as FrameworkElement)?.DataContext is RowView r ? r.Name : null;
+    private static RowView? RowOf(UIElement child) => (child as FrameworkElement)?.DataContext as RowView;
+    private static string? NameOf(UIElement child) => RowOf(child)?.Name;
     private static bool IsDrawer(UIElement child) => NameOf(child)?.StartsWith(CommunicationSession.DrawerRowPrefix, StringComparison.Ordinal) == true;
-    private static double Weight(UIElement child) => NameOf(child) switch
+    private static double Weight(UIElement child) => RowOf(child) switch
     {
-        CommunicationSession.PinnedRow => PinnedWeight,
-        CommunicationSession.ItchViewRow => ItchViewWeight,
-        CommunicationSession.ItchBarRow => 0.55,
+        { Name: CommunicationSession.PinnedRow } => PinnedWeight,
+        { Name: CommunicationSession.ItchViewRow } => ItchViewWeight,
+        { Title: not null, Subtitle: not null } => TitleWithSubtitleWeight,
+        { Title: not null } => TitleWeight,
+        { Name: var n } when n.StartsWith(CommunicationSession.ItchMoveRowPrefix, StringComparison.Ordinal) => MoveRowWeight,
         _ => 1.0,
     };
+
+    /// <summary>A heading row's share of a keyboard row: a title alone, or a title with a line of explanation.</summary>
+    public const double TitleWeight = 0.5, TitleWithSubtitleWeight = 0.8;
+    /// <summary>The Move-the-figure rows are a little slimmer than keys, leaving the figure as much height as possible.</summary>
+    public const double MoveRowWeight = 0.85;
 
     /// <summary>The Itch figure's share in key rows (it also gets the extra height the window grows by).</summary>
     public const double ItchViewWeight = 5.0;
@@ -75,16 +84,11 @@ public sealed class BoardRowsPanel : Panel
         var (unit, drawerRow, itchExtra) = Plan(final.Height);
         LastKeyboardUnit = unit;
         var y = 0.0;
-        foreach (UIElement child in InternalChildren.Cast<UIElement>().Where(c => !IsDrawer(c)))
+        foreach (UIElement child in InternalChildren)
         {
-            var h = Weight(child) * unit + (IsItchView(child) ? itchExtra : 0);
+            var h = IsDrawer(child) ? drawerRow : Weight(child) * unit + (IsItchView(child) ? itchExtra : 0);
             child.Arrange(new Rect(0, y, final.Width, h));
             y += h;
-        }
-        foreach (UIElement child in InternalChildren.Cast<UIElement>().Where(IsDrawer))
-        {
-            child.Arrange(new Rect(0, y, final.Width, drawerRow));
-            y += drawerRow;
         }
         return final;
     }
@@ -161,12 +165,26 @@ public sealed class VisibleIfTrue : System.Windows.Data.IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture) => throw new NotSupportedException();
 }
 
-/// <summary>Draws the Itch screen's view row as the 3D figure and every other row as its buttons.</summary>
+/// <summary>Visible when the bound value is a non-empty string, collapsed otherwise.</summary>
+public sealed class VisibleIfSet : System.Windows.Data.IValueConverter
+{
+    public static readonly VisibleIfSet Instance = new();
+    public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture) =>
+        value is string { Length: > 0 } ? Visibility.Visible : Visibility.Collapsed;
+    public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture) => throw new NotSupportedException();
+}
+
+/// <summary>Draws the Itch view row as the 3D figure, a titled row as its heading, and every other row as its buttons.</summary>
 public sealed class RowTemplateSelector : System.Windows.Controls.DataTemplateSelector
 {
     public DataTemplate? Buttons { get; set; }
     public DataTemplate? ItchFigure { get; set; }
+    public DataTemplate? Title { get; set; }
 
-    public override DataTemplate? SelectTemplate(object item, DependencyObject container) =>
-        item is RowView { Name: CommunicationSession.ItchViewRow } ? ItchFigure : Buttons;
+    public override DataTemplate? SelectTemplate(object item, DependencyObject container) => item switch
+    {
+        RowView { Name: CommunicationSession.ItchViewRow } => ItchFigure,
+        RowView { Title: not null } => Title,
+        _ => Buttons,
+    };
 }

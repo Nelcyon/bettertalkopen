@@ -6,6 +6,7 @@ using System.Text;
 using System.Windows.Input;
 using System.Windows.Interop;
 using Aac.Core.Abstractions;
+using Aac.Core.Input;
 using Aac.Core.Speech;
 using Aac.Core.Storage;
 
@@ -44,6 +45,8 @@ public static class AppPaths
     /// <summary>One line per start and exit (with the reason), so a vanished window can be explained.</summary>
     public static string AppLog => Path.Combine(Root, "app.log");
     public static string WindowSize => Path.Combine(Root, "window.json");
+    /// <summary>How the Itch panels are arranged (moved in move mode), saved the moment it changes.</summary>
+    public static string Layout => Path.Combine(Root, "layout.json");
 }
 
 /// <summary>Windows DPAPI, current-user scope: files are unreadable by other Windows accounts or on another PC.</summary>
@@ -148,63 +151,60 @@ public sealed class SapiSpeechEngine : ISpeechEngine, ISpeechProgress, IDisposab
     public void Dispose() => _synth.Dispose();
 }
 
-/// <summary>A system-wide shortcut (RegisterHotKey) that works while another program has focus.</summary>
-public sealed class GlobalHotkey : IDisposable
+/// <summary>
+/// The system-wide hotkeys (RegisterHotKey): they work while another program has focus. Each is a
+/// <see cref="HotkeySpec"/> such as "Ctrl+Shift+F12" with the action it runs. None are set unless the
+/// person assigns them in Settings → Hotkeys.
+/// </summary>
+public sealed class GlobalHotkeys : IDisposable
 {
     private const int WmHotkey = 0x0312;
-    private const uint ModAlt = 0x1, ModControl = 0x2, ModShift = 0x4, ModWin = 0x8, ModNoRepeat = 0x4000;
-    private const int Id = 0xA11;
+    private const uint ModNoRepeat = 0x4000;
+    private const int FirstId = 0xA11;
     private readonly HwndSource _source;
-    private readonly Action _onPressed;
-    private bool _registered;
+    private readonly Dictionary<int, Action> _actions = new();
 
-    private GlobalHotkey(HwndSource source, Action onPressed)
+    private GlobalHotkeys(HwndSource source)
     {
         _source = source;
-        _onPressed = onPressed;
+        _source.AddHook(Hook);
     }
 
-    /// <summary>Parses e.g. "Ctrl+Shift+F12". Returns null and a reason if it cannot be registered.</summary>
-    public static GlobalHotkey? TryRegister(IntPtr hwnd, string spec, Action onPressed, out string? problem)
+    /// <summary>
+    /// Registers every hotkey it can and reports, in plain words, each one it could not (a key another
+    /// program already owns, or a spec that cannot be read).
+    /// </summary>
+    public static GlobalHotkeys Register(IntPtr hwnd, IEnumerable<(string Spec, Action Run)> hotkeys, List<string> problems)
     {
-        problem = null;
-        if (string.IsNullOrWhiteSpace(spec)) return null;
-        uint mods = ModNoRepeat;
-        Key? key = null;
-        foreach (var part in spec.Split('+', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        var hotkeysOwner = new GlobalHotkeys(HwndSource.FromHwnd(hwnd));
+        var id = FirstId;
+        foreach (var (spec, run) in hotkeys)
         {
-            switch (part.ToLowerInvariant())
+            if (!HotkeySpec.TryParse(spec, out var mods, out var keyName, out var problem))
             {
-                case "ctrl" or "control": mods |= ModControl; break;
-                case "shift": mods |= ModShift; break;
-                case "alt": mods |= ModAlt; break;
-                case "win": mods |= ModWin; break;
-                default:
-                    if (Enum.TryParse<Key>(part, true, out var k)) key = k;
-                    else { problem = $"Unknown key \"{part}\" in global shortcut."; return null; }
-                    break;
+                problems.Add($"Hotkey {spec}: {problem}");
+                continue;
             }
+            if (!Enum.TryParse<Key>(keyName, true, out var key) || KeyInterop.VirtualKeyFromKey(key) == 0)
+            {
+                problems.Add($"Hotkey {spec}: \"{keyName}\" is not a key name Windows knows.");
+                continue;
+            }
+            if (!RegisterHotKey(hwnd, id, (uint)mods | ModNoRepeat, (uint)KeyInterop.VirtualKeyFromKey(key)))
+            {
+                problems.Add($"Hotkey {spec} is already used by another program, so it does nothing here.");
+                continue;
+            }
+            hotkeysOwner._actions[id++] = run;
         }
-        if (key is null) { problem = "Global shortcut has no key."; return null; }
-
-        var source = HwndSource.FromHwnd(hwnd);
-        var hotkey = new GlobalHotkey(source, onPressed);
-        source.AddHook(hotkey.Hook);
-        if (!RegisterHotKey(hwnd, Id, mods, (uint)KeyInterop.VirtualKeyFromKey(key.Value)))
-        {
-            source.RemoveHook(hotkey.Hook);
-            problem = $"Global shortcut {spec} is already used by another program.";
-            return null;
-        }
-        hotkey._registered = true;
-        return hotkey;
+        return hotkeysOwner;
     }
 
     private IntPtr Hook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        if (msg == WmHotkey && wParam.ToInt32() == Id)
+        if (msg == WmHotkey && _actions.TryGetValue(wParam.ToInt32(), out var run))
         {
-            _onPressed();
+            run();
             handled = true;
         }
         return IntPtr.Zero;
@@ -212,7 +212,8 @@ public sealed class GlobalHotkey : IDisposable
 
     public void Dispose()
     {
-        if (_registered) UnregisterHotKey(_source.Handle, Id);
+        foreach (var id in _actions.Keys) UnregisterHotKey(_source.Handle, id);
+        _actions.Clear();
         _source.RemoveHook(Hook);
     }
 

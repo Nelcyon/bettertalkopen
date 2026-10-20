@@ -82,16 +82,10 @@ public class ItchTests
         }
         Assert.Equal(new[] { "Up", "Left" }, rig.Engine.Spoken.Select(u => u.DisplayText));
 
-        // The controls panel folds away and back (the small Controls button over the figure).
-        rig.Session.ToggleItchControls();
-        Assert.DoesNotContain(rig.Session.Rows, r => r.Name.StartsWith(CommunicationSession.ItchControlsPrefix));
-        rig.Session.ToggleItchControls();
-        Assert.Contains(rig.Session.Rows, r => r.Name.StartsWith(CommunicationSession.ItchControlsPrefix));
-
         rig.Clock.AdvanceMs(1000);
         rig.Session.ActivateCell("itch"); // the Itch button closes it again
         Assert.False(rig.Session.ItchOpen);
-        Assert.DoesNotContain(rig.Session.Rows, r => r.Name.StartsWith(CommunicationSession.ItchRowPrefix) || r.Name.StartsWith(CommunicationSession.ItchControlsPrefix));
+        Assert.DoesNotContain(rig.Session.Rows, r => r.Name.StartsWith(CommunicationSession.ItchRowPrefix));
     }
 
     [Fact]
@@ -170,22 +164,6 @@ public class ItchTests
             Assert.Equal(x0, ScreenX(), 6);
             Assert.Equal(y0, ScreenY(), 6);
         }
-    }
-
-    [Fact]
-    public void Folding_the_controls_away_tells_the_window_so_the_panel_closes_too()
-    {
-        var rig = new Rig();
-        rig.Session.OpenItch(true);
-        var told = 0;
-        rig.Session.PropertyChanged += (_, _) => told++;
-        rig.Session.ToggleItchControls(); // the Controls button over the figure
-        Assert.False(rig.Session.ItchControlsOpen);
-        Assert.True(told > 0);
-        told = 0;
-        rig.Session.ToggleItchControls();
-        Assert.True(rig.Session.ItchControlsOpen);
-        Assert.True(told > 0);
     }
 
     [Fact]

@@ -38,6 +38,14 @@ Name: "{autodesktop}\BetterTalk"; Filename: "{app}\BetterTalk.exe"
 
 [Run]
 Filename: "{app}\BetterTalk.exe"; Description: "Start BetterTalk now"; Flags: nowait postinstall skipifsilent
+; An update from Settings, Updates runs this installer quietly with /relaunch=1: start the new version afterwards.
+Filename: "{app}\BetterTalk.exe"; Flags: nowait; Check: Relaunch
 
 ; Settings, buttons and downloaded voices live in %APPDATA%\BetterTalk and %LOCALAPPDATA%\BetterTalk and are
 ; deliberately left alone when the app is uninstalled.
+
+[Code]
+function Relaunch: Boolean;
+begin
+  Result := WizardSilent and (ExpandConstant('{param:relaunch|0}') = '1');
+end;

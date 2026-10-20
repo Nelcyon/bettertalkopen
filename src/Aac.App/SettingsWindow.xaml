@@ -3,32 +3,29 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Aac.App"
         Title="BetterTalk settings" Width="700" Height="800" MinWidth="520" MinHeight="520"
+        Background="{DynamicResource DkBg}" Foreground="{DynamicResource DkText}"
         FontFamily="Segoe UI" FontSize="16" WindowStartupLocation="CenterScreen" ShowInTaskbar="True">
     <Window.Resources>
+        <ResourceDictionary>
+        <ResourceDictionary.MergedDictionaries><ResourceDictionary Source="DarkTheme.xaml"/></ResourceDictionary.MergedDictionaries>
         <!-- A setting's name, and the plain-words explanation shown under it. -->
         <Style TargetType="TextBlock" x:Key="Label">
             <Setter Property="Margin" Value="0,18,0,2"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
         <Style TargetType="TextBlock" x:Key="Hint">
-            <Setter Property="Foreground" Value="#555"/>
+            <Setter Property="Foreground" Value="{StaticResource DkMuted}"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="Margin" Value="0,2,0,6"/>
         </Style>
         <Style TargetType="TextBlock" x:Key="Intro">
-            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="Foreground" Value="{StaticResource DkText}"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="Margin" Value="0,0,0,4"/>
         </Style>
-        <Style TargetType="CheckBox">
-            <Setter Property="Margin" Value="0,16,0,0"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-        </Style>
-        <Style TargetType="TabItem">
-            <Setter Property="Padding" Value="14,8"/>
-            <Setter Property="FontSize" Value="16"/>
-        </Style>
+        <!-- CheckBox, TabItem and the other controls take their dark look from DarkTheme.xaml (a local CheckBox style based on it would find itself). -->
+        </ResourceDictionary>
     </Window.Resources>
     <DockPanel Margin="18">
         <TextBlock DockPanel.Dock="Top" Style="{StaticResource Intro}" Margin="0,0,0,10"
@@ -37,8 +34,6 @@
             <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,8"
                        Text="BetterTalk restarts to apply your changes. The message you are writing, your buttons and what it has learned are kept."/>
             <DockPanel LastChildFill="False">
-                <Button DockPanel.Dock="Left" Content="Open settings file (advanced)" Padding="12,6" Click="OpenFile_Click"
-                        ToolTip="Opens the raw settings in Notepad. Only for helpers who know what they are changing."/>
                 <Button DockPanel.Dock="Right" Content="Save and restart" Padding="18,6" Margin="10,0,0,0" IsDefault="True" FontWeight="SemiBold" Click="Save_Click"/>
                 <Button DockPanel.Dock="Right" Content="Cancel" Padding="18,6" Margin="10,0,0,0" IsCancel="True" Click="Cancel_Click"/>
             </DockPanel>
@@ -54,11 +49,11 @@
                                    Text="Pick the voice that speaks your messages. Voices shaded green are already on this computer. Picking any other one downloads it once (this needs internet), then it works without internet. You will hear a sample straight away."/>
                 <ComboBox x:Name="Voice" SelectionChanged="Voice_SelectionChanged" MaxDropDownHeight="520" TextSearch.TextPath="Label">
                     <ComboBox.ItemContainerStyle>
-                        <Style TargetType="ComboBoxItem">
+                        <Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Installed}" Value="True">
-                                    <Setter Property="Background" Value="#DFF3E2"/>
+                                    <Setter Property="Background" Value="{StaticResource DkInstalled}"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding IsHeading}" Value="True">
@@ -133,6 +128,12 @@
             <TabItem Header="Screen &amp; window">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="14,4,14,14">
+                        <TextBlock Style="{StaticResource Label}" Margin="0,8,0,2" Text="Set-up guide"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="A few questions, answered in a minute, that set the main choices at once: how the user chooses buttons, how BetterTalk comes back, which screen and corner, hiding by itself, and the voice. It runs by itself the first time BetterTalk starts on a computer."/>
+                        <Button Content="Run the set-up guide…" Padding="12,8" HorizontalAlignment="Left" Click="SetupGuide_Click"
+                                ToolTip="Closes this window and opens the guide. Nothing changes until you press Finish there"/>
+
                         <TextBlock Style="{StaticResource Label}">
                             <Run Text="Text size: "/><Run Text="{Binding Value, ElementName=TextSize, StringFormat=N0}"/>
                         </TextBlock>
@@ -148,18 +149,38 @@
                             <ComboBoxItem Content="Never show it (keys only flash when pressed)" Tag="Never"/>
                         </ComboBox>
 
-                        <TextBlock Style="{StaticResource Label}" Text="Opening BetterTalk from the corner of the screen"/>
+                        <TextBlock Style="{StaticResource Label}" Text="Which screen and corner"/>
                         <TextBlock Style="{StaticResource Hint}"
-                                   Text="BetterTalk can open when you use the top-left corner of the main screen, wherever you are in Windows."/>
+                                   Text="BetterTalk sits flush in one corner of one screen. Everything it opens grows away from that corner, so the keyboard never moves."/>
+                        <ComboBox x:Name="ScreenChoice" DisplayMemberPath="Label"/>
+                        <ComboBox x:Name="CornerChoice" Margin="0,6,0,0">
+                            <ComboBoxItem Content="Top left corner" Tag="TopLeft"/>
+                            <ComboBoxItem Content="Top right corner" Tag="TopRight"/>
+                            <ComboBoxItem Content="Bottom left corner" Tag="BottomLeft"/>
+                            <ComboBoxItem Content="Bottom right corner" Tag="BottomRight"/>
+                        </ComboBox>
+
+                        <TextBlock Style="{StaticResource Label}" Text="Opening BetterTalk from its corner"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="BetterTalk can open when you use the corner it sits in, wherever you are in Windows. The icon near the clock always opens it too, and the Hotkeys tab can give it a key."/>
                         <ComboBox x:Name="Corner">
-                            <ComboBoxItem Content="Click in the top-left corner to open it" Tag="Click"/>
-                            <ComboBoxItem Content="Rest the mouse in the top-left corner to open it" Tag="Rest"/>
+                            <ComboBoxItem Content="Click in the corner to open it" Tag="Click"/>
+                            <ComboBoxItem Content="Rest the mouse in the corner to open it" Tag="Rest"/>
                             <ComboBoxItem Content="Do not open from the corner" Tag="Off"/>
                         </ComboBox>
+                        <TextBlock Style="{StaticResource Label}">
+                            <Run Text="Size of the corner: "/><Run Text="{Binding Value, ElementName=CornerSize, StringFormat=N0}"/><Run Text=" pixels"/>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource Hint}" Text="How close to the corner the pointer has to be. Bigger is easier to hit; smaller is harder to open by accident."/>
+                        <Slider x:Name="CornerSize" Minimum="1" Maximum="40" TickFrequency="1" IsSnapToTickEnabled="True"/>
+                        <TextBlock Style="{StaticResource Label}">
+                            <Run Text="Rest time before it opens: "/><Run Text="{Binding Value, ElementName=CornerRest, StringFormat=N1}"/><Run Text=" seconds"/>
+                        </TextBlock>
+                        <Slider x:Name="CornerRest" Minimum="0.1" Maximum="3" TickFrequency="0.1" IsSnapToTickEnabled="True"/>
 
                         <CheckBox x:Name="AutoHide" Content="Hide BetterTalk by itself when the mouse leaves it"/>
                         <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,0"
-                                   Text="While this is on, the yellow Hide button on the keyboard is not shown. Open it again from the corner, from the tray icon near the clock, or with Ctrl+Shift+F12."/>
+                                   Text="The yellow Hide button on the keyboard is always there too. After BetterTalk hides, open it again from the corner, from the tray icon near the clock, or with a hotkey you set in the Hotkeys tab."/>
                         <TextBlock Style="{StaticResource Label}">
                             <Run Text="Seconds before it hides: "/><Run Text="{Binding Value, ElementName=AutoHideSeconds, StringFormat=N0}"/>
                         </TextBlock>
@@ -170,24 +191,77 @@
                         <CheckBox x:Name="LockSize" Content="Lock the window size"/>
                         <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,0"
                                    Text="Stops the window being made bigger, smaller or full screen by accident."/>
+                        <CheckBox x:Name="StartWithWindows" Content="Start BetterTalk when I sign in to Windows"/>
                         <CheckBox x:Name="StartHidden" Content="Start hidden (do not show the window when BetterTalk starts)"/>
                         <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,6"
-                                   Text="It then waits as an icon near the clock until you open it (from the corner, by clicking that icon, or with Ctrl+Shift+F12)."/>
+                                   Text="It then waits as an icon near the clock until you open it (from the corner, by clicking that icon, or with a hotkey you set in the Hotkeys tab)."/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="Move the panels"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="The Itch figure and its controls usually sit beside the keyboard. Untick Lock UI to move them: each panel gets a dashed outline, its buttons stop working, and you drag it anywhere on any screen. Panels snap to and slide along the edges of the keyboard and of each other, and a pulled-out panel can be resized by its edges. Press Lock UI (on the screen, or tick it here) when they are where you want them. BetterTalk remembers where you put them."/>
+                        <CheckBox x:Name="LockUi" Content="🔒 Lock UI (the panels stay where they are)" Click="LockUi_Click"/>
+                        <Button Content="Put the panels back beside the keyboard" Padding="12,8" Margin="0,10,0,0" HorizontalAlignment="Left" Click="PutPanelsBack_Click"
+                                ToolTip="Every panel back beside the keyboard at its usual width"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ================= Hotkeys ================= -->
+            <TabItem Header="Hotkeys">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="14,4,14,14">
+                        <TextBlock Style="{StaticResource Intro}"
+                                   Text="Give any action a key. Click a box, then press the key (or the QuadStick button that sends a key). Backspace empties a box. A key can only do one thing: giving it to a new action takes it off the old one."/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="Anywhere in Windows"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="These work even while a game or a browser has the focus. Hold Ctrl, Alt, Shift or Win together with the key, or use an F-key, so an ordinary key is never taken away from other programs. Nothing is set here to begin with."/>
+                        <Grid x:Name="HotkeyRows" Margin="0,4,0,0"/>
+                        <TextBlock x:Name="HotkeyNote" Style="{StaticResource Hint}" Foreground="{StaticResource DkWarn}"/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="While BetterTalk is open"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Single keys, so a QuadStick can send each one with one gesture. Letters, Space and the other typing keys are best left for typing."/>
+                        <Grid x:Name="KeyRows" Margin="0,4,0,0"/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="The Itch figure"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="These only work while the figure is open."/>
+                        <Grid x:Name="FigureKeyRows" Margin="0,4,0,0"/>
+                        <TextBlock x:Name="KeyNote" Style="{StaticResource Hint}" Foreground="{StaticResource DkWarn}"/>
+                        <Button Content="Put all keys back to the defaults" Padding="12,6" HorizontalAlignment="Left" Margin="0,10,0,0" Click="ResetKeys_Click"/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="Key timing"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="For switches and sip-puff controls that bounce or double-fire. A second press of the same key inside the first number is ignored."/>
+                        <TextBlock Style="{StaticResource Label}">
+                            <Run Text="Ignore a repeat press of the same key within: "/><Run Text="{Binding Value, ElementName=Debounce, StringFormat=N0}"/><Run Text=" ms"/>
+                        </TextBlock>
+                        <Slider x:Name="Debounce" Minimum="0" Maximum="1000" TickFrequency="50" IsSnapToTickEnabled="True"/>
+                        <TextBlock Style="{StaticResource Label}">
+                            <Run Text="Holding Delete starts repeating after: "/><Run Text="{Binding Value, ElementName=RepeatDelay, StringFormat=N0}"/><Run Text=" ms"/>
+                        </TextBlock>
+                        <Slider x:Name="RepeatDelay" Minimum="200" Maximum="1500" TickFrequency="50" IsSnapToTickEnabled="True"/>
+                        <TextBlock Style="{StaticResource Label}">
+                            <Run Text="...and then deletes one more every: "/><Run Text="{Binding Value, ElementName=RepeatInterval, StringFormat=N0}"/><Run Text=" ms"/>
+                        </TextBlock>
+                        <Slider x:Name="RepeatInterval" Minimum="30" Maximum="300" TickFrequency="10" IsSnapToTickEnabled="True"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
 
             <!-- ================= Buttons and phrases ================= -->
-            <TabItem Header="Buttons &amp; phrases">
+            <TabItem Header="Buttons">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="14,4,14,14">
-                        <TextBlock Style="{StaticResource Intro}"
-                                   Text="The red buttons along the top are urgent phrases that are always one press away. The orange buttons open from Quick and Phrases at the bottom of the keyboard."/>
+                        <Border Background="{StaticResource DkPanelHi}" BorderBrush="{StaticResource DkAccentHi}" BorderThickness="2" CornerRadius="8" Padding="12,10" Margin="0,0,0,6">
+                            <TextBlock TextWrapping="Wrap" FontWeight="SemiBold"
+                                       Text="Two ways to edit the very same buttons. Here you rename them all in one go as lists (red buttons, Quick, Phrases, spoken words). Or press &quot;Edit buttons live&quot; and tap each button on the real screen. Both change the same buttons."/>
+                        </Border>
 
-                        <TextBlock Style="{StaticResource Label}" Text="Change buttons on the screen"/>
+                        <TextBlock Style="{StaticResource Label}" Text="Way 1: Edit buttons live on the screen"/>
                         <TextBlock Style="{StaticResource Hint}"
-                                   Text="Closes this window and lets you tap any button to change its words, or add or delete one. To stop changing buttons, right-click the BetterTalk icon near the clock and untick &quot;Change the words on the buttons&quot;."/>
-                        <Button Content="Change buttons on the screen…" Padding="12,8" HorizontalAlignment="Left" Click="EditButtons_Click"/>
+                                   Text="Closes this window and lets you tap any button to change its words, move it earlier or later in its row, or add or delete one. The screen gets a red frame while you edit; press &quot;Done editing&quot; at the bottom when you finish."/>
+                        <Button Content="Edit buttons live on the screen…" Padding="12,8" HorizontalAlignment="Left" Click="EditButtons_Click"/>
 
                         <TextBlock Style="{StaticResource Label}" Text="Back up or move your buttons"/>
                         <TextBlock Style="{StaticResource Hint}"
@@ -199,13 +273,23 @@
                                     ToolTip="Replaces this computer's buttons with the ones saved in a file"/>
                         </StackPanel>
 
-                        <TextBlock Style="{StaticResource Label}" Text="Urgent phrases (the red buttons)"/>
+                        <TextBlock Style="{StaticResource Label}" Text="Red buttons (urgent phrases along the top)"/>
                         <TextBlock Style="{StaticResource Hint}" Text="Type one phrase per line. Each line becomes a red button across the top."/>
                         <TextBox x:Name="Pinned" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" VerticalScrollBarVisibility="Auto"/>
 
-                        <TextBlock Style="{StaticResource Label}" Text="Quick phrases (the Quick page)"/>
+                        <TextBlock Style="{StaticResource Label}" Text="Quick phrases (the orange Quick page)"/>
                         <TextBlock Style="{StaticResource Hint}" Text="Type one phrase per line. They appear when you press Quick."/>
                         <TextBox x:Name="Quick" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="180" VerticalScrollBarVisibility="Auto"/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="Phrases (the Phrases page)"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="One category per heading written in [square brackets], then one phrase per line under it. Rename, reorder or delete lines freely; a line starting with [ starts a new category."/>
+                        <TextBox x:Name="PhraseCategories" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="260" VerticalScrollBarVisibility="Auto"/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="Words said out loud (top strip while Itch is open)"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Type one per line. While Itch is open they replace the red urgent buttons along the top, and each is said the moment it is pressed, to guide the person scratching. Up, Down, Left and Right are always there."/>
+                        <TextBox x:Name="SpokenWords" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="110" VerticalScrollBarVisibility="Auto"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -215,43 +299,26 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="14,4,14,14">
                         <TextBlock Style="{StaticResource Intro}"
-                                   Text="The Itch button opens a 3D figure. Click the spot on the figure where it itches and BetterTalk writes the exact place for the person helping."/>
+                                   Text="The Itch button opens a 3D figure. Click the spot on the figure where it itches and BetterTalk writes the exact place in the message box."/>
                         <TextBlock Style="{StaticResource Label}" Text="Moving the figure with the mouse"/>
                         <TextBlock Style="{StaticResource Hint}"
                                    Text="Hold the left button and drag to turn it and tilt it. Hold the right button and drag to move it around. Use the mouse wheel to zoom in on whatever the pointer is over. A left click marks the spot."/>
+                        <TextBlock Style="{StaticResource Label}" Text="Buttons for everything"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Beside the figure, &quot;Move the figure&quot; has a button for every movement (turn, tilt, slide, closer and farther), so everything can be done with left clicks alone; the small controller icon in the figure's corner shows or hides it. While Itch is open, the top strip shows the words that are said out loud with one press instead of the urgent buttons; press Itch again to get them back. Change those words in the Buttons tab."/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="How the spoken words in the top strip look"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Pick the colours that make it clearest that these buttons say their words out loud. Takes effect after BetterTalk restarts."/>
+                        <ComboBox x:Name="SpokenLookChoice">
+                            <ComboBoxItem Content="Blue buttons with a red outline" Tag="BlueRedOutline"/>
+                            <ComboBoxItem Content="Orange buttons with a blue outline" Tag="OrangeBlueOutline"/>
+                            <ComboBoxItem Content="Same colours as the Itch button" Tag="LikeItchButton"/>
+                        </ComboBox>
+
                         <TextBlock Style="{StaticResource Label}" Text="Moving the figure with keys or QuadStick buttons"/>
                         <TextBlock Style="{StaticResource Hint}"
-                                   Text="Click a box below, then press the key (or the QuadStick button that sends a key) you want for that move. Backspace empties a box."/>
-                        <Grid Margin="0,4,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition/>
-                                <RowDefinition/>
-                                <RowDefinition/>
-                                <RowDefinition/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Text="Turn left " VerticalAlignment="Center"/>
-                            <TextBox x:Name="KeyTurnLeft" Grid.Column="1" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                            <TextBlock Text="  Turn right " Grid.Column="2" VerticalAlignment="Center"/>
-                            <TextBox x:Name="KeyTurnRight" Grid.Column="3" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                            <TextBlock Text="Closer " Grid.Row="1" VerticalAlignment="Center"/>
-                            <TextBox x:Name="KeyCloser" Grid.Row="1" Grid.Column="1" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                            <TextBlock Text="  Farther " Grid.Row="1" Grid.Column="2" VerticalAlignment="Center"/>
-                            <TextBox x:Name="KeyFarther" Grid.Row="1" Grid.Column="3" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                            <TextBlock Text="Move up " Grid.Row="2" VerticalAlignment="Center"/>
-                            <TextBox x:Name="KeyMoveUp" Grid.Row="2" Grid.Column="1" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                            <TextBlock Text="  Move down " Grid.Row="2" Grid.Column="2" VerticalAlignment="Center"/>
-                            <TextBox x:Name="KeyMoveDown" Grid.Row="2" Grid.Column="3" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                            <TextBlock Text="Move left " Grid.Row="3" VerticalAlignment="Center"/>
-                            <TextBox x:Name="KeyMoveLeft" Grid.Row="3" Grid.Column="1" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                            <TextBlock Text="  Move right " Grid.Row="3" Grid.Column="2" VerticalAlignment="Center"/>
-                            <TextBox x:Name="KeyMoveRight" Grid.Row="3" Grid.Column="3" Margin="4" IsReadOnly="True" PreviewKeyDown="KeyBox_PreviewKeyDown"/>
-                        </Grid>
+                                   Text="Keys for turning, zooming and moving the figure are set in the Hotkeys tab, under The Itch figure."/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -264,9 +331,35 @@
                                    Text="BetterTalk works completely offline. It never records sound and never sends anything anywhere. The only time it uses the internet is to download a voice you choose."/>
                         <CheckBox x:Name="Learn" Content="Learn the words and phrases I use"/>
                         <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,0"
-                                   Text="BetterTalk remembers what you say so it can suggest your own words first and list your most-used messages. It is stored scrambled (encrypted) so only this Windows account can read it, and it never leaves this computer."/>
+                                   Text="BetterTalk remembers the words you use so it can suggest them first, and the messages you say again and again so it can list them. It is not a log of what you said: a message said only once is kept only as a scrambled fingerprint that cannot be read back, word pairs are kept only once they repeat, anything that looks like a password, a number or an email address is ignored, only the day is saved, and anything unused for a year is forgotten. What is kept is also encrypted so only this Windows account can read it, and it never leaves this computer."/>
                         <TextBlock Style="{StaticResource Hint}" Margin="22,4,0,0"
                                    Text="To erase everything it has learned: press Phrases on the main screen, then select Forget learning twice."/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <!-- ================= Updates ================= -->
+            <TabItem Header="Updates">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="14,4,14,14">
+                        <TextBlock Style="{StaticResource Intro}"
+                                   Text="BetterTalk only looks for a new version when you press Check for updates; it never checks or downloads anything by itself. You see what is new first, then choose to update or not."/>
+                        <TextBlock x:Name="UpdateVersion" Style="{StaticResource Label}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <Button x:Name="CheckUpdate" Content="Check for updates" Padding="12,8" Click="CheckUpdate_Click"/>
+                            <Button x:Name="InstallUpdate" Content="Update now" Padding="12,8" Margin="8,0,0,0" IsDefault="False" Visibility="Collapsed" Click="InstallUpdate_Click"
+                                    ToolTip="Keeps a snapshot of this version and your setup, downloads the new version, installs it and starts it again"/>
+                            <Button x:Name="FullReadme" Content="Full feature list" Padding="12,8" Margin="8,0,0,0" Visibility="Collapsed" Click="FullReadme_Click"
+                                    ToolTip="Shows the complete description of the new version"/>
+                        </StackPanel>
+                        <ProgressBar x:Name="UpdateProgress" Height="12" Margin="0,10,0,0" Minimum="0" Maximum="1" Visibility="Collapsed"/>
+                        <TextBlock x:Name="UpdateStatus" TextWrapping="Wrap" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource DkText}" Margin="0,10,0,6"/>
+                        <TextBox x:Name="UpdateNotes" IsReadOnly="True" TextWrapping="Wrap" MinHeight="220" MaxHeight="420"
+                                 VerticalScrollBarVisibility="Auto" Visibility="Collapsed" FontSize="15"/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="Go back to the version before"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Every update first keeps a snapshot of the version you had, with its settings, buttons, panel layout and learned words. If you do not like the new version, go back to it here; changes made since the update are replaced by the snapshot. You can update again whenever you like."/>
+                        <Button x:Name="GoBack" Padding="12,8" HorizontalAlignment="Left" Click="GoBack_Click"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

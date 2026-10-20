@@ -3,6 +3,9 @@ using System.Net.Http;
 using System.Speech.Synthesis;
 using System.Windows;
 using System.Windows.Controls;
+using Aac.Core.Input;
+using Aac.Core.Layout;
+using Aac.Core.Prediction;
 using Aac.Core.Speech;
 using Aac.Core.Storage;
 
@@ -19,12 +22,21 @@ public partial class SettingsWindow : Window
     private readonly Action _restart;
 
     private readonly Action _editButtons;
+    private readonly Action<bool> _setUnlocked;
+    private readonly Action _putPanelsBack;
+    private readonly Action _setupGuide;
+    private readonly Action _quit;
 
-    public SettingsWindow(AppSettings current, Action restart, Action editButtons)
+    public SettingsWindow(AppSettings current, Action restart, Action editButtons, Action<bool> setUnlocked, bool unlocked, Action putPanelsBack, Action setupGuide, Action quit)
     {
         InitializeComponent();
         _restart = restart;
         _editButtons = editButtons;
+        _setUnlocked = setUnlocked;
+        LockUi.IsChecked = !unlocked;
+        _putPanelsBack = putPanelsBack;
+        _setupGuide = setupGuide;
+        _quit = quit;
         // Start from what is on disk so hand edits made while the app was running are not lost.
         var onDisk = SettingsStore.Load(AppPaths.Settings, out var problem);
         _settings = File.Exists(AppPaths.Settings) && problem is null ? onDisk : current;
@@ -42,9 +54,19 @@ public partial class SettingsWindow : Window
         TextSize.Value = _settings.FontSize;
         SpeakWhen.SelectedIndex = _settings.Speech.SpeakEachWord ? 1 : 0;
         Highlight.SelectedItem = Highlight.Items.Cast<System.Windows.Controls.ComboBoxItem>().First(i => (string)i.Tag == _settings.SelectionHighlight.ToString());
-        foreach (var (box, action) in DollKeys) box.Text = KeyFor(action) ?? "";
-        var corner = _settings.OpenFromTopLeftCorner ? _settings.CornerTrigger.ToString() : "Off";
+        FillKeyRows();
+        ShowUpdateState();
+        Closed += (_, _) => _updateCancel.Cancel();
+        Debounce.Value = Math.Clamp(_settings.Input.DebounceMs, 0, 1000);
+        RepeatDelay.Value = Math.Clamp(_settings.Input.DeleteRepeatDelayMs, 200, 1500);
+        RepeatInterval.Value = Math.Clamp(_settings.Input.DeleteRepeatIntervalMs, 30, 300);
+        FillScreens();
+        CornerChoice.SelectedItem = CornerChoice.Items.Cast<System.Windows.Controls.ComboBoxItem>().First(i => (string)i.Tag == _settings.Anchor.ToString());
+        var corner = _settings.OpenFromCorner ? _settings.CornerTrigger.ToString() : "Off";
         Corner.SelectedItem = Corner.Items.Cast<System.Windows.Controls.ComboBoxItem>().First(i => (string)i.Tag == corner);
+        CornerSize.Value = Math.Clamp(_settings.CornerPixels, 1, 40);
+        CornerRest.Value = Math.Clamp(Math.Round(_settings.CornerDwellMs / 100.0) / 10.0, 0.1, 3);
+        StartWithWindows.IsChecked = _settings.StartWithWindows;
         StartHidden.IsChecked = _settings.StartHidden;
         LockSize.IsChecked = _settings.LockWindowSize;
         AutoHide.IsChecked = _settings.AutoHideWhenMouseLeaves;
@@ -54,10 +76,35 @@ public partial class SettingsWindow : Window
         Learn.IsChecked = _settings.Privacy.LearnFromSpokenMessages;
         Pinned.Text = string.Join(Environment.NewLine, _settings.Phrases.Pinned);
         Quick.Text = string.Join(Environment.NewLine, _settings.Phrases.QuickPhrases);
+        SpokenWords.Text = string.Join(Environment.NewLine, _settings.Phrases.Spoken);
+        PhraseCategories.Text = string.Join(Environment.NewLine + Environment.NewLine,
+            _settings.Phrases.Categories.Select(c => "[" + c.Name + "]" + Environment.NewLine + string.Join(Environment.NewLine, c.Phrases)));
+        SpokenLookChoice.SelectedItem = SpokenLookChoice.Items.Cast<System.Windows.Controls.ComboBoxItem>().First(i => (string)i.Tag == _settings.SpokenButtonLook.ToString());
     }
 
     private static List<string> Lines(string text) =>
         text.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
+
+    /// <summary>"[Name]" lines start a category; the lines under it are its phrases.</summary>
+    private static List<PhraseCategory> ParseCategories(string text)
+    {
+        var result = new List<PhraseCategory>();
+        PhraseCategory? current = null;
+        foreach (var line in Lines(text))
+        {
+            if (line.StartsWith('['))
+            {
+                current = new PhraseCategory { Name = line.Trim('[', ']', ' ') };
+                result.Add(current);
+            }
+            else
+            {
+                if (current is null) { current = new PhraseCategory { Name = "Phrases" }; result.Add(current); }
+                current.Phrases.Add(line);
+            }
+        }
+        return result.Where(c => c.Name.Length > 0).ToList();
+    }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
@@ -75,10 +122,19 @@ public partial class SettingsWindow : Window
         _settings.Speech.SpeakEachWord = SpeakWhen.SelectedIndex == 1;
         if (Enum.TryParse<Aac.Core.Input.FocusHighlight>((string)((System.Windows.Controls.ComboBoxItem)Highlight.SelectedItem).Tag, out var highlight))
             _settings.SelectionHighlight = highlight;
-        foreach (var (box, action) in DollKeys) SetKey(action, box.Text);
+        foreach (var (box, info) in _keyBoxes) SetKey(info.Name, box.Text);
+        _settings.Hotkeys = _hotkeyBoxes.Where(b => b.Box.Text.Length > 0).ToDictionary(b => b.Box.Text, b => b.Info.Name);
+        _settings.Input.DebounceMs = (int)Debounce.Value;
+        _settings.Input.DeleteRepeatDelayMs = (int)RepeatDelay.Value;
+        _settings.Input.DeleteRepeatIntervalMs = (int)RepeatInterval.Value;
+        _settings.Screen = (ScreenChoice.SelectedItem as ScreenRow)?.Key;
+        if (Enum.TryParse<WindowCorner>((string)((System.Windows.Controls.ComboBoxItem)CornerChoice.SelectedItem).Tag, out var anchor)) _settings.Anchor = anchor;
         var cornerChoice = (string)((System.Windows.Controls.ComboBoxItem)Corner.SelectedItem).Tag;
-        _settings.OpenFromTopLeftCorner = cornerChoice != "Off";
+        _settings.OpenFromCorner = cornerChoice != "Off";
         if (Enum.TryParse<CornerTrigger>(cornerChoice, out var trigger)) _settings.CornerTrigger = trigger;
+        _settings.CornerPixels = (int)CornerSize.Value;
+        _settings.CornerDwellMs = (int)Math.Round(CornerRest.Value * 1000);
+        _settings.StartWithWindows = StartWithWindows.IsChecked == true;
         _settings.StartHidden = StartHidden.IsChecked == true;
         _settings.LockWindowSize = LockSize.IsChecked == true;
         _settings.AutoHideWhenMouseLeaves = AutoHide.IsChecked == true;
@@ -89,6 +145,10 @@ public partial class SettingsWindow : Window
         _settings.Phrases.PinnedPhrases = Lines(Pinned.Text);
         var quick = Lines(Quick.Text);
         if (quick.Count > 0) _settings.Phrases.QuickPhrases = quick;
+        _settings.Phrases.SpokenPhrases = Lines(SpokenWords.Text);
+        var categories = ParseCategories(PhraseCategories.Text);
+        if (categories.Count > 0) _settings.Phrases.Categories = categories;
+        if (Enum.TryParse<SpokenLook>((string)((System.Windows.Controls.ComboBoxItem)SpokenLookChoice.SelectedItem).Tag, out var look)) _settings.SpokenButtonLook = look;
 
         try
         {
@@ -335,32 +395,145 @@ public partial class SettingsWindow : Window
         base.OnClosed(e);
     }
 
-    private (System.Windows.Controls.TextBox Box, Aac.Core.Input.InputAction Action)[] DollKeys => new[]
-    {
-        (KeyTurnLeft, Aac.Core.Input.InputAction.DollTurnLeft), (KeyTurnRight, Aac.Core.Input.InputAction.DollTurnRight),
-        (KeyCloser, Aac.Core.Input.InputAction.DollCloser), (KeyFarther, Aac.Core.Input.InputAction.DollFarther),
-        (KeyMoveUp, Aac.Core.Input.InputAction.DollMoveUp), (KeyMoveDown, Aac.Core.Input.InputAction.DollMoveDown),
-        (KeyMoveLeft, Aac.Core.Input.InputAction.DollMoveLeft), (KeyMoveRight, Aac.Core.Input.InputAction.DollMoveRight),
-    };
+    // ---------- screen ----------
 
-    private string? KeyFor(Aac.Core.Input.InputAction action) =>
-        _settings.KeyBindings.FirstOrDefault(kv => string.Equals(kv.Value, action.ToString(), StringComparison.OrdinalIgnoreCase)).Key;
+    /// <summary>One screen in the list; Key is what settings saves (null for the main screen).</summary>
+    private sealed record ScreenRow(string Label, string? Key);
 
-    /// <summary>Binds one key to the action, replacing whatever that key or action had before.</summary>
-    private void SetKey(Aac.Core.Input.InputAction action, string key)
+    /// <summary>Lists the screens Windows knows, the main one first, and selects the one in the settings (or the main one if it is unplugged).</summary>
+    private void FillScreens()
     {
-        foreach (var old in _settings.KeyBindings.Where(kv => string.Equals(kv.Value, action.ToString(), StringComparison.OrdinalIgnoreCase)).Select(kv => kv.Key).ToList())
-            _settings.KeyBindings.Remove(old);
-        if (key.Length > 0) _settings.KeyBindings[key] = action.ToString();
+        var main = Screens.MainScreen();
+        foreach (var s in Screens.All()) ScreenChoice.Items.Add(new ScreenRow(s.Describe(main), s.IsMain ? null : s.DeviceName));
+        var chosen = Screens.Choose(_settings.Screen);
+        ScreenChoice.SelectedItem = ScreenChoice.Items.Cast<ScreenRow>().First(r => (r.Key ?? main.DeviceName).Equals(chosen.IsMain ? main.DeviceName : chosen.DeviceName, StringComparison.OrdinalIgnoreCase));
     }
 
-    /// <summary>The next key pressed in one of the doll key boxes becomes its key (Backspace clears it).</summary>
+    // ---------- hotkeys and keys ----------
+
+    private readonly List<(TextBox Box, ActionInfo Info)> _hotkeyBoxes = new();
+    private readonly List<(TextBox Box, ActionInfo Info)> _keyBoxes = new();
+
+    /// <summary>One row per action: its name and a box that takes the next key pressed in it.</summary>
+    private void FillKeyRows()
+    {
+        AddKeyRows(HotkeyRows, ActionCatalog.Hotkeys, _hotkeyBoxes, HotkeyBox_PreviewKeyDown);
+        AddKeyRows(KeyRows, ActionCatalog.Keys.Where(k => k.Group == ActionCatalog.OpenGroup), _keyBoxes, KeyBox_PreviewKeyDown);
+        AddKeyRows(FigureKeyRows, ActionCatalog.Keys.Where(k => k.Group == ActionCatalog.FigureGroup), _keyBoxes, KeyBox_PreviewKeyDown);
+        foreach (var (box, info) in _hotkeyBoxes)
+            box.Text = _settings.Hotkeys.FirstOrDefault(kv => string.Equals(kv.Value, info.Name, StringComparison.OrdinalIgnoreCase)).Key ?? "";
+        foreach (var (box, info) in _keyBoxes) box.Text = KeyFor(info.Name) ?? "";
+    }
+
+    private static void AddKeyRows(Grid grid, IEnumerable<ActionInfo> actions, List<(TextBox, ActionInfo)> boxes, System.Windows.Input.KeyEventHandler onKey)
+    {
+        grid.ColumnDefinitions.Clear();
+        // One action per row: the name on the left (it wraps), a same-size key box on the right, so nothing is cut off.
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var i = 0;
+        foreach (var info in actions)
+        {
+            var row = i;
+            var col = 0;
+            if (grid.RowDefinitions.Count <= row) grid.RowDefinitions.Add(new RowDefinition());
+            var label = new TextBlock { Text = info.Label, VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 10, 0) };
+            Grid.SetRow(label, row);
+            Grid.SetColumn(label, col);
+            grid.Children.Add(label);
+            var box = new TextBox { Margin = new Thickness(4), Width = 200, IsReadOnly = true, Tag = info,
+                ToolTip = "Click here, then press the key you want. Backspace empties it." };
+            box.PreviewKeyDown += onKey;
+            Grid.SetRow(box, row);
+            Grid.SetColumn(box, col + 1);
+            grid.Children.Add(box);
+            boxes.Add((box, info));
+            i++;
+        }
+    }
+
+    private string? KeyFor(string action) =>
+        _settings.KeyBindings.FirstOrDefault(kv => string.Equals(kv.Value, action, StringComparison.OrdinalIgnoreCase)).Key;
+
+    /// <summary>Binds one key to the action, replacing whatever that key or action had before.</summary>
+    private void SetKey(string action, string key)
+    {
+        foreach (var old in _settings.KeyBindings.Where(kv => string.Equals(kv.Value, action, StringComparison.OrdinalIgnoreCase)).Select(kv => kv.Key).ToList())
+            _settings.KeyBindings.Remove(old);
+        if (key.Length > 0)
+        {
+            _settings.KeyBindings.Remove(key);
+            _settings.KeyBindings[key] = action;
+        }
+    }
+
+    internal static bool IsModifierKey(System.Windows.Input.Key key) => key is System.Windows.Input.Key.LeftCtrl or System.Windows.Input.Key.RightCtrl
+        or System.Windows.Input.Key.LeftShift or System.Windows.Input.Key.RightShift or System.Windows.Input.Key.LeftAlt or System.Windows.Input.Key.RightAlt
+        or System.Windows.Input.Key.LWin or System.Windows.Input.Key.RWin;
+
+    internal static HotkeyModifiers HeldModifiers()
+    {
+        var held = System.Windows.Input.Keyboard.Modifiers;
+        var mods = HotkeyModifiers.None;
+        if (held.HasFlag(System.Windows.Input.ModifierKeys.Control)) mods |= HotkeyModifiers.Control;
+        if (held.HasFlag(System.Windows.Input.ModifierKeys.Alt)) mods |= HotkeyModifiers.Alt;
+        if (held.HasFlag(System.Windows.Input.ModifierKeys.Shift)) mods |= HotkeyModifiers.Shift;
+        if (held.HasFlag(System.Windows.Input.ModifierKeys.Windows)) mods |= HotkeyModifiers.Win;
+        return mods;
+    }
+
+    /// <summary>A system-wide hotkey box: the next key, with the Ctrl/Alt/Shift/Win held with it, becomes its hotkey.</summary>
+    private void HotkeyBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (sender is not TextBox box || e.Key == System.Windows.Input.Key.Tab) return;
+        var key = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
+        e.Handled = true;
+        if (IsModifierKey(key)) return; // wait for the key that goes with it
+        var mods = HeldModifiers();
+        if (key == System.Windows.Input.Key.Back && mods == HotkeyModifiers.None) { box.Text = ""; HotkeyNote.Text = ""; return; }
+        var spec = HotkeySpec.Format(mods, Aac.Core.Input.KeyMap.Normalize(key.ToString()));
+        if (!HotkeySpec.TryParse(spec, out _, out _, out var problem)) { HotkeyNote.Text = problem; return; }
+        HotkeyNote.Text = TakeFromOthers(_hotkeyBoxes, box, spec);
+        box.Text = spec;
+    }
+
+    /// <summary>An in-app key box: the next key pressed becomes its key (one key, no Ctrl/Alt/Shift).</summary>
     private void KeyBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (sender is not System.Windows.Controls.TextBox box || e.Key == System.Windows.Input.Key.Tab) return;
+        if (sender is not TextBox box || e.Key == System.Windows.Input.Key.Tab) return;
         var key = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
-        box.Text = key == System.Windows.Input.Key.Back ? "" : key.ToString();
         e.Handled = true;
+        if (IsModifierKey(key)) { KeyNote.Text = "Keys here are single keys: press the key on its own."; return; }
+        if (key == System.Windows.Input.Key.Back) { box.Text = ""; KeyNote.Text = ""; return; }
+        var name = Aac.Core.Input.KeyMap.Normalize(key.ToString());
+        KeyNote.Text = TakeFromOthers(_keyBoxes, box, name);
+        box.Text = name;
+    }
+
+    /// <summary>Empties any other box in the list that had this key, and says which action lost it.</summary>
+    private static string TakeFromOthers(List<(TextBox Box, ActionInfo Info)> boxes, TextBox except, string key)
+    {
+        var lost = new List<string>();
+        foreach (var (box, info) in boxes)
+        {
+            if (box == except || !string.Equals(box.Text, key, StringComparison.OrdinalIgnoreCase)) continue;
+            box.Text = "";
+            lost.Add(info.Label);
+        }
+        return lost.Count == 0 ? "" : $"{key} was taken off \"{string.Join("\", \"", lost)}\".";
+    }
+
+    /// <summary>Every in-app key back to the defaults; the system-wide hotkeys are cleared (there are none by default).</summary>
+    private void ResetKeys_Click(object sender, RoutedEventArgs e)
+    {
+        foreach (var (box, _) in _hotkeyBoxes) box.Text = "";
+        foreach (var (box, info) in _keyBoxes)
+            box.Text = Aac.Core.Input.KeyMap.DefaultBindings.FirstOrDefault(kv => string.Equals(kv.Value, info.Name, StringComparison.OrdinalIgnoreCase)).Key ?? "";
+        HotkeyNote.Text = "";
+        KeyNote.Text = "";
+        Debounce.Value = new Aac.Core.Input.InputGateOptions().DebounceMs;
+        RepeatDelay.Value = new Aac.Core.Input.InputGateOptions().DeleteRepeatDelayMs;
+        RepeatInterval.Value = new Aac.Core.Input.InputGateOptions().DeleteRepeatIntervalMs;
     }
 
     /// <summary>Closes Settings and turns on edit mode, where buttons are changed by tapping them.</summary>
@@ -439,7 +612,122 @@ public partial class SettingsWindow : Window
         _editButtons();
     }
 
-    private void OpenFile_Click(object sender, RoutedEventArgs e) => App.OpenSettingsFile();
+    /// <summary>Takes effect at once (no restart): unticked closes this window so the panels can be dragged.</summary>
+    private void LockUi_Click(object sender, RoutedEventArgs e)
+    {
+        var locked = LockUi.IsChecked == true;
+        if (!locked) Close();
+        _setUnlocked(!locked);
+    }
+
+    private void PutPanelsBack_Click(object sender, RoutedEventArgs e) => _putPanelsBack();
+
+    private void SetupGuide_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+        _setupGuide();
+    }
+
+    // ---------- updates ----------
+
+    private Aac.Core.Updates.ReleaseInfo? _release;
+    private readonly CancellationTokenSource _updateCancel = new();
+
+    private void ShowUpdateState()
+    {
+        UpdateVersion.Text = $"This is BetterTalk {Updater.CurrentText}.";
+        var snap = Updater.Snapshot();
+        GoBack.Content = snap is null ? "No earlier version kept yet" : $"Go back to version {snap.Version} (kept {snap.TakenAt:d MMM yyyy})";
+        GoBack.IsEnabled = snap is not null;
+    }
+
+    private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        CheckUpdate.IsEnabled = false;
+        InstallUpdate.Visibility = FullReadme.Visibility = Visibility.Collapsed;
+        UpdateStatus.Text = "Looking for a new version…";
+        try
+        {
+            _release = await Updater.CheckAsync(_updateCancel.Token);
+            if (_release is null) { UpdateStatus.Text = "No released version was found."; return; }
+            var newer = _release.IsNewerThan(Updater.Current);
+            UpdateStatus.Text = newer
+                ? $"Version {_release.Tag.TrimStart('v')} is available. Here is what is new; press Update now if you want it."
+                : $"You have the newest version. Here is what the latest release ({_release.Tag.TrimStart('v')}) brought.";
+            UpdateNotes.Text = _release.Notes.Length > 0 ? Aac.Core.Updates.ReleaseInfo.PlainText(_release.Notes) : "(The release has no notes.)";
+            UpdateNotes.Visibility = Visibility.Visible;
+            FullReadme.Visibility = Visibility.Visible;
+            InstallUpdate.Visibility = newer && _release.InstallerUrl is not null ? Visibility.Visible : Visibility.Collapsed;
+            InstallUpdate.Content = $"Update to {_release.Tag.TrimStart('v')}";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
+        {
+            UpdateStatus.Text = $"Could not reach the update page ({ex.Message}). Check the internet connection and try again.";
+        }
+        finally
+        {
+            CheckUpdate.IsEnabled = true;
+        }
+    }
+
+    private async void FullReadme_Click(object sender, RoutedEventArgs e)
+    {
+        if (_release is null) return;
+        try
+        {
+            UpdateNotes.Text = Aac.Core.Updates.ReleaseInfo.PlainText(await Updater.ReadmeAsync(_release, _updateCancel.Token));
+            UpdateStatus.Text = $"The full feature list of version {_release.Tag.TrimStart('v')}:";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
+        {
+            UpdateStatus.Text = $"The feature list could not be loaded ({ex.Message}).";
+        }
+    }
+
+    private async void InstallUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        if (_release is null) return;
+        if (MessageBox.Show(this, $"Update BetterTalk to {_release.Tag.TrimStart('v')}?\n\nA snapshot of this version and your setup is kept first, so you can go back to it in this tab. BetterTalk closes while the update installs, then starts again.",
+                "BetterTalk update", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
+        CheckUpdate.IsEnabled = InstallUpdate.IsEnabled = GoBack.IsEnabled = false;
+        try
+        {
+            UpdateStatus.Text = "Keeping a snapshot of this version and your setup…";
+            await Task.Run(Updater.TakeSnapshot);
+            UpdateStatus.Text = "Downloading the new version…";
+            UpdateProgress.Visibility = Visibility.Visible;
+            var installer = await Updater.DownloadAsync(_release, new Progress<double>(p => UpdateProgress.Value = p), _updateCancel.Token);
+            UpdateStatus.Text = "Installing. BetterTalk will start again in a moment.";
+            Updater.StartInstaller(installer);
+            Close();
+            _quit();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            UpdateStatus.Text = $"The update did not finish ({ex.Message}). Nothing was changed; BetterTalk is still the version you had.";
+            UpdateProgress.Visibility = Visibility.Collapsed;
+            CheckUpdate.IsEnabled = InstallUpdate.IsEnabled = true;
+            ShowUpdateState();
+        }
+    }
+
+    private void GoBack_Click(object sender, RoutedEventArgs e)
+    {
+        if (Updater.Snapshot() is not { } snap) return;
+        if (MessageBox.Show(this, $"Go back to BetterTalk {snap.Version}?\n\nThe program and its setup (settings, buttons, panel layout, learned words) go back to how they were on {snap.TakenAt:d MMM yyyy}. BetterTalk closes and starts again.",
+                "BetterTalk", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
+        try
+        {
+            Updater.StartRestore();
+            Close();
+            _quit();
+        }
+        catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception)
+        {
+            UpdateStatus.Text = $"Could not go back ({ex.Message}).";
+        }
+    }
+
 }
 
 /// <summary>One line in the voice list: a voice (Key is what settings saves) or a group heading.</summary>

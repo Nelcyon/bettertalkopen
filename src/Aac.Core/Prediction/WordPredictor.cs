@@ -96,7 +96,8 @@ public sealed partial class WordPredictor
     public void ExportPersonal(PersonalData data)
     {
         data.Words = new Dictionary<string, double>(_personalUnigrams);
-        data.WordPairs = _personalBigrams.ToDictionary(kv => $"{kv.Key.Item1} {kv.Key.Item2}", kv => kv.Value);
+        // Only word pairs said more than once are saved: a pair said once would show the order of words in one message.
+        data.WordPairs = _personalBigrams.Where(kv => kv.Value >= 2).ToDictionary(kv => $"{kv.Key.Item1} {kv.Key.Item2}", kv => kv.Value);
     }
 
     public void ImportPersonal(PersonalData data)

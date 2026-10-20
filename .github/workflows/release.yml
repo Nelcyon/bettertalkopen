@@ -46,4 +46,12 @@ jobs:
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           $tag = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME } else { 'v' + $env:INPUT_VERSION.TrimStart('v') }
-          gh release create $tag installer/Output/BetterTalk-Setup.exe --target $env:GITHUB_SHA --title "BetterTalk $tag" --notes "Download **BetterTalk-Setup.exe**, double-click it, and follow the prompts. Windows may say it protected your PC because the file is not signed: choose More info, then Run anyway."
+          # The notes are this version's section of CHANGELOG.md (shown in the app's Settings → Updates), then how to install.
+          $version = $tag.TrimStart('v')
+          $lines = Get-Content CHANGELOG.md -Encoding utf8
+          $start = [Array]::IndexOf($lines, "## $version")
+          $section = @()
+          if ($start -ge 0) { for ($i = $start + 1; $i -lt $lines.Count -and -not $lines[$i].StartsWith('## '); $i++) { $section += $lines[$i] } }
+          $notes = (($section -join "`n").Trim()) + "`n`n---`nTo install: download **BetterTalk-Setup.exe**, double-click it, and follow the prompts. Windows may say it protected your PC because the file is not signed: choose More info, then Run anyway. Already have BetterTalk? Settings → Updates → Check for updates."
+          Set-Content -Path release-notes.md -Value $notes -Encoding utf8
+          gh release create $tag installer/Output/BetterTalk-Setup.exe --target $env:GITHUB_SHA --title "BetterTalk $tag" --notes-file release-notes.md
