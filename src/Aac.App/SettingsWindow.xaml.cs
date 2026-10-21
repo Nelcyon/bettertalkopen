@@ -30,6 +30,12 @@ public partial class SettingsWindow : Window
     public SettingsWindow(AppSettings current, Action restart, Action editButtons, Action<bool> setUnlocked, bool unlocked, Action putPanelsBack, Action setupGuide, Action quit)
     {
         InitializeComponent();
+        // Wide enough for the whole QuadStick card and every tab heading in one row, but never bigger than the screen.
+        var work = SystemParameters.WorkArea;
+        MinWidth = Math.Min(MinWidth, work.Width);
+        Width = Math.Min(Width, work.Width);
+        MinHeight = Math.Min(MinHeight, work.Height);
+        Height = Math.Min(Height, work.Height);
         _restart = restart;
         _editButtons = editButtons;
         _setUnlocked = setUnlocked;
@@ -557,7 +563,7 @@ public partial class SettingsWindow : Window
         CardGrid.ColumnDefinitions.Clear();
         CardGrid.RowDefinitions.Clear();
         CardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(92) });
-        foreach (var _ in QuadStickCard.Tubes) CardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 96 });
+        foreach (var _ in QuadStickCard.Tubes) CardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 128 });
         CardGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         for (var c = 0; c < QuadStickCard.Tubes.Count; c++)
         {
