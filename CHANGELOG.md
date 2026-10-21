@@ -2,6 +2,12 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.3.6
+
+- **The likeliest word is in the middle of the green row.** The word BetterTalk thinks you want most is now in
+  the centre, and the next ones alternate right and left outward, so the best guess is always the shortest move
+  away. To go back to likeliest-on-the-left, pick it in Settings → Screen & window → Green suggested words.
+
 ## 0.3.5
 
 - **New starting buttons.** New installs start with a different set of red and quick buttons.

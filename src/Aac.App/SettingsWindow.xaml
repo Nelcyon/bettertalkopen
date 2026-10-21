@@ -149,6 +149,14 @@
                             <ComboBoxItem Content="Never show it (keys only flash when pressed)" Tag="Never"/>
                         </ComboBox>
 
+                        <TextBlock Style="{StaticResource Label}" Text="Green suggested words"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Where the likeliest word goes in the green row. From the middle puts it in the centre, with the next likeliest words alternating right and left outward."/>
+                        <ComboBox x:Name="SuggestionOrder">
+                            <ComboBoxItem Content="Likeliest word in the middle"/>
+                            <ComboBoxItem Content="Likeliest word on the left"/>
+                        </ComboBox>
+
                         <TextBlock Style="{StaticResource Label}" Text="Which screen and corner"/>
                         <TextBlock Style="{StaticResource Hint}"
                                    Text="BetterTalk sits flush in one corner of one screen. Everything it opens grows away from that corner, so the keyboard never moves."/>

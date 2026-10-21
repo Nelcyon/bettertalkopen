@@ -38,6 +38,8 @@ public sealed class SessionOptions
     public bool QuickPhrasesSpeakImmediately { get; set; } = true;
     public bool ClearMessageAfterSpeaking { get; set; } = true;
     public bool LearnFromSpokenMessages { get; set; } = true;
+    /// <summary>The likeliest word goes in the middle of the green row and the rest alternate outward; otherwise left to right.</summary>
+    public bool SuggestionsFromMiddle { get; set; } = true;
     public bool WrapNavigation { get; set; }
     /// <summary>After choosing a sentence or phrase, put the cursor on Speak (choosing never speaks).</summary>
     public bool JumpToSpeakAfterChoosing { get; set; } = true;
@@ -68,6 +70,7 @@ public sealed class SessionOptions
         ClearMessageAfterSpeaking = s.Speech.ClearMessageAfterSpeaking,
         SpeakEachWord = s.Speech.SpeakEachWord,
         LearnFromSpokenMessages = s.Privacy.LearnFromSpokenMessages,
+        SuggestionsFromMiddle = s.SuggestionsFromMiddle,
         WrapNavigation = s.WrapNavigation,
         DrawerAbove = !Layout.Anchoring.IsTop(s.Anchor),
         ItchOpensRight = Layout.Anchoring.IsLeft(s.Anchor),
@@ -540,6 +543,17 @@ public sealed class CommunicationSession : INotifyPropertyChanged
     public string? LastSpoken => _speech.LastSpokenText;
     /// <summary>Word suggestion slots on the keyboard; the row always has this many so nothing below it moves.</summary>
     public const int SuggestionSlots = 6;
+
+    /// <summary>
+    /// Which prediction (0 = likeliest) goes in a slot of the green row, counted from the left. From the middle,
+    /// six slots hold ranks 4 2 0 1 3 5: the likeliest just left of centre, the next just right of it, and so on outward.
+    /// </summary>
+    public static int SuggestionRank(int slot, bool fromMiddle)
+    {
+        if (!fromMiddle) return slot;
+        var centre = (SuggestionSlots - 1) / 2;
+        return slot <= centre ? 2 * (centre - slot) : 2 * (slot - centre) - 1;
+    }
     public IReadOnlyList<MessageMetric> CompletedMessages => _metrics;
     public int TotalActions { get; private set; }
 
@@ -931,11 +945,13 @@ public sealed class CommunicationSession : INotifyPropertyChanged
         rows.Add(Row(PinnedRow, strip.Append(itch).ToArray()));
 
         // Green row: only predicted words, always six slots (blank and disabled when empty) so it never moves.
+        // By default the likeliest word sits in the middle and the rest alternate right and left outward.
         var words = _predictor.Predict(Draft, SuggestionSlots);
         rows.Add(Row(SuggestionsRow, Enumerable.Range(0, SuggestionSlots)
-            .Select(i => i < words.Count
-                ? new Cell($"pred-{i}", words[i], CellKind.Prediction, Payload: words[i])
-                : new Cell($"pred-{i}", "", CellKind.Prediction, IsEnabled: false))
+            .Select(slot => SuggestionRank(slot, _options.SuggestionsFromMiddle))
+            .Select((rank, slot) => rank < words.Count
+                ? new Cell($"pred-{slot}", words[rank], CellKind.Prediction, Payload: words[rank])
+                : new Cell($"pred-{slot}", "", CellKind.Prediction, IsEnabled: false))
             .ToArray()));
 
         // Every key is one unit wide, like a real keyboard; rows are staggered by half a key and a key

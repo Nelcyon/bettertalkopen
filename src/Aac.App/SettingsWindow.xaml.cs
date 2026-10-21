@@ -68,6 +68,7 @@ public partial class SettingsWindow : Window
         Debounce.Value = Math.Clamp(_settings.Input.DebounceMs, 0, 1000);
         RepeatDelay.Value = Math.Clamp(_settings.Input.DeleteRepeatDelayMs, 200, 1500);
         RepeatInterval.Value = Math.Clamp(_settings.Input.DeleteRepeatIntervalMs, 30, 300);
+        SuggestionOrder.SelectedIndex = _settings.SuggestionsFromMiddle ? 0 : 1;
         FillScreens();
         CornerChoice.SelectedItem = CornerChoice.Items.Cast<System.Windows.Controls.ComboBoxItem>().First(i => (string)i.Tag == _settings.Anchor.ToString());
         var corner = _settings.OpenFromCorner ? _settings.CornerTrigger.ToString() : "Off";
@@ -136,6 +137,7 @@ public partial class SettingsWindow : Window
         _settings.Input.DebounceMs = (int)Debounce.Value;
         _settings.Input.DeleteRepeatDelayMs = (int)RepeatDelay.Value;
         _settings.Input.DeleteRepeatIntervalMs = (int)RepeatInterval.Value;
+        _settings.SuggestionsFromMiddle = SuggestionOrder.SelectedIndex != 1;
         _settings.Screen = (ScreenChoice.SelectedItem as ScreenRow)?.Key;
         if (Enum.TryParse<WindowCorner>((string)((System.Windows.Controls.ComboBoxItem)CornerChoice.SelectedItem).Tag, out var anchor)) _settings.Anchor = anchor;
         var cornerChoice = (string)((System.Windows.Controls.ComboBoxItem)Corner.SelectedItem).Tag;

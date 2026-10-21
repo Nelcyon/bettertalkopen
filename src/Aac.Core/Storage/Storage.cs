@@ -59,6 +59,8 @@ public sealed class AppSettings
     public int AutoHideAfterMs { get; set; } = 2000;
     /// <summary>When the selection highlight shows; pressed keys always flash briefly.</summary>
     public FocusHighlight SelectionHighlight { get; set; } = FocusHighlight.WhileUsingKeys;
+    /// <summary>The likeliest predicted word sits in the middle of the green row, the others alternating right and left outward; off = likeliest on the left.</summary>
+    public bool SuggestionsFromMiddle { get; set; } = true;
     /// <summary>How the words that replace the urgent strip while Itch is open are coloured.</summary>
     public SpokenLook SpokenButtonLook { get; set; } = SpokenLook.BlueRedOutline;
     /// <summary>Stop the window being resized or maximized (its saved size is kept); fullscreen (F11) is ignored too.</summary>
