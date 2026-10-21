@@ -207,7 +207,17 @@ public static class ButtonStore
         try
         {
             if (File.Exists(path))
-                return JsonSerializer.Deserialize<PhraseLibrary>(File.ReadAllText(path), SettingsStore.JsonOptions) ?? fromSettings;
+            {
+                var buttons = JsonSerializer.Deserialize<PhraseLibrary>(File.ReadAllText(path), SettingsStore.JsonOptions) ?? fromSettings;
+                if (buttons.Upgrade())
+                {
+                    // Keep the file as it was before this version touched it, then write the upgraded one.
+                    var before = Path.ChangeExtension(path, ".before-upgrade.json");
+                    if (!File.Exists(before)) File.Copy(path, before);
+                    Save(path, buttons);
+                }
+                return buttons;
+            }
         }
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException or NotSupportedException)
         {
@@ -216,6 +226,7 @@ public static class ButtonStore
             try { File.Copy(path, Path.ChangeExtension(path, ".unreadable.json"), overwrite: true); } catch (IOException) { }
             return fromSettings;
         }
+        fromSettings.Upgrade();
         Save(path, fromSettings);
         return fromSettings;
     }

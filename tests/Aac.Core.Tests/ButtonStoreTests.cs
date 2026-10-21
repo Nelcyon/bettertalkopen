@@ -49,4 +49,49 @@ public class ButtonStoreTests : IDisposable
         Assert.NotNull(problem);
         Assert.True(File.Exists(Path.Combine(_dir, "buttons.unreadable.json")));
     }
+
+    private const string OldUntouchedFile = """
+        {
+          "PinnedPhrases": [ "Help!", "I need the bathroom.", "I'm in pain.", "Yes.", "No." ],
+          "QuickPhrases": [ "Yes.", "No.", "Wait.", "Stop.", "I need help.", "Please repeat that.", "That's not what I meant.",
+                            "Give me a moment.", "I'm uncomfortable.", "I need to reposition." ],
+          "Categories": [ { "Name": "Needs", "Phrases": [ "I need water." ] } ],
+          "SpokenListVersion": 1
+        }
+        """;
+
+    [Fact]
+    public void An_update_gives_never_changed_buttons_the_new_starting_buttons_and_writes_them_into_the_file()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(File_, OldUntouchedFile);
+        var loaded = ButtonStore.Load(File_, PhraseLibrary.CreateDefault(), out var problem);
+        Assert.Null(problem);
+        Assert.Equal(PhraseLibrary.DefaultPinnedPhrases, loaded.Pinned);
+        Assert.Equal(PhraseLibrary.DefaultQuickPhrases, loaded.QuickPhrases);
+        Assert.Equal(new[] { "I need water." }, loaded.Categories.Single().Phrases); // phrase pages are untouched
+
+        // Written out in full, so a later version's starting buttons can never change them again.
+        var onDisk = System.Text.Json.JsonSerializer.Deserialize<PhraseLibrary>(File.ReadAllText(File_), SettingsStore.JsonOptions)!;
+        Assert.Equal(PhraseLibrary.DefaultPinnedPhrases, onDisk.PinnedPhrases);
+        Assert.Equal(2, onDisk.ButtonsVersion);
+        Assert.False(onDisk.Upgrade());
+        Assert.Equal(OldUntouchedFile, File.ReadAllText(Path.Combine(_dir, "buttons.before-upgrade.json")));
+    }
+
+    [Fact]
+    public void An_update_never_changes_buttons_someone_has_changed()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(File_, """{ "PinnedPhrases": [ "Water", "Lights" ], "QuickPhrases": [ "Fan on" ], "Categories": [] }""");
+        var loaded = ButtonStore.Load(File_, PhraseLibrary.CreateDefault(), out _);
+        Assert.Equal(new[] { "Water", "Lights" }, loaded.Pinned);
+        Assert.Equal(new[] { "Fan on" }, loaded.QuickPhrases);
+
+        // Even a red row set to exactly the old starting buttons stays when the quick row was changed.
+        File.WriteAllText(File_, """{ "PinnedPhrases": [ "Help!", "I need the bathroom.", "I'm in pain.", "Yes.", "No." ], "QuickPhrases": [ "Fan on" ], "Categories": [] }""");
+        loaded = ButtonStore.Load(File_, PhraseLibrary.CreateDefault(), out _);
+        Assert.Equal("Help!", loaded.Pinned[0]);
+        Assert.Equal(new[] { "Fan on" }, loaded.QuickPhrases);
+    }
 }

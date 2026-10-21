@@ -12,7 +12,7 @@
     <AssemblyName>BetterTalk</AssemblyName>
     <RootNamespace>Aac.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.3.4</Version>
+    <Version>0.3.5</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NAudio.WinMM" Version="2.2.1" />

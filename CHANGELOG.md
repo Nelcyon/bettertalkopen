@@ -2,6 +2,15 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.3.5
+
+- **New starting buttons.** New installs start with a different set of red and quick buttons.
+- **Your buttons are kept in your buttons file for good.** Older versions kept the red buttons you never
+  changed as built-in starting buttons, so a new version could change them. Now every row is written into the
+  file, so no update can change them. If your red and quick buttons were never changed, this update gives you
+  the new starting buttons once (a copy of the old file is kept as buttons.before-upgrade.json); buttons you
+  changed yourself are never touched.
+
 ## 0.3.4
 
 - **Wider Settings window.** The whole QuadStick card now fits without scrolling sideways, and all the tabs

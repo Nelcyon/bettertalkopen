@@ -42,7 +42,7 @@ public class SessionTests
     {
         var rig = WithQuickOpen();
         Assert.Equal(Drawer.Quick, rig.Session.Drawer);
-        Assert.Equal("Yes.", rig.Session.FocusedCell?.Label);
+        Assert.Equal(PhraseLibrary.DefaultQuickPhrases[0], rig.Session.FocusedCell?.Label);
         Assert.StartsWith(CommunicationSession.DrawerRowPrefix, rig.Session.Rows[rig.Session.FocusRow].Name);
     }
 
@@ -52,7 +52,7 @@ public class SessionTests
         var rig = WithQuickOpen();
         rig.Session.HandleAction(InputAction.Select);
         Assert.Single(rig.Engine.Spoken);
-        Assert.Equal("Yes.", rig.Engine.Spoken[0].DisplayText);
+        Assert.Equal(PhraseLibrary.DefaultQuickPhrases[0], rig.Engine.Spoken[0].DisplayText);
         Assert.Equal(UtteranceKind.QuickPhrase, rig.Engine.Spoken[0].Kind);
         Assert.Equal(Drawer.Quick, rig.Session.Drawer);
     }
@@ -63,7 +63,7 @@ public class SessionTests
         var rig = WithQuickOpen(new SessionOptions { QuickPhrasesSpeakImmediately = false });
         rig.Session.HandleAction(InputAction.Select);
         Assert.Empty(rig.Engine.Spoken);
-        Assert.Equal("Yes.", rig.Session.Draft);
+        Assert.Equal(PhraseLibrary.DefaultQuickPhrases[0], rig.Session.Draft);
         Assert.Equal(CommandId.Speak, rig.Session.FocusedCell?.Command);
     }
 
@@ -221,9 +221,9 @@ public class SessionTests
         rig.Session.PhrasesChanged += (_, _) => saved++;
         rig.Session.SetEditMode(true);
 
-        Click(rig, c => c.Kind == CellKind.Pinned && c.Payload == "I'm in pain.");
+        Click(rig, c => c.Kind == CellKind.Pinned && c.Payload == "Feet");
         Assert.Empty(rig.Engine.Spoken);
-        Assert.Equal(new PhraseEdit(PhraseList.Urgent, null, "I'm in pain."), asked);
+        Assert.Equal(new PhraseEdit(PhraseList.Urgent, null, "Feet"), asked);
         rig.Session.ApplyEdit(asked!, "Please open the window.");
         Assert.Contains(rig.Session.Rows[0].Cells, c => c.Cell.Payload == "Please open the window.");
 
@@ -414,12 +414,12 @@ public class SessionTests
     public void Metrics_count_actions_per_message_without_storing_text()
     {
         var rig = WithQuickOpen();
-        rig.Session.HandleAction(InputAction.MoveRight); // to "No."
+        rig.Session.HandleAction(InputAction.MoveRight); // to the second quick phrase
         rig.Session.HandleAction(InputAction.Select);
         var m = Assert.Single(rig.Session.CompletedMessages);
         Assert.Equal(2, m.Actions);
         Assert.Equal(MessageKind.Quick, m.Kind);
-        Assert.Equal(3, m.Characters);
+        Assert.Equal(PhraseLibrary.DefaultQuickPhrases[1].Length, m.Characters);
     }
 
     [Fact]
@@ -450,14 +450,14 @@ public class SessionTests
         rig.Session.Open(drawer);
         Assert.Equal(CommunicationSession.PinnedRow, rig.Session.Rows[0].Name);
         Assert.NotEqual(CommunicationSession.PinnedRow, rig.Session.Rows[rig.Session.FocusRow].Name);
-        Click(rig, c => c.Kind == CellKind.Pinned && c.Payload == "I need the bathroom.");
-        Assert.Equal("I need the bathroom.", Assert.Single(rig.Engine.Spoken).DisplayText);
+        Click(rig, c => c.Kind == CellKind.Pinned && c.Payload == "Tube Feeding please!");
+        Assert.Equal("Tube Feeding please!", Assert.Single(rig.Engine.Spoken).DisplayText);
     }
 
     [Fact]
     public void Older_settings_without_pinned_phrases_get_the_defaults_and_an_empty_list_hides_the_strip()
     {
-        Assert.Contains("I'm in pain.", new PhraseLibrary().Pinned);
+        Assert.Contains(PhraseLibrary.DefaultPinnedPhrases[0], new PhraseLibrary().Pinned);
         Assert.Empty(new PhraseLibrary { PinnedPhrases = new() }.Pinned);
     }
 
