@@ -296,6 +296,21 @@ public class SessionTests
     }
 
     [Fact]
+    public void The_likeliest_word_sits_in_the_middle_and_the_rest_alternate_outward()
+    {
+        Assert.Equal(new[] { 4, 2, 0, 1, 3, 5 }, Enumerable.Range(0, CommunicationSession.SuggestionSlots).Select(s => CommunicationSession.SuggestionRank(s, true)));
+        Assert.Equal(new[] { 0, 1, 2, 3, 4, 5 }, Enumerable.Range(0, CommunicationSession.SuggestionSlots).Select(s => CommunicationSession.SuggestionRank(s, false)));
+
+        string[] Row(Rig r) => r.Session.Rows.First(x => x.Name == CommunicationSession.SuggestionsRow).Cells.Select(c => c.Cell.Label).ToArray();
+        var middle = new Rig();
+        var left = new Rig(new SessionOptions { SuggestionsFromMiddle = false });
+        middle.Type("the d");
+        left.Type("the d");
+        var ranked = Row(left);
+        Assert.Equal(new[] { ranked[4], ranked[2], ranked[0], ranked[1], ranked[3], ranked[5] }, Row(middle));
+    }
+
+    [Fact]
     public void Prediction_completes_the_current_word()
     {
         var rig = new Rig();
