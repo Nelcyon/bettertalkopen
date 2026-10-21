@@ -2,6 +2,12 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.3.7
+
+- **Numbers on the keyboard.** A new row above the letters has 1 to 0, with a comma and a full stop at its
+  right end. The keyboard stays the same width; the keys get a little shorter to make room, so drag the window
+  a bit taller if you want them back to their old height.
+
 ## 0.3.6
 
 - **The likeliest word is in the middle of the green row.** The word BetterTalk thinks you want most is now in

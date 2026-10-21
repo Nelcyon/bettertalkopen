@@ -157,6 +157,10 @@ public sealed class CommunicationSession : INotifyPropertyChanged
     public const string FrequentCategory = "★ Most used";
     private const int ForgetConfirmMs = 10_000;
 
+    /// <summary>The number row above Q–P.</summary>
+    public const string NumberRow = "keys-numbers";
+    private static readonly string[] NumberKeys = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ",", "." };
+
     private static readonly string[][] KeyboardLayout =
     {
         new[] { "q", "w", "e", "r", "t", "y", "u", "i", "o", "p" },
@@ -953,6 +957,11 @@ public sealed class CommunicationSession : INotifyPropertyChanged
                 ? new Cell($"pred-{slot}", words[rank], CellKind.Prediction, Payload: words[rank])
                 : new Cell($"pred-{slot}", "", CellKind.Prediction, IsEnabled: false))
             .ToArray()));
+
+        // Number row above the letters: 1 to 0 over Q to P, then comma and full stop over the backspace key,
+        // so the row is exactly as wide as the others.
+        rows.Add(KeyRow(NumberRow, NumberKeys
+            .Select(k => new Cell($"key-{k}", k, CellKind.Letter, Payload: k)).ToArray()));
 
         // Every key is one unit wide, like a real keyboard; rows are staggered by half a key and a key
         // and a half, and nothing is stretched to fill its row.
