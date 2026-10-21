@@ -523,11 +523,29 @@ public class SessionTests
         var keyRows = rig.Session.Rows.Where(r => r.Name.StartsWith("keys-") || r.Name == "edit").ToList();
         Assert.All(keyRows, r => Assert.Equal(12, r.Units));
         Assert.All(keyRows.SelectMany(r => r.Cells).Where(c => c.Cell.Kind == CellKind.Letter), c => Assert.Equal(1, c.Cell.Span));
-        Assert.Equal(new[] { 0.0, 0.5, 1.5 }, keyRows.Take(3).Select(r => r.Geometry.Cells[0].Start));
+        Assert.Equal(new[] { 0.0, 0.0, 0.5, 1.5 }, keyRows.Take(4).Select(r => r.Geometry.Cells[0].Start));
         // Q sits above A and Z is under S, as on a real keyboard.
         Click(rig, c => c.Payload == "s");
         rig.Session.HandleAction(InputAction.MoveDown);
         Assert.Equal("z", rig.Session.FocusedCell?.Payload);
+    }
+
+    [Fact]
+    public void Number_row_sits_above_the_letters_and_types_digits()
+    {
+        var rig = new Rig();
+        var names = rig.Session.Rows.Select(r => r.Name).ToList();
+        Assert.Equal(names.IndexOf("keys-0") - 1, names.IndexOf(CommunicationSession.NumberRow));
+        var row = rig.Session.Rows.First(r => r.Name == CommunicationSession.NumberRow);
+        Assert.Equal(new[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ",", "." }, row.Cells.Select(c => c.Cell.Payload));
+        Assert.Equal(12, row.Geometry.Total);
+        rig.Session.ActivateCell("key-4");
+        rig.Session.ActivateCell("key-2");
+        Assert.Equal("42", rig.Session.Draft);
+        // 1 sits above Q.
+        Click(rig, c => c.Payload == "q");
+        rig.Session.HandleAction(InputAction.MoveUp);
+        Assert.Equal("1", rig.Session.FocusedCell?.Payload);
     }
 
     [Fact]
