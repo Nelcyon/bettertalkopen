@@ -2,6 +2,11 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.3.4
+
+- **Wider Settings window.** The whole QuadStick card now fits without scrolling sideways, and all the tabs
+  sit in one row.
+
 ## 0.3.3
 
 - **QuadStick card.** A new Settings tab laid out like a paper sip-and-puff card: the tubes across, soft puff,

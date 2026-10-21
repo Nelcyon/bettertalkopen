@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:Aac.App"
-        Title="BetterTalk settings" Width="820" Height="800" MinWidth="520" MinHeight="520"
+        Title="BetterTalk settings" Width="1040" Height="800" MinWidth="1040" MinHeight="520"
         Background="{DynamicResource DkBg}" Foreground="{DynamicResource DkText}"
         FontFamily="Segoe UI" FontSize="16" WindowStartupLocation="CenterScreen" ShowInTaskbar="True">
     <Window.Resources>
@@ -208,7 +208,8 @@
 
             <!-- ================= QuadStick card ================= -->
             <TabItem Header="QuadStick card">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <!-- No sideways scrolling: the window is wide enough for the whole card, and the text in the squares wraps. -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="14,4,14,14">
                         <TextBlock Style="{StaticResource Intro}"
                                    Text="Like the paper sip-and-puff card: the tubes across, how hard you sip or puff down. Each square shows what that gesture sends, and what BetterTalk does with it."/>
