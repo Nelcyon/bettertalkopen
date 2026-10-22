@@ -3,6 +3,7 @@ using Aac.Core.Abstractions;
 using Aac.Core.Speech;
 using Aac.Core.Storage;
 using NAudio.CoreAudioApi;
+using NAudio.CoreAudioApi.Interfaces;
 
 namespace Aac.App;
 
