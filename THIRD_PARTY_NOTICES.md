@@ -14,7 +14,7 @@ BetterTalk is licensed under the GNU General Public License v3.0 (see LICENSE). 
 | Library | Licence |
 |---|---|
 | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) (org.k2fsa.sherpa.onnx) | Apache 2.0 |
-| [NAudio](https://github.com/naudio/NAudio) (NAudio.WinMM) | MIT |
+| [NAudio](https://github.com/naudio/NAudio) (NAudio.WinMM, NAudio.Wasapi) | MIT |
 | System.Speech, .NET | MIT |
 | xUnit (tests only) | Apache 2.0 |
 

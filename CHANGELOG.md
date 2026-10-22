@@ -2,6 +2,18 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.4.0
+
+- **Other sounds get quieter while BetterTalk speaks.** Music, videos, calls and every other program's sound on
+  the computer drop to half their volume the moment BetterTalk starts speaking (Speak, the red buttons, quick
+  phrases and the Itch words), so people can hear you over the TV. When the voice finishes or you press Stop,
+  each program goes back to exactly its own volume. A program you open while BetterTalk is speaking is turned
+  down too, and if you change a program's volume yourself meanwhile, your choice is kept.
+- **Change it or switch it off** in Settings → Voice & speaking → Other sounds while speaking: untick it, or
+  choose how quiet other sounds go (50% is half as loud, 0% silences them while BetterTalk speaks).
+- If BetterTalk ever closes unexpectedly while speaking, the other programs' volumes are put back the next time
+  it starts.
+
 ## 0.3.9
 
 - **Send feedback from inside BetterTalk.** Settings → Updates → Send feedback (also in the tray menu) turns the
