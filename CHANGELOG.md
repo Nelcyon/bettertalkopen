@@ -2,6 +2,15 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.3.9
+
+- **Send feedback from inside BetterTalk.** Settings → Updates → Send feedback (also in the tray menu) turns the
+  main window into a feedback box with a teal frame. Type with BetterTalk's own keyboard and suggestions, then
+  press Send feedback where Speak usually is. Nothing is spoken or learned, and your unfinished message comes
+  back afterwards. Only your feedback words, the BetterTalk version and the Windows version are sent, and no
+  account is needed. Without internet, the feedback is kept on your PC and sent the next time BetterTalk starts.
+- **Older button files (from before 0.3.5) keep the plain starting buttons when they update.**
+
 ## 0.3.8
 
 - **New installs start with the plain buttons again.** A fresh install gets the general starting red and quick

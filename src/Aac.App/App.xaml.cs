@@ -132,9 +132,12 @@ public partial class App : Application
         var window = new MainWindow(session, gate, settings);
         MainWindow = window;
         window.EditDoneRequested += () => SetEditMode(session, window, false);
+        window.FeedbackCancelRequested += () => SetFeedbackMode(session, window, false);
+        session.FeedbackSubmitted += (_, text) => SendFeedback(session, text);
         window.LockUiRequested += () => SetArranging(session, window, false);
         _tray = new TrayIcon(window.ShowFromTray, window.HideToTray, OpenSettings, OpenSettingsFile, () => Quit(restart: false, "Exit chosen in the tray menu"),
-            on => SetEditMode(session, window, on), on => SetArranging(session, window, on), window.PutAllPanelsBack, OpenSetupGuide);
+            on => SetEditMode(session, window, on), on => SetArranging(session, window, on), window.PutAllPanelsBack, OpenSetupGuide,
+            () => SetFeedbackMode(session, window, true));
         _session = session;
         // For checking the Settings window on a test copy (it is otherwise opened from the tray icon).
         if (Environment.GetEnvironmentVariable("BETTERTALK_OPEN_SETTINGS") == "1" && Environment.GetEnvironmentVariable("BETTERTALK_DATA_DIR") is { Length: > 0 })
@@ -155,6 +158,14 @@ public partial class App : Application
         ItchView.Preload().ContinueWith(_ => Dispatcher.BeginInvoke(ItchViewHost.Prepare, DispatcherPriority.ApplicationIdle),
             TaskScheduler.Default);
 
+        // Feedback written while offline (or before sending was set up) goes now, quietly.
+        if (FeedbackSender.AnyWaiting)
+            FeedbackSender.SendWaitingAsync().ContinueWith(t =>
+            {
+                if (t.Exception is { } ex) LogError(ex.GetBaseException());
+                else if (t.Result > 0) LogLifecycle($"sent {t.Result} saved feedback");
+            }, TaskScheduler.Default);
+
         var signal = _showSignal;
         ThreadPool.RegisterWaitForSingleObject(signal, (_, _) => Dispatcher.BeginInvoke(window.ShowFromTray), null, Timeout.Infinite, executeOnlyOnce: false);
     }
@@ -163,6 +174,7 @@ public partial class App : Application
 
     private void SetEditMode(CommunicationSession session, MainWindow window, bool on)
     {
+        if (on && session.FeedbackMode) session.SetFeedbackMode(false);
         session.SetEditMode(on);
         if (_tray is not null) _tray.EditModeChecked = on;
         if (on)
@@ -171,6 +183,41 @@ public partial class App : Application
             session.ShowNotice("Button edit mode: tap a button to change its words or move it along its row, or ＋ Add. Press Done editing at the bottom when you finish.");
         }
         else session.ShowNotice("Edit mode off.");
+    }
+
+    /// <summary>
+    /// Feedback mode (Settings or the tray): the keyboard writes feedback for the makers instead of a message, with
+    /// a frame round the window and Cancel at the bottom. The unfinished message comes back afterwards.
+    /// </summary>
+    private void SetFeedbackMode(CommunicationSession session, MainWindow window, bool on)
+    {
+        if (on && session.EditMode) SetEditMode(session, window, false);
+        session.SetFeedbackMode(on);
+        if (on)
+        {
+            window.ShowFromTray();
+            session.ShowNotice("Feedback: type what you would like to tell the makers of BetterTalk, then press Send feedback. It is not spoken. Cancel is at the bottom.");
+        }
+        else session.ShowNotice("Feedback closed. Your message is back.");
+    }
+
+    private async void SendFeedback(CommunicationSession session, string text)
+    {
+        FeedbackSender.Result result;
+        try { result = await FeedbackSender.SendAsync(text); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            LogError(ex);
+            session.FeedbackDone(false, $"Your feedback could not be saved ({ex.Message}). Please try again.");
+            return;
+        }
+        LogLifecycle($"feedback {result}");
+        session.FeedbackDone(true, result switch
+        {
+            FeedbackSender.Result.Sent => "Thank you! Your feedback was sent.",
+            FeedbackSender.Result.SavedNoInternet => "Thank you! There is no internet right now, so your feedback is kept on this PC and goes the next time BetterTalk starts.",
+            _ => "Thank you! Your feedback is kept on this PC and goes by itself as soon as feedback sending is switched on.",
+        });
     }
 
     /// <summary>Move mode ("Unlock UI") on or off (the tray menu or Settings), with the tray's tick kept in step.</summary>
@@ -220,7 +267,8 @@ public partial class App : Application
             on => { if (_session is not null && MainWindow is MainWindow w) SetArranging(_session, w, on); },
             MainWindow is MainWindow { IsArranging: true },
             () => { if (MainWindow is MainWindow w) w.PutAllPanelsBack(); },
-            OpenSetupGuide, () => Quit(restart: false, "closing for an update or going back to the version before"));
+            OpenSetupGuide, () => Quit(restart: false, "closing for an update or going back to the version before"),
+            () => { if (_session is not null && MainWindow is MainWindow w) SetFeedbackMode(_session, w, true); });
         _settingsWindow.Show();
         _settingsWindow.Activate();
     }

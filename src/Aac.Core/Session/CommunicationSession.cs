@@ -236,6 +236,64 @@ public sealed class CommunicationSession : INotifyPropertyChanged
     public event EventHandler<PhraseEdit>? EditRequested;
     /// <summary>The button texts were changed; the host saves them.</summary>
     public event EventHandler? PhrasesChanged;
+    /// <summary>In feedback mode, Send feedback (the Speak key) hands the typed text to the host to send.</summary>
+    public event EventHandler<string>? FeedbackSubmitted;
+
+    // ---------- feedback ----------
+
+    /// <summary>
+    /// While on, the keyboard writes feedback for the makers of BetterTalk instead of a message: Speak becomes
+    /// Send feedback, nothing is said out loud or learned, and the unfinished message is put aside and comes back
+    /// when feedback mode ends.
+    /// </summary>
+    public bool FeedbackMode { get; private set; }
+    /// <summary>True from Send feedback until the host says how sending went.</summary>
+    public bool FeedbackSending { get; private set; }
+    private string? _draftBeforeFeedback;
+
+    public void SetFeedbackMode(bool on)
+    {
+        if (FeedbackMode == on) return;
+        if (on)
+        {
+            _draftBeforeFeedback = Draft;
+            FeedbackMode = true;
+            SetDraft("", recordUndo: false);
+            _undo.Clear();
+            StatusText = "Type your feedback, then press Send feedback.";
+        }
+        else
+        {
+            FeedbackMode = false;
+            FeedbackSending = false;
+            _undo.Clear();
+            SetDraft(_draftBeforeFeedback ?? "", recordUndo: false);
+            _draftBeforeFeedback = null;
+            StatusText = "Ready.";
+        }
+        Rebuild();
+        RaiseAll();
+    }
+
+    /// <summary>The host's answer to <see cref="FeedbackSubmitted"/>: sent (or kept to send later) ends feedback mode.</summary>
+    public void FeedbackDone(bool finished, string status)
+    {
+        FeedbackSending = false;
+        if (finished) SetFeedbackMode(false);
+        else Rebuild();
+        ShowNotice(status);
+    }
+
+    private void SubmitFeedback()
+    {
+        var text = Draft.Trim();
+        if (text.Length == 0) { StatusText = "Type your feedback first."; return; }
+        if (FeedbackSending) return;
+        FeedbackSending = true;
+        StatusText = "Sending your feedback…";
+        Rebuild();
+        FeedbackSubmitted?.Invoke(this, text);
+    }
 
     // ---------- itch ----------
 
@@ -656,6 +714,7 @@ public sealed class CommunicationSession : INotifyPropertyChanged
     /// <summary>Says the whole message now (one press, one time), then clears it if set to.</summary>
     public void Speak()
     {
+        if (FeedbackMode) { SubmitFeedback(); return; }
         var text = Draft.Trim();
         var outcome = _speech.SpeakMessage(text);
         switch (outcome)
@@ -877,7 +936,7 @@ public sealed class CommunicationSession : INotifyPropertyChanged
         SayFinishedWords(typed);
 
 
-        _draftStore?.Save(Draft);
+        if (!FeedbackMode) _draftStore?.Save(Draft);
         Rebuild();
     }
 
@@ -896,7 +955,7 @@ public sealed class CommunicationSession : INotifyPropertyChanged
             .Where(m => m.Index + m.Length < Draft.Length && (char.IsWhiteSpace(Draft[m.Index + m.Length]) || ".,!?;:".Contains(Draft[m.Index + m.Length])))
             .ToList();
         var finishedEnd = finished.Count == 0 ? 0 : finished[^1].Index + finished[^1].Length;
-        if (!typed || !_options.SpeakEachWord)
+        if (!typed || !_options.SpeakEachWord || FeedbackMode)
         {
             // Deleting only the space after a said word keeps it said, so retyping the space is silent.
             if (!(Draft.StartsWith(_saidUpTo, StringComparison.Ordinal) && _saidUpTo.Length > finishedEnd))
@@ -978,7 +1037,9 @@ public sealed class CommunicationSession : INotifyPropertyChanged
             // Speak is where Enter is, with a small Stop segment attached that lights up only while speaking.
             if (i == 1)
             {
-                keys.Add(new Cell("speak", "Speak", CellKind.Command, CommandId.Speak, IsEnabled: hasText && !IsSpeaking, Icon: "🔊", Span: 2, Part: KeyPart.Start));
+                keys.Add(FeedbackMode
+                    ? new Cell("speak", "Send feedback", CellKind.Command, CommandId.Speak, IsEnabled: hasText && !FeedbackSending, Icon: "✉", Span: 2, Part: KeyPart.Start)
+                    : new Cell("speak", "Speak", CellKind.Command, CommandId.Speak, IsEnabled: hasText && !IsSpeaking, Icon: "🔊", Span: 2, Part: KeyPart.Start));
                 keys.Add(new Cell("stop", "Stop speaking", CellKind.Command, CommandId.StopVoice, IsEnabled: IsSpeaking, Icon: "■", Caption: "Stop", Span: 0.5, Part: KeyPart.End));
             }
             rows.Add(KeyRow($"keys-{i}", keys.ToArray()));

@@ -410,6 +410,35 @@
                 <Button Style="{StaticResource BadgeButton}" Content="Done editing" FontSize="16" FontWeight="Bold" Padding="16,2" Click="EditDone_Click"/>
             </StackPanel>
         </Border>
+        <!-- Feedback mode: a teal frame round the window and a label on its bottom edge with Cancel, like edit mode,
+             so it is always clear that the keyboard is writing feedback and not a message. -->
+        <Border x:Name="FeedbackFrame" Grid.RowSpan="2" Grid.ColumnSpan="5" Margin="-14" BorderBrush="#3FB8A8" BorderThickness="6"
+                IsHitTestVisible="False" Panel.ZIndex="50">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding FeedbackMode}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+        </Border>
+        <Border x:Name="FeedbackBadge" Grid.RowSpan="2" Grid.ColumnSpan="5" Margin="0,0,0,-14" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                Background="#1E6B62" BorderBrush="#3FB8A8" BorderThickness="2,2,2,0" CornerRadius="10,10,0,0" Padding="16,2,6,2" Panel.ZIndex="51">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding FeedbackMode}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="FEEDBACK" FontSize="17" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                <TextBlock Text="type it, then press Send feedback · it is not spoken" FontSize="15" Foreground="White" VerticalAlignment="Center" Margin="12,0,14,0"/>
+                <Button Style="{StaticResource BadgeButton}" Content="Cancel" FontSize="16" FontWeight="Bold" Padding="16,2" Click="FeedbackCancel_Click"/>
+            </StackPanel>
+        </Border>
         <!-- Move mode (UI unlocked): a label on the bottom edge with Lock UI, so there is always a way back. -->
         <Border x:Name="MoveBadge" Grid.RowSpan="2" Grid.Column="2" Margin="0,0,0,-14" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                 Background="#2F5F95" BorderBrush="#7CC4FF" BorderThickness="2,2,2,0" CornerRadius="10,10,0,0" Padding="16,2,6,2" Panel.ZIndex="51" Visibility="Collapsed">

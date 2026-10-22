@@ -21,7 +21,7 @@ public sealed class TrayIcon : IDisposable
     private readonly Forms.ToolStripMenuItem _arrangeItem;
 
     public TrayIcon(Action show, Action hide, Action openSettings, Action openSettingsFile, Action exit, Action<bool> setEditMode,
-        Action<bool> setArranging, Action putPanelsBack, Action setupGuide)
+        Action<bool> setArranging, Action putPanelsBack, Action setupGuide, Action sendFeedback)
     {
         _image = DrawIcon();
         var menu = new Forms.ContextMenuStrip { ShowItemToolTips = true };
@@ -41,6 +41,8 @@ public sealed class TrayIcon : IDisposable
         _arrangeItem.CheckedChanged += (_, _) => setArranging(_arrangeItem.Checked);
         menu.Items.Add(_arrangeItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
+        menu.Items.Add(new Forms.ToolStripMenuItem("Send feedback to the makers…", null, (_, _) => sendFeedback())
+            { ToolTipText = "Type it with BetterTalk's own keyboard. Only your words and the version numbers are sent" });
         menu.Items.Add(new Forms.ToolStripMenuItem("Help and downloads (opens the BetterTalk web page)", null, (_, _) => OpenHelpPage()));
         var advanced = new Forms.ToolStripMenuItem("Set-up and tools") { ToolTipText = "Options for the person setting BetterTalk up" };
         advanced.DropDownItems.Add(new Forms.ToolStripMenuItem("Run the set-up guide", null, (_, _) => setupGuide())

@@ -73,6 +73,9 @@ Your settings, buttons and learned words are always kept.
 
 ## Report a problem or an idea
 
+- **Easiest: from inside BetterTalk.** Choose Settings → Updates → **Send feedback** (or *Send feedback to the
+  makers* in the tray menu), type with BetterTalk's own keyboard and press **Send feedback**. No account is
+  needed. Only your feedback words, the BetterTalk version and the Windows version are sent.
 - **[Open an issue on GitHub](https://github.com/Nelcyon/bettertalkopen/issues/new/choose)** (needs a free
   GitHub account). There is a short form for problems and one for ideas.
 - Helpful to include: your BetterTalk version (Settings → Updates), your Windows version, how the user controls
