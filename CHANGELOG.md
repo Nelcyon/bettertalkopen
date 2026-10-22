@@ -10,6 +10,9 @@ Each version's notes here are shown in Settings → Updates when you press Check
   of it. BetterTalk now waits until the speakers have really played everything, with a moment of silence after
   the last word, before it counts the message as finished. Only then do other sounds come back up and the
   window hide by itself.
+- **Other sounds go quieter while BetterTalk speaks: a quarter of their volume instead of half,** so you are
+  easier to hear over the TV or music. This applies to everyone, including if you had changed it in 0.4.0.
+  Choose another level in Settings → Voice & speaking → Other sounds while speaking (now in steps of 5%).
 
 ## 0.4.1
 

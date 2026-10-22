@@ -118,8 +118,8 @@
                         <TextBlock Style="{StaticResource Label}">
                             <Run Text="How quiet: other sounds go to "/><Run Text="{Binding Value, ElementName=DuckTo, StringFormat=N0}"/><Run Text="% of their volume"/>
                         </TextBlock>
-                        <TextBlock Style="{StaticResource Hint}" Text="50 is half as loud. 0 silences them while BetterTalk speaks."/>
-                        <Slider x:Name="DuckTo" Minimum="0" Maximum="90" TickFrequency="10" IsSnapToTickEnabled="True"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="25 (the usual) is a quarter of their volume, 50 is half. 0 silences them while BetterTalk speaks."/>
+                        <Slider x:Name="DuckTo" Minimum="0" Maximum="90" TickFrequency="5" IsSnapToTickEnabled="True"/>
 
                         <TextBlock Style="{StaticResource Label}" Text="When should it speak?"/>
                         <ComboBox x:Name="SpeakWhen">

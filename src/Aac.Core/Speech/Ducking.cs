@@ -87,8 +87,8 @@ public sealed class AudioDucker
         if (store is not null) _pending.AddRange(store.Load().Where(s => s.AppId.Length > 0));
     }
 
-    /// <summary>How loud other programs stay while BetterTalk speaks: 0.5 = half their volume.</summary>
-    public double Level { get; set; } = 0.5;
+    /// <summary>How loud other programs stay while BetterTalk speaks: 0.25 = a quarter of their volume.</summary>
+    public double Level { get; set; } = 0.25;
 
     public bool IsDucked { get; private set; }
 
