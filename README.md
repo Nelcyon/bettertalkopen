@@ -66,9 +66,13 @@ Your settings, buttons and learned words are always kept.
 - **Why Windows warns about it.** The installer is not code-signed yet (a signing certificate costs money every
   year). That is why SmartScreen says "Windows protected your PC". It is a warning about an unknown publisher,
   not a virus detection.
+- **No AI services.** BetterTalk has no connection to ChatGPT, Gemini, Claude or any other AI chatbot or
+  language model, closed or open. Word suggestions come from a plain word-frequency list plus the words you
+  use, counted on your own PC. The natural voices are open-source text-to-speech models (Piper, Kokoro,
+  KittenTTS) that run on your PC through the open-source sherpa-onnx library.
 - **It stays on your computer.** No account, no cloud, no tracking, no ads. It never records audio. The only
-  times it uses the internet are when you download a voice or press Check for updates. What it learns about
-  your words is stored encrypted on your PC (see [Privacy defaults](#privacy-defaults)).
+  times it uses the internet are when you download a voice, press Check for updates, or send feedback. What it
+  learns about your words is stored encrypted on your PC (see [Privacy defaults](#privacy-defaults)).
 - **No administrator rights.** It installs into your own user folder, like many apps do.
 
 ## Report a problem or an idea
@@ -284,26 +288,19 @@ y up, facing +z) and embedded in the app. The figure wears dark green shorts wit
 body mesh itself. A clicked point is named by the nearest of the simple regions in
 `Mannequin.Parts`, which are fitted to that body.
 
-## Sentence options (removed)
-
-Turning a few keywords into full sentences was tried and removed: without a capable
-language model it could not offer useful options. The offline rules and the local-model client are
-still in `src/Aac.Core/Generation` (unused) in case it is revisited.
-
 ## Privacy defaults
 
 | Setting | Default | Meaning |
 |---|---|---|
 | `Privacy.RecoverUnfinishedMessage` | on | Saves only the current unfinished message, encrypted. It is deleted once the message is spoken or cleared. |
 | `Privacy.LearnFromSpokenMessages` | **on** | Learns the user's words, word pairs and repeated messages from what the user speaks. Words the user uses get suggested first, and messages said twice appear under "★ Most used" on the Phrases page. It is not a log: a message said once is kept only as a salted one-way fingerprint (no text), word pairs are saved only once they have been said twice, messages that look private (a password or pin, a run of four or more digits, an email address) are never learned from, only the day is stored, and anything unused for a year is forgotten. Stored encrypted in `%APPDATA%\BetterTalk\learned.bin` (Windows DPAPI, so only this Windows account can read it). "Forget learning" on the Phrases page (select it twice) erases it. |
-| `Generation.ShareRecentMessagesWithLocalAi` | **off** | Gives the local model the user's last five spoken messages as background. |
 
 The app never records audio, never uses a cloud service, and keeps no history of spoken messages on disk: what it learns is described above, and the error log never contains message text.
 
 ## Layout
 
 ```
-src/Aac.Core      UI-independent logic: speech safety, input gate, prediction, sentence options, session
+src/Aac.Core      UI-independent logic: speech safety, input gate, prediction, session
 src/Aac.App       WPF window, floating panels, set-up guide, SAPI speech, DPAPI encryption, hotkeys
 tests/            xUnit tests for Aac.Core
 tools/Aac.Bench   simulated-user action counts

@@ -6,7 +6,7 @@ public sealed class PhraseCategory
     public List<string> Phrases { get; set; } = new();
 }
 
-/// <summary>Fixed, human-authored phrases. Nothing here is AI generated.</summary>
+/// <summary>Fixed phrases written by people; the user can edit them.</summary>
 public sealed class PhraseLibrary
 {
     /// <summary>The red and quick buttons a fresh install starts with. Updates never put these over buttons someone already has.</summary>

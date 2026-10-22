@@ -68,7 +68,6 @@ public sealed class AppSettings
 
     public InputGateOptions Input { get; set; } = new();
     public SpeechSettings Speech { get; set; } = new();
-    public GenerationSettings Generation { get; set; } = new();
     public PrivacySettings Privacy { get; set; } = new();
     public PhraseLibrary Phrases { get; set; } = PhraseLibrary.CreateDefault();
 }
@@ -94,18 +93,6 @@ public sealed class SpeechSettings
     /// <summary>After speaking, clear the message so the next one starts fresh (Undo brings it back).</summary>
     public bool ClearMessageAfterSpeaking { get; set; } = true;
     public Dictionary<string, string> Pronunciations { get; set; } = new();
-}
-
-public sealed class GenerationSettings
-{
-    public int MaxCandidates { get; set; } = 4;
-    /// <summary>Off by default. Requires a model server on this computer (Ollama, llama.cpp, LM Studio).</summary>
-    public bool LocalAiEnabled { get; set; }
-    public string LocalAiEndpoint { get; set; } = "http://localhost:11434/v1/chat/completions";
-    public string LocalAiModel { get; set; } = "";
-    public int LocalAiTimeoutMs { get; set; } = 8000;
-    /// <summary>Share the last few spoken messages with the local model as background. Off by default.</summary>
-    public bool ShareRecentMessagesWithLocalAi { get; set; }
 }
 
 /// <summary>Everything stored is encrypted for this Windows user and never leaves the PC.</summary>

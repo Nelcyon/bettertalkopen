@@ -120,27 +120,3 @@ public class DictionaryPredictionTests
         Assert.True(best < 400, $"{best} ms for 40 predictions");
     }
 }
-
-public class EverydaySentenceTests
-{
-    [Theory]
-    [InlineData("water please", "I need water, please.")]
-    [InlineData("blanket", "Can I have some blanket?")]
-    [InlineData("call nurse", "Can you call the nurse?")]
-    [InlineData("tv remote", "Can you get me the tv remote?")]
-    public void Plain_words_get_everyday_sentences_that_pass_the_checks(string keywords, string expected)
-    {
-        var options = Aac.Core.Generation.RuleBasedGenerator.Generate(keywords).ToList();
-        Assert.Contains(expected, options);
-        Assert.True(options.Count >= 3);
-        Assert.All(options, o => Assert.True(Aac.Core.Generation.CandidateValidator.Validate(keywords, o).Accepted, o));
-    }
-
-    [Fact]
-    public void A_negated_thing_stays_negated()
-    {
-        var options = Aac.Core.Generation.RuleBasedGenerator.Generate("not coffee").ToList();
-        Assert.Contains("I don't want coffee.", options);
-        Assert.All(options, o => Assert.True(Aac.Core.Generation.CandidateValidator.Validate("not coffee", o).Accepted, o));
-    }
-}
