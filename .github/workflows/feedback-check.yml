@@ -1,0 +1,33 @@
+name: feedback-check
+on:
+  push:
+    branches: [feedback-check]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the feedback receiver (prints no reply text except known words)
+        env:
+          URL: https://script.google.com/macros/s/AKfycbzEM4YIzMCvh95EMCSQk8E_Lh8wte8YGPZ_d3_esqIB3xg2SwtWzKNUxnzHH7fjGz_O/exec
+        run: |
+          set +e
+          summarise() {
+            # $1 = headers file, $2 = body file
+            echo "status lines: $(grep -E '^HTTP/' "$1" | tr -d '\r' | tr '\n' ' ')"
+            grep -i '^location:' "$1" | tr -d '\r' | sed -E 's#^[Ll]ocation: *https?://([^/?]+)([^?]*)\??(.*)#redirect host=\1 path=\2 params=\3#' | sed -E 's/=[^&= ]+(&|$)/=…\1/g'
+            echo "body bytes: $(wc -c < "$2")"
+            case "$(tr -d '\r\n' < "$2")" in
+              ok|bad|"BetterTalk feedback receiver is working.") echo "body: $(cat "$2")";;
+              *) echo "body: (something else, not shown)";;
+            esac
+            for f in "$1" "$2"; do
+              echo "$f: @ signs=$(grep -o '@' "$f" | wc -l) gmail=$(grep -ic gmail "$f") 'created by'=$(grep -ic 'created by' "$f") accounts.google=$(grep -ic 'accounts.google' "$f")"
+            done
+          }
+          echo "== Opening it like a browser"
+          curl -sS -L -D g.h -o g.b "$URL"; summarise g.h g.b
+          echo "== Empty feedback (should be refused, nothing written)"
+          curl -sS -L -D e.h -o e.b -H 'Content-Type: application/json' -d '{"text":""}' "$URL"; summarise e.h e.b
+          echo "== One test row"
+          curl -sS -L -D t.h -o t.b -H 'Content-Type: application/json' \
+            -d '{"text":"Test from the set-up check. You can delete this row.","version":"0.3.9","windows":"set-up check","written":"2026-10-22T00:50:00Z"}' "$URL"; summarise t.h t.b
