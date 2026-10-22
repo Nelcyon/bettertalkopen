@@ -2,6 +2,15 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.4.2
+
+- **The last word is never cut short.** With the downloaded voices (Piper, Kokoro), the end of a message could
+  be clipped or sound faded, because BetterTalk treated the voice as finished while the speakers were still
+  playing the last fraction of a second. Then other sounds came back up and the window could hide right on top
+  of it. BetterTalk now waits until the speakers have really played everything, with a moment of silence after
+  the last word, before it counts the message as finished. Only then do other sounds come back up and the
+  window hide by itself.
+
 ## 0.4.1
 
 - **Stop and quick phrases are dependable with the downloaded voices.** Pressing a quick phrase, a red button or

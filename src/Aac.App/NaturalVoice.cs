@@ -105,6 +105,8 @@ public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDispo
     private readonly float _volume;
     private readonly int _speaker;
     private volatile WaveOutEvent? _playing;
+    /// <summary>Silence added after each utterance, so stopping the device can only ever cut silence.</summary>
+    private const int TailSilenceMs = 250;
     private volatile bool _disposed;
 
     public NaturalSpeechEngine(VoiceChoice voice, SpeechSettings settings)
@@ -222,7 +224,8 @@ public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDispo
             DiscardOnBufferOverflow = true,
         };
         using var output = new WaveOutEvent { DesiredLatency = 120, NumberOfBuffers = 3 };
-        output.Init(buffer);
+        var played = new CountingWaveProvider(buffer);
+        output.Init(played);
         _playing = output;
         var started = false;
         var pcm = Array.Empty<byte>();
@@ -305,9 +308,22 @@ public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDispo
         }
 
         if (!started) { _playing = null; return !stop.IsCancellationRequested; }
-        // Let what is queued play out (plus the device's own buffers), unless the user presses Stop.
+        // A little silence after the last word, so that if the speaker or headset is slower than Windows
+        // reports, it is silence that gets cut when playback stops, never the end of the last word.
+        var tail = tts.SampleRate * TailSilenceMs / 1000;
+        lock (gate)
+        {
+            buffer.AddSamples(new byte[tail * 2], 0, tail * 2);
+            pieces.Add((made, tail, utterance.SpokenText.Length, 0));
+            made += tail;
+        }
+        // Let what is queued play out, unless the user presses Stop: first until the device has taken all of
+        // it, then until the device says it has actually played all it took (its own buffers can hold a few
+        // hundred milliseconds), so the utterance never ends while its last word is still to be heard.
         while (!stop.IsCancellationRequested && buffer.BufferedBytes > 0) Thread.Sleep(15);
-        if (!stop.IsCancellationRequested) Thread.Sleep(output.DesiredLatency);
+        var taken = played.BytesRead;
+        var waited = Stopwatch.StartNew();
+        while (!stop.IsCancellationRequested && output.GetPosition() < taken && waited.ElapsedMilliseconds < 2000) Thread.Sleep(15);
         _playing = null;
         output.Stop();
         PerfLog.Record("voice.utterance", clock);
@@ -352,5 +368,21 @@ public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDispo
         _queue.Close();
         if (_tts.IsCompletedSuccessfully) _tts.Result.Dispose();
         _fallback?.Dispose();
+    }
+}
+
+/// <summary>Passes audio through to the device and counts how much it has taken.</summary>
+internal sealed class CountingWaveProvider(IWaveProvider source) : IWaveProvider
+{
+    private long _bytesRead;
+
+    public WaveFormat WaveFormat => source.WaveFormat;
+    public long BytesRead => Interlocked.Read(ref _bytesRead);
+
+    public int Read(byte[] buffer, int offset, int count)
+    {
+        var n = source.Read(buffer, offset, count);
+        Interlocked.Add(ref _bytesRead, n);
+        return n;
     }
 }
