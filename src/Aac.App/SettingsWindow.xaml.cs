@@ -765,6 +765,7 @@ public partial class SettingsWindow : Window
         var summary = $"{loaded.Pinned.Count} red, {loaded.QuickPhrases.Count} quick and {loaded.Categories.Sum(c => c.Phrases.Count)} phrase buttons";
         if (MessageBox.Show(this, $"Replace this computer's buttons with the {summary} in this file? The app restarts to show them.",
                 "Load buttons", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        loaded.KeepAsLoaded();
         try
         {
             ButtonStore.Save(AppPaths.Buttons, loaded);

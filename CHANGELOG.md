@@ -2,6 +2,14 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.3.8
+
+- **New installs start with the plain buttons again.** A fresh install gets the general starting red and quick
+  buttons (Help!, I need the bathroom., I'm in pain., Yes., No. and the usual quick phrases).
+- **Your buttons stay exactly as they are.** Updating never changes the buttons already in your buttons file,
+  whichever version you update from. To use a saved set of buttons, choose Settings → Buttons → Load buttons
+  from a file.
+
 ## 0.3.7
 
 - **Numbers on the keyboard.** A new row above the letters has 1 to 0, with a comma and a full stop at its
