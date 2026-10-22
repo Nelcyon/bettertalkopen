@@ -61,19 +61,19 @@ public class ButtonStoreTests : IDisposable
         """;
 
     [Fact]
-    public void A_pre_035_file_with_never_changed_buttons_gets_the_035_buttons_once_and_writes_them_into_the_file()
+    public void A_pre_035_file_with_never_changed_buttons_keeps_the_starting_buttons_and_writes_them_into_the_file()
     {
         Directory.CreateDirectory(_dir);
         File.WriteAllText(File_, OldUntouchedFile);
         var loaded = ButtonStore.Load(File_, PhraseLibrary.CreateDefault(), out var problem);
         Assert.Null(problem);
-        Assert.Equal(PhraseLibrary.UpgradePinned035, loaded.Pinned);
-        Assert.Equal(PhraseLibrary.UpgradeQuick035, loaded.QuickPhrases);
+        Assert.Equal(PhraseLibrary.DefaultPinnedPhrases, loaded.Pinned);
+        Assert.Equal(PhraseLibrary.DefaultQuickPhrases, loaded.QuickPhrases);
         Assert.Equal(new[] { "I need water." }, loaded.Categories.Single().Phrases); // phrase pages are untouched
 
         // Written out in full, so a later version's starting buttons can never change them again.
         var onDisk = System.Text.Json.JsonSerializer.Deserialize<PhraseLibrary>(File.ReadAllText(File_), SettingsStore.JsonOptions)!;
-        Assert.Equal(PhraseLibrary.UpgradePinned035, onDisk.PinnedPhrases);
+        Assert.Equal(PhraseLibrary.DefaultPinnedPhrases, onDisk.PinnedPhrases);
         Assert.Equal(2, onDisk.ButtonsVersion);
         Assert.False(onDisk.Upgrade());
         Assert.Equal(OldUntouchedFile, File.ReadAllText(Path.Combine(_dir, "buttons.before-upgrade.json")));
@@ -107,7 +107,6 @@ public class ButtonStoreTests : IDisposable
         Assert.Equal(new[] { "Help!", "I need the bathroom.", "I'm in pain.", "Yes.", "No." }, loaded.Pinned);
         Assert.Equal("Yes.", loaded.QuickPhrases[0]);
         Assert.Equal(10, loaded.QuickPhrases.Count);
-        Assert.DoesNotContain(PhraseLibrary.UpgradePinned035[0], loaded.Pinned);
 
         var onDisk = OnDisk(File_);
         Assert.Equal(PhraseLibrary.DefaultPinnedPhrases, onDisk.PinnedPhrases);
@@ -122,8 +121,8 @@ public class ButtonStoreTests : IDisposable
         // What 0.3.5 to 0.3.7 wrote: every row out in full, ButtonsVersion 2.
         var written = new PhraseLibrary
         {
-            PinnedPhrases = PhraseLibrary.UpgradePinned035.ToList(),
-            QuickPhrases = PhraseLibrary.UpgradeQuick035.ToList(),
+            PinnedPhrases = new() { "Water", "Lights" },
+            QuickPhrases = new() { "Fan on" },
             SpokenPhrases = PhraseLibrary.DefaultSpokenPhrases.ToList(),
             SpokenListVersion = 1,
             ButtonsVersion = 2,
@@ -136,8 +135,8 @@ public class ButtonStoreTests : IDisposable
         {
             var loaded = ButtonStore.Load(File_, PhraseLibrary.CreateDefault(), out var problem);
             Assert.Null(problem);
-            Assert.Equal(PhraseLibrary.UpgradePinned035, loaded.Pinned);
-            Assert.Equal(PhraseLibrary.UpgradeQuick035, loaded.QuickPhrases);
+            Assert.Equal(new[] { "Water", "Lights" }, loaded.Pinned);
+            Assert.Equal(new[] { "Fan on" }, loaded.QuickPhrases);
         }
         Assert.Equal(before, File.ReadAllText(File_));
         Assert.False(File.Exists(Path.Combine(_dir, "buttons.before-upgrade.json")));
@@ -167,9 +166,9 @@ public class ButtonStoreTests : IDisposable
         var loaded = ButtonStore.Load(File_, PhraseLibrary.CreateDefault(), out _);
         Assert.Equal(new[] { "Fan on", "Lights off" }, loaded.QuickPhrases);
         Assert.Equal("Hello", loaded.Categories.Single().Phrases.Single());
-        // A red row that was never written out showed the 0.3.5 buttons in 0.3.5 to 0.3.7, so it keeps showing them.
-        Assert.Equal(PhraseLibrary.UpgradePinned035, loaded.Pinned);
-        Assert.Equal(PhraseLibrary.UpgradePinned035, OnDisk(File_).PinnedPhrases);
+        // A red row that was never written out gets the starting buttons, written into the file.
+        Assert.Equal(PhraseLibrary.DefaultPinnedPhrases, loaded.Pinned);
+        Assert.Equal(PhraseLibrary.DefaultPinnedPhrases, OnDisk(File_).PinnedPhrases);
         Assert.Equal(old, File.ReadAllText(Path.Combine(_dir, "buttons.before-upgrade.json")));
     }
 

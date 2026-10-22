@@ -11,6 +11,8 @@ it out loud with a choice of free, natural-sounding voices that run entirely off
 > pathologist) have checked that it is reliable for them. Please tell us what goes wrong: see
 > [Report a problem or an idea](#report-a-problem-or-an-idea).
 
+![BetterTalk main window: urgent red buttons, green word suggestions, number row, keyboard, Speak and Stop, and the message box](docs/main-window.png)
+
 **Who it is for:** anyone who uses Windows with limited movement and wants a quick way to speak: QuadStick
 and sip-and-puff users, switch and head-mouse users, mouse users, and the family and carers who set it up.
 **What it is not:** a medical device, a replacement for a dedicated speech-generating device, or an app for

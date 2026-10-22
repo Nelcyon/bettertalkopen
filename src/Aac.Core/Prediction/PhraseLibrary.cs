@@ -17,24 +17,6 @@ public sealed class PhraseLibrary
         "Please repeat that.", "That's not what I meant.", "Give me a moment.", "I'm uncomfortable.", "I need to reposition.",
     };
 
-    /// <summary>The starting red and quick buttons of 0.1.0 to 0.3.4 (the same as today's). A pre-0.3.5 file that still has exactly these was never changed by hand.</summary>
-    private static readonly string[] OldDefaultPinned = { "Help!", "I need the bathroom.", "I'm in pain.", "Yes.", "No." };
-    private static readonly string[] OldDefaultQuick =
-    {
-        "Yes.", "No.", "Wait.", "Stop.", "I need help.",
-        "Please repeat that.", "That's not what I meant.", "Give me a moment.", "I'm uncomfortable.", "I need to reposition.",
-    };
-
-    /// <summary>
-    /// The starting buttons of 0.3.5 to 0.3.7. Only the one-off upgrade of a pre-0.3.5 file uses them, so it gives
-    /// exactly what 0.3.5 to 0.3.7 gave whichever version someone updates to; fresh installs never get them.
-    /// </summary>
-    internal static readonly string[] UpgradePinned035 = { "I want a bag", "Tube Feeding please!", "Feet", "Q-tip", "Mom", "Echo... call mom", "Eye wipe" };
-    internal static readonly string[] UpgradeQuick035 =
-    {
-        "My quadstick tubes need blown out", "My quadstick tubes need reattached", "I need to Pee", "I need to Poop", "I wanna go to Bed",
-    };
-
     /// <summary>Said to the person scratching, from the panel beside the Itch figure. Plain words that read right on their own.</summary>
     public static readonly IReadOnlyList<string> DefaultSpokenPhrases = new[] { "Up", "Down", "Left", "Right", "Keep going", "Scratch harder", "Scratch softer", "That's the spot", "Stop", "Thanks, that's better" };
 
@@ -61,9 +43,9 @@ public sealed class PhraseLibrary
     /// <summary>
     /// Brings an older button file up to date, once; true when something changed (the caller saves it).
     /// Button files from before the arrows could be moved get them at the front of their spoken words.
-    /// Pre-0.3.5 red and quick rows that were never written out, or still are exactly the old starting buttons, get
-    /// the 0.3.5 upgrade buttons; anything changed by hand is kept. Then every row is written out in full, so from
-    /// then on the file is only ever changed by the person (a file at ButtonsVersion 2 is never touched here).
+    /// Pre-0.3.5 red and quick rows that were never written out get today's starting buttons; anything in the file
+    /// is kept. Then every row is written out in full, so from then on the file is only ever changed by the person
+    /// (a file at ButtonsVersion 2 is never touched here).
     /// </summary>
     public bool Upgrade()
     {
@@ -80,14 +62,8 @@ public sealed class PhraseLibrary
         }
         if (ButtonsVersion < 2)
         {
-            var untouched = (PinnedPhrases is null || PinnedPhrases.SequenceEqual(OldDefaultPinned))
-                && (QuickPhrases.Count == 0 || QuickPhrases.SequenceEqual(OldDefaultQuick));
-            if (untouched)
-            {
-                PinnedPhrases = UpgradePinned035.ToList();
-                QuickPhrases = UpgradeQuick035.ToList();
-            }
-            PinnedPhrases ??= UpgradePinned035.ToList();
+            PinnedPhrases ??= DefaultPinnedPhrases.ToList();
+            if (QuickPhrases.Count == 0) QuickPhrases = DefaultQuickPhrases.ToList();
             SpokenPhrases ??= DefaultSpokenPhrases.ToList();
             ButtonsVersion = 2;
             changed = true;
