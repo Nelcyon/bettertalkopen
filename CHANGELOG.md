@@ -2,6 +2,18 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.4.2
+
+- **The last word is never cut short.** With the downloaded voices (Piper, Kokoro), the end of a message could
+  be clipped or sound faded, because BetterTalk treated the voice as finished while the speakers were still
+  playing the last fraction of a second. Then other sounds came back up and the window could hide right on top
+  of it. BetterTalk now waits until the speakers have really played everything, with a moment of silence after
+  the last word, before it counts the message as finished. Only then do other sounds come back up and the
+  window hide by itself.
+- **Other sounds go quieter while BetterTalk speaks: a quarter of their volume instead of half,** so you are
+  easier to hear over the TV or music. This applies to everyone, including if you had changed it in 0.4.0.
+  Choose another level in Settings → Voice & speaking → Other sounds while speaking (now in steps of 5%).
+
 ## 0.4.1
 
 - **Stop and quick phrases are dependable with the downloaded voices.** Pressing a quick phrase, a red button or

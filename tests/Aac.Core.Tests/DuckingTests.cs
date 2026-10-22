@@ -237,3 +237,16 @@ public class DuckingTests
         public void Save(IReadOnlyCollection<DuckedSound> sounds) => Saved = sounds.ToList();
     }
 }
+
+public class DuckingLevelSettingTests
+{
+    [Fact]
+    public void Other_sounds_go_to_a_quarter_by_default_and_the_old_half_setting_does_not_carry_over()
+    {
+        Assert.Equal(25, new Aac.Core.Storage.SpeechSettings().OtherSoundsLevel);
+        var from040 = System.Text.Json.JsonSerializer.Deserialize<Aac.Core.Storage.SpeechSettings>(
+            """{ "DuckOtherSounds": true, "DuckOtherSoundsTo": 50 }""", Aac.Core.Storage.SettingsStore.JsonOptions)!;
+        Assert.Equal(25, from040.OtherSoundsLevel);
+        Assert.True(from040.DuckOtherSounds);
+    }
+}

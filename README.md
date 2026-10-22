@@ -93,7 +93,7 @@ Your settings, buttons and learned words are always kept.
 | Area | What it does |
 |---|---|
 | One screen | Urgent red buttons on top, six green word suggestions, a number row and a QWERTY keyboard with large equal-size keys, and the message box. **Quick** and **Phrases** open drawers of stored phrases. Nothing moves or resizes while the user types. |
-| Speech | **Speak** says the whole message, once per press; a red **Stop** cuts it off. The words are highlighted as they are said so others can read along. Optional word-by-word speaking. Windows voices plus dozens of free natural voices that run offline after a one-time download. Other programs' sound (music, TV, videos) is turned down to half while it speaks and back up afterwards (adjustable in Settings). |
+| Speech | **Speak** says the whole message, once per press; a red **Stop** cuts it off. The words are highlighted as they are said so others can read along. Optional word-by-word speaking. Windows voices plus dozens of free natural voices that run offline after a one-time download. Other programs' sound (music, TV, videos) is turned down to a quarter while it speaks and back up afterwards (adjustable in Settings). |
 | Word suggestions | About 59,000 English words, ranked by how common they are and by what the user says (learning can be turned off). The likeliest word sits in the middle of the green row. |
 | Itch | A 3D body to click on, which writes a precise sentence ("I have an itch on my left inner thigh, just above the knee.") plus one-press words for the person scratching (Keep going, Scratch harder, That's the spot...). |
 | Controls | Works with mouse clicks alone, or with keys and mouse buttons that you choose (Settings → Hotkeys, Settings → QuadStick card). |

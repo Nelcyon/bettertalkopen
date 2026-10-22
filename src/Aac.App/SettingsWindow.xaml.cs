@@ -59,7 +59,7 @@ public partial class SettingsWindow : Window
         Rate.Value = _settings.Speech.Rate;
         Volume.Value = _settings.Speech.Volume;
         Duck.IsChecked = _settings.Speech.DuckOtherSounds;
-        DuckTo.Value = Math.Clamp(_settings.Speech.DuckOtherSoundsTo, 0, 90);
+        DuckTo.Value = Math.Clamp(_settings.Speech.OtherSoundsLevel, 0, 90);
         TextSize.Value = _settings.FontSize;
         SpeakWhen.SelectedIndex = _settings.Speech.SpeakEachWord ? 1 : 0;
         Highlight.SelectedItem = Highlight.Items.Cast<System.Windows.Controls.ComboBoxItem>().First(i => (string)i.Tag == _settings.SelectionHighlight.ToString());
@@ -131,7 +131,7 @@ public partial class SettingsWindow : Window
         _settings.Speech.Rate = (int)Rate.Value;
         _settings.Speech.Volume = (int)Volume.Value;
         _settings.Speech.DuckOtherSounds = Duck.IsChecked == true;
-        _settings.Speech.DuckOtherSoundsTo = (int)DuckTo.Value;
+        _settings.Speech.OtherSoundsLevel = (int)DuckTo.Value;
         _settings.FontSize = TextSize.Value;
         _settings.Speech.SpeakEachWord = SpeakWhen.SelectedIndex == 1;
         if (Enum.TryParse<Aac.Core.Input.FocusHighlight>((string)((System.Windows.Controls.ComboBoxItem)Highlight.SelectedItem).Tag, out var highlight))

@@ -25,7 +25,7 @@ public sealed class SoundDucking : IDisposable
     {
         _speech = speech;
         _enabled = settings.DuckOtherSounds;
-        _level = Math.Clamp(settings.DuckOtherSoundsTo, 0, 100) / 100.0;
+        _level = Math.Clamp(settings.OtherSoundsLevel, 0, 100) / 100.0;
         // Speaking starting or stopping wakes the thread at once, so the sound drops as the voice begins.
         speech.StateChanged += (_, _) => _wake.Set();
         _thread = new Thread(Run) { IsBackground = true, Name = "Sound ducking" };
