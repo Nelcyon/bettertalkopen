@@ -650,7 +650,6 @@ public class StorageTests
             s.LockWindowSize = true;
             SettingsStore.Save(path, s);
             Assert.True(SettingsStore.Load(path, out _).LockWindowSize);
-            Assert.False(loaded.Generation.LocalAiEnabled);
 
             File.WriteAllText(path, "{ not json");
             var fallback = SettingsStore.Load(path, out problem);

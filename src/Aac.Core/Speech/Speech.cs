@@ -9,7 +9,7 @@ public enum UtteranceKind
     Message,
     /// <summary>One word, spoken as soon as it was finished (word-by-word mode).</summary>
     Word,
-    /// <summary>A fixed rapid-response phrase (Yes, No, I need help...). Never AI generated.</summary>
+    /// <summary>A fixed rapid-response phrase (Yes, No, I need help...) that the user set up.</summary>
     QuickPhrase,
 }
 
@@ -183,7 +183,7 @@ public sealed class SpeechController
         return SpeakOutcome.Started;
     }
 
-    /// <summary>Speaks a fixed rapid-response phrase immediately. No approval needed; never passes through AI.</summary>
+    /// <summary>Speaks a fixed rapid-response phrase immediately. No approval needed.</summary>
     public SpeakOutcome SpeakQuickPhrase(string text)
     {
         var trimmed = text.Trim();
