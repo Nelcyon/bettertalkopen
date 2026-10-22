@@ -52,6 +52,9 @@ jobs:
           $start = [Array]::IndexOf($lines, "## $version")
           $section = @()
           if ($start -ge 0) { for ($i = $start + 1; $i -lt $lines.Count -and -not $lines[$i].StartsWith('## '); $i++) { $section += $lines[$i] } }
-          $notes = (($section -join "`n").Trim()) + "`n`n---`nTo install: download **BetterTalk-Setup.exe**, double-click it, and follow the prompts. Windows may say it protected your PC because the file is not signed: choose More info, then Run anyway."
+          # The SHA-256 checksum goes below the --- line too, so people can check their download (README, "Is this safe?").
+          $hash = (Get-FileHash installer/Output/BetterTalk-Setup.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -Path installer/Output/BetterTalk-Setup.exe.sha256 -Value "$hash  BetterTalk-Setup.exe" -Encoding ascii
+          $notes = (($section -join "`n").Trim()) + "`n`n---`nTo install: download **BetterTalk-Setup.exe**, double-click it, and follow the prompts. Windows may say it protected your PC because the file is not signed: choose More info, then Run anyway.`n`nSHA-256 of BetterTalk-Setup.exe: ``$hash```nTo check it, run ``Get-FileHash .\BetterTalk-Setup.exe`` in PowerShell where you saved it. The installer was built from this release's code by the public release workflow on GitHub."
           Set-Content -Path release-notes.md -Value $notes -Encoding utf8
-          gh release create $tag installer/Output/BetterTalk-Setup.exe --target $env:GITHUB_SHA --title "BetterTalk $tag" --notes-file release-notes.md
+          gh release create $tag installer/Output/BetterTalk-Setup.exe installer/Output/BetterTalk-Setup.exe.sha256 --target $env:GITHUB_SHA --title "BetterTalk $tag" --notes-file release-notes.md

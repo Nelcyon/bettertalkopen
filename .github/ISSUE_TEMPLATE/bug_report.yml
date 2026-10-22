@@ -1,0 +1,43 @@
+name: Something went wrong
+description: Tell us about a problem with BetterTalk.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping. Please never paste anything you or the person using BetterTalk typed or said.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: BetterTalk version
+      description: Settings → Updates shows it.
+      placeholder: "0.3.9"
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: "Windows 11"
+  - type: dropdown
+    id: control
+    attributes:
+      label: How is the computer controlled?
+      multiple: true
+      options:
+        - QuadStick or sip-and-puff
+        - Switch or head mouse
+        - Eye tracker
+        - Mouse
+        - Keyboard
+        - Something else
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log files (optional)
+      description: If BetterTalk closed by itself, attach errors.log and app.log from %APPDATA%\BetterTalk. They never contain message text.

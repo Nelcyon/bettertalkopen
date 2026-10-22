@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: How to install and use BetterTalk
+    url: https://github.com/Nelcyon/bettertalkopen#readme
+    about: Install steps, the "Windows protected your PC" warning, and what each setting does.

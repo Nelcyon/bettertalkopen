@@ -1,49 +1,96 @@
-# BetterTalk (prototype)
+# BetterTalk (early beta)
 
-A free Windows communication app (AAC) for people who cannot speak and control a computer with a
-QuadStick, a head or mouth switch, a mouse or an eye tracker, for example people living with ALS. The
-user builds a message by typing (with word suggestions that learn from them) or by choosing a stored
-phrase, can point to exactly where they itch on a 3D figure, and the app says it out loud with a choice
-of free, natural-sounding voices that run entirely offline.
+A free, open-source Windows communication app (AAC) for people who cannot speak and control a computer with a
+QuadStick, a head or mouth switch, a mouse, or an eye tracker that moves the mouse, for example people living
+with ALS. The user builds a message by typing on a large on-screen keyboard (with word suggestions that learn
+from them) or by choosing a stored phrase, can point to exactly where they itch on a 3D figure, and the app says
+it out loud with a choice of free, natural-sounding voices that run entirely offline.
 
-> **Status: prototype.** Use it alongside an existing, proven AAC system, not instead of one, until the
-> user and an AAC-specialist speech-language pathologist have checked that it is reliable for them.
+> **Status: early beta.** BetterTalk is new and has been used by very few people so far. Use it alongside an
+> existing, proven AAC system, not instead of one, until the user (and ideally their speech-language
+> pathologist) have checked that it is reliable for them. Please tell us what goes wrong: see
+> [Report a problem or an idea](#report-a-problem-or-an-idea).
+
+**Who it is for:** anyone who uses Windows with limited movement and wants a quick way to speak: QuadStick
+and sip-and-puff users, switch and head-mouse users, mouse users, and the family and carers who set it up.
+**What it is not:** a medical device, a replacement for a dedicated speech-generating device, or an app for
+phones or Macs (Windows 10 and 11 only, for now).
 
 ## Download and install
 
 **[Download BetterTalk-Setup.exe](https://github.com/Nelcyon/bettertalkopen/releases/latest/download/BetterTalk-Setup.exe)**
-(Windows 10 or 11, 64-bit). The link always gets the newest version.
+(Windows 10 or 11, 64-bit, about 60 MB). The link always gets the newest version.
 
 1. Double-click the downloaded **BetterTalk-Setup.exe**. No administrator password is needed.
-2. If Windows says "Windows protected your PC", choose **More info**, then **Run anyway**. (The installer is
-   not yet signed with a paid certificate; the source code is all here.)
+2. Windows will probably show a blue box saying **"Windows protected your PC"**. This appears for any new
+   program that is not signed with a paid certificate; it does not mean a virus was found. Choose
+   **More info**, then **Run anyway**. (See [Is this safe?](#is-this-safe) below.)
 3. Press **Install**. BetterTalk opens, with icons on the Desktop and in the Start menu.
 
-Nothing else needs installing. The installer contains only the app: no voices. It speaks with the
-Windows voice to start with, and the user can pick and download natural voices themselves, inside the
-app, under Settings → Voice. To update, run the newest Setup the same way: settings, buttons and learned
-words are kept. To remove it: Windows Settings → Apps → Installed apps → BetterTalk → Uninstall.
+Nothing else needs installing. The installer contains only the app, not the voices: it speaks with the Windows
+voice to start with, and natural voices can be picked and downloaded inside the app, under Settings → Voice & speaking.
+To remove it: Windows Settings → Apps → Installed apps → BetterTalk → Uninstall.
 
-The first time BetterTalk starts on a computer, a short **set-up guide** asks how the user chooses buttons,
-how BetterTalk should come back after hiding (a click or a rest in its corner, a hotkey), which screen and
-corner it sits in (the window moves as you choose), whether it hides by itself, and which voice to use.
-Skip keeps the usual choices; the guide can be run again from Settings → Screen & window or the tray's
-Set-up and tools menu.
+### The first few minutes
 
-- Action-count benchmark: [docs/benchmarks.md](docs/benchmarks.md)
+1. The first time BetterTalk starts, a short **set-up guide** (about a minute) asks how the user chooses
+   buttons, how BetterTalk should come back after hiding (a click or a rest in its corner, or a hotkey), which
+   screen and corner it sits in, whether it hides by itself, and which voice to use. **Skip for now** keeps the
+   usual choices. It can be run again from Settings → Screen & window, or the tray icon's Set-up and tools menu.
+2. The red buttons along the top are a few urgent phrases (Help!, I need the bathroom., I'm in pain., Yes.,
+   No.). Make them your own: Settings → Buttons, or **Edit buttons live** to change them on screen.
+3. Pick a nicer voice in Settings → Voice & speaking. Each voice downloads once (70 to 350 MB) and then works
+   with no internet.
+4. Settings (the ⚙ key, or right-click the BetterTalk icon near the clock) has everything else, including the
+   **QuadStick card** tab, which shows which sip, puff or key does what.
 
-## What works in v0.1
+### Updates
+
+Settings → **Updates** → **Check for updates** shows what is new and offers **Update to …**, which keeps a
+snapshot of your version first so you can go back. Nothing is checked or downloaded unless you press the button.
+Your settings, buttons and learned words are always kept.
+
+## Is this safe?
+
+- **All the code is here**, under the GPL-3.0 licence. Anyone can read it, and anyone can build the app
+  themselves (see [Build it yourself](#build-it-yourself)).
+- **The installer is built by GitHub, not on someone's PC.** Each release is made by the public
+  [release workflow](.github/workflows/release.yml) on GitHub's own Windows machines, straight from the code
+  in this repository; you can see every run on the [Actions](https://github.com/Nelcyon/bettertalkopen/actions)
+  page.
+- **Checksum.** Each release lists the SHA-256 checksum of BetterTalk-Setup.exe. To check your download, open
+  PowerShell in your Downloads folder and run `Get-FileHash .\BetterTalk-Setup.exe`; the number must match the
+  one on the [release page](https://github.com/Nelcyon/bettertalkopen/releases/latest).
+- **Why Windows warns about it.** The installer is not code-signed yet (a signing certificate costs money every
+  year). That is why SmartScreen says "Windows protected your PC". It is a warning about an unknown publisher,
+  not a virus detection.
+- **It stays on your computer.** No account, no cloud, no tracking, no ads. It never records audio. The only
+  times it uses the internet are when you download a voice or press Check for updates. What it learns about
+  your words is stored encrypted on your PC (see [Privacy defaults](#privacy-defaults)).
+- **No administrator rights.** It installs into your own user folder, like many apps do.
+
+## Report a problem or an idea
+
+- **[Open an issue on GitHub](https://github.com/Nelcyon/bettertalkopen/issues/new/choose)** (needs a free
+  GitHub account). There is a short form for problems and one for ideas.
+- Helpful to include: your BetterTalk version (Settings → Updates), your Windows version, how the user controls
+  the computer (QuadStick, switch, mouse, eye tracker), and what you did just before it went wrong.
+- If BetterTalk closed by itself, the files `errors.log` and `app.log` in `%APPDATA%\BetterTalk` say why. They
+  never contain message text, so they are safe to attach. Please never post anything you or the user typed or
+  said.
+
+## What it does
 
 | Area | What it does |
 |---|---|
-| Quick responses | The opening screen holds Yes, No, Wait, Stop, I need help, Please repeat that, That's not what I meant, Give me a moment, I'm uncomfortable and I need to reposition. One selection speaks the phrase. These are fixed text, never AI, and they work offline. |
-| Keyboard | Large letter keys in QWERTY order, plus Space, Delete letter, Delete word, Undo and Clear. Five word predictions update with each letter. |
-| Phrases | Categories: Needs, Questions, Social, Opinions, Entertainment, Computer & games, Personal. Choosing a phrase loads it into the message and moves the focus to Speak. It is not spoken until the user presses Speak. |
-| Speech | **Speak** says the whole message, once per press. A cooldown stops a bounced or repeated press from replaying it, and the message clears after speaking (Undo brings it back, silently). Optional word-by-word mode ("When to speak" in Settings) also says each word once as soon as Space, punctuation or a word suggestion finishes it; deleting, Undo and loaded phrases never re-speak. **Stop voice** works at any time. Nothing is spoken by focus changes or at startup. Speech is offline, using the Windows SAPI voices. |
-| Safe input | A held key or auto-repeat cannot trigger an action twice. A key held while switching from another program does nothing. Presses in the first 0.4 s after the window gains focus are ignored. Bounced presses are debounced. You can also require a key to be held before it counts. |
-| Works alongside other programs | Hide it with the yellow Hide button, open it from the corner or the tray icon, or give any key you like to show, hide or speak in Settings → Hotkeys (nothing is set to begin with). Keys such as Space, delete and speak only work while BetterTalk is in use, never system-wide. **F11** toggles fullscreen. |
-| Recovery | The unfinished message is saved encrypted (Windows DPAPI, readable only by this Windows user). After a crash it comes back, and it is never spoken on its own. Errors are logged without any message text, in `%APPDATA%\BetterTalk\errors.log`; `app.log` in the same folder records each start and exit with its reason (tray Exit, settings restart, Windows shutting down, a crash), so a window that vanished can be explained. |
-| Measurement | Counts the actions used for each message, without storing the text. `tools/Aac.Bench` simulates the representative tasks. |
+| One screen | Urgent red buttons on top, six green word suggestions, a number row and a QWERTY keyboard with large equal-size keys, and the message box. **Quick** and **Phrases** open drawers of stored phrases. Nothing moves or resizes while the user types. |
+| Speech | **Speak** says the whole message, once per press; a red **Stop** cuts it off. The words are highlighted as they are said so others can read along. Optional word-by-word speaking. Windows voices plus dozens of free natural voices that run offline after a one-time download. |
+| Word suggestions | About 59,000 English words, ranked by how common they are and by what the user says (learning can be turned off). The likeliest word sits in the middle of the green row. |
+| Itch | A 3D body to click on, which writes a precise sentence ("I have an itch on my left inner thigh, just above the knee.") plus one-press words for the person scratching (Keep going, Scratch harder, That's the spot...). |
+| Controls | Works with mouse clicks alone, or with keys and mouse buttons that you choose (Settings → Hotkeys, Settings → QuadStick card). |
+| Works alongside other programs | Hide it with the yellow Hide button and bring it back from its corner, the tray icon or a hotkey. Its keys only work while it is in use, never system-wide. |
+| Safe input | A held key, auto-repeat or bounced press cannot trigger an action twice. |
+| Recovery | The unfinished message is saved encrypted and comes back after a crash, never spoken on its own. Errors are logged without any message text. |
 
 ## Controls
 
@@ -80,7 +127,7 @@ key where Enter would be, with a small red **Stop** segment attached. The **Sett
 Settings can also be opened from the BetterTalk icon near the clock: right-click it for the menu. The message box at the bottom is three lines tall and scrolls to the newest words.
 Problems such as a missing voice show for five seconds over the message box; there is no status text.
 
-## Run it on Windows
+## Build it yourself
 
 Requirements: Windows 10 or 11 (x64) and the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 The SDK is needed to build. You do not need it to run a published copy.
@@ -99,13 +146,12 @@ dotnet publish src/Aac.App -c Release -r win-x64 --self-contained true -p:Publis
 ```
 
 On first run the app writes its settings to `%APPDATA%\BetterTalk\settings.json`. Close the app
-before editing that file. If the file cannot be read, the app starts with default settings and says
-so on its status line.
+before editing that file. If the file cannot be read, the app starts with default settings and says so.
 
 ## Test it
 
 ```powershell
-dotnet test tests/Aac.Core.Tests          # 88 automated tests
+dotnet test tests/Aac.Core.Tests          # about 180 automated tests
 dotnet run --project tools/Aac.Bench      # action-count table for the representative tasks
 ```
 
@@ -184,7 +230,7 @@ keyboard and message box never move.
 - The user **clicks the spot on the figure** (QuadStick mouse mode). A red dot marks it and the message box gets
   a sentence for the person scratching, as exact as the click: "I have an itch on my left inner thigh, just
   above the knee.", "behind my right ear", "on the tip of my left ring finger", "in my left armpit", "on my
-  right big toe" (left and right are always the user's own). **Say it** speaks it.
+  right big toe" (left and right are always the user's own). **Speak** says it.
 - Moving the figure, all smooth (the view glides to each change) and gentler the closer it is:
   - Mouse: **left-drag** turns it (side to side) and tilts it (up and down); **right-drag** moves it, the body
     following the pointer exactly; the **wheel** zooms in on whatever is under the pointer (up to 10x, enough
@@ -204,7 +250,7 @@ keyboard and message box never move.
 
 **Itch** again closes the panel and brings the urgent buttons back.
 
-### Updates
+### How updates work
 
 Settings → **Updates** → **Check for updates** asks GitHub for the newest release and shows what is new in it
 (its section of `CHANGELOG.md`); **Full feature list** shows its README. Nothing is checked or downloaded unless
