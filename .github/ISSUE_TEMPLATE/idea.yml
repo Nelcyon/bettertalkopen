@@ -1,0 +1,23 @@
+name: An idea or a wish
+description: Something that would make BetterTalk easier or faster to use.
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+      description: What is hard or slow today, and what would make it better?
+    validations:
+      required: true
+  - type: dropdown
+    id: control
+    attributes:
+      label: How is the computer controlled?
+      multiple: true
+      options:
+        - QuadStick or sip-and-puff
+        - Switch or head mouse
+        - Eye tracker
+        - Mouse
+        - Keyboard
+        - Something else
