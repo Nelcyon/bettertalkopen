@@ -85,6 +85,10 @@ public sealed class SpeechSettings
     public int Rate { get; set; }
     /// <summary>0–100.</summary>
     public int Volume { get; set; } = 100;
+    /// <summary>Turn other programs' sound (music, videos, calls) down while BetterTalk speaks, and back up afterwards.</summary>
+    public bool DuckOtherSounds { get; set; } = true;
+    /// <summary>How loud other programs stay while BetterTalk speaks, in percent of their own volume (50 = half).</summary>
+    public int DuckOtherSoundsTo { get; set; } = 50;
     public SpeechOptions Safety { get; set; } = new();
     /// <summary>Quick phrases speak with one selection. If false, they load into the message to Speak.</summary>
     public bool QuickPhrasesSpeakImmediately { get; set; } = true;

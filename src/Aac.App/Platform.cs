@@ -47,6 +47,8 @@ public static class AppPaths
     public static string WindowSize => Path.Combine(Root, "window.json");
     /// <summary>How the Itch panels are arranged (moved in move mode), saved the moment it changes.</summary>
     public static string Layout => Path.Combine(Root, "layout.json");
+    /// <summary>Other programs turned down while BetterTalk speaks; there only until they are back up (so a crash cannot leave them quiet).</summary>
+    public static string DuckedSounds => Path.Combine(Root, "ducked-sounds.json");
 }
 
 /// <summary>Windows DPAPI, current-user scope: files are unreadable by other Windows accounts or on another PC.</summary>

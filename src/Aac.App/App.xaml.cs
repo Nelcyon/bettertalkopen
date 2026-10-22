@@ -15,6 +15,7 @@ namespace Aac.App;
 public partial class App : Application
 {
     private ISpeechEngine? _engine;
+    private SoundDucking? _ducking;
     private WordPredictor? _predictor;
     private PersonalModelStore? _learned;
     private PhraseMemory? _memory;
@@ -57,6 +58,7 @@ public partial class App : Application
         {
             LogError(args.ExceptionObject as Exception);
             LogLifecycle($"crashed: unhandled {(args.ExceptionObject as Exception)?.GetType().Name} (terminating: {args.IsTerminating})");
+            if (args.IsTerminating) _ducking?.Dispose(); // other programs' sound goes back up before BetterTalk goes
         };
         TaskScheduler.UnobservedTaskException += (_, args) =>
         {
@@ -83,6 +85,7 @@ public partial class App : Application
 
         _engine = CreateSpeechEngine(settings.Speech, notices);
         var speech = new SpeechController(_engine, clock, settings.Speech.Safety, new PronunciationLexicon(settings.Speech.Pronunciations));
+        _ducking = new SoundDucking(speech, settings.Speech);
 
         _predictor = predictorLoad.GetAwaiter().GetResult();
         _memory = new PhraseMemory();
@@ -336,6 +339,7 @@ public partial class App : Application
         _cornerSpot?.Dispose();
         _tray?.Dispose();
         (_engine as IDisposable)?.Dispose();
+        _ducking?.Dispose();
         base.OnExit(e);
         if (_restart && Environment.ProcessPath is { } exe)
         {

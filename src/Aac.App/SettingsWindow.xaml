@@ -111,6 +111,16 @@
                         </TextBlock>
                         <Slider x:Name="Volume" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True"/>
 
+                        <TextBlock Style="{StaticResource Label}" Text="Other sounds while speaking"/>
+                        <CheckBox x:Name="Duck" Content="Turn other sounds down while BetterTalk speaks"/>
+                        <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,6"
+                                   Text="Music, videos and calls on this computer get quieter while your words are spoken, so people can hear you, and go back to exactly their own volume when BetterTalk stops speaking."/>
+                        <TextBlock Style="{StaticResource Label}">
+                            <Run Text="How quiet: other sounds go to "/><Run Text="{Binding Value, ElementName=DuckTo, StringFormat=N0}"/><Run Text="% of their volume"/>
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource Hint}" Text="50 is half as loud. 0 silences them while BetterTalk speaks."/>
+                        <Slider x:Name="DuckTo" Minimum="0" Maximum="90" TickFrequency="10" IsSnapToTickEnabled="True"/>
+
                         <TextBlock Style="{StaticResource Label}" Text="When should it speak?"/>
                         <ComboBox x:Name="SpeakWhen">
                             <ComboBoxItem Content="Only when I press Speak (it reads the whole message)" Tag="Message"/>
