@@ -221,9 +221,9 @@ public class SessionTests
         rig.Session.PhrasesChanged += (_, _) => saved++;
         rig.Session.SetEditMode(true);
 
-        Click(rig, c => c.Kind == CellKind.Pinned && c.Payload == "Feet");
+        Click(rig, c => c.Kind == CellKind.Pinned && c.Payload == "I'm in pain.");
         Assert.Empty(rig.Engine.Spoken);
-        Assert.Equal(new PhraseEdit(PhraseList.Urgent, null, "Feet"), asked);
+        Assert.Equal(new PhraseEdit(PhraseList.Urgent, null, "I'm in pain."), asked);
         rig.Session.ApplyEdit(asked!, "Please open the window.");
         Assert.Contains(rig.Session.Rows[0].Cells, c => c.Cell.Payload == "Please open the window.");
 
@@ -465,8 +465,8 @@ public class SessionTests
         rig.Session.Open(drawer);
         Assert.Equal(CommunicationSession.PinnedRow, rig.Session.Rows[0].Name);
         Assert.NotEqual(CommunicationSession.PinnedRow, rig.Session.Rows[rig.Session.FocusRow].Name);
-        Click(rig, c => c.Kind == CellKind.Pinned && c.Payload == "Tube Feeding please!");
-        Assert.Equal("Tube Feeding please!", Assert.Single(rig.Engine.Spoken).DisplayText);
+        Click(rig, c => c.Kind == CellKind.Pinned && c.Payload == "I need the bathroom.");
+        Assert.Equal("I need the bathroom.", Assert.Single(rig.Engine.Spoken).DisplayText);
     }
 
     [Fact]
