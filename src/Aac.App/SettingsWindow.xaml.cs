@@ -27,7 +27,7 @@ public partial class SettingsWindow : Window
     private readonly Action _setupGuide;
     private readonly Action _quit;
 
-    public SettingsWindow(AppSettings current, Action restart, Action editButtons, Action<bool> setUnlocked, bool unlocked, Action putPanelsBack, Action setupGuide, Action quit)
+    public SettingsWindow(AppSettings current, Action restart, Action editButtons, Action<bool> setUnlocked, bool unlocked, Action putPanelsBack, Action setupGuide, Action quit, Action sendFeedback)
     {
         InitializeComponent();
         // Wide enough for the whole QuadStick card and every tab heading in one row, but never bigger than the screen.
@@ -43,6 +43,7 @@ public partial class SettingsWindow : Window
         _putPanelsBack = putPanelsBack;
         _setupGuide = setupGuide;
         _quit = quit;
+        _sendFeedback = sendFeedback;
         // Start from what is on disk so hand edits made while the app was running are not lost.
         var onDisk = SettingsStore.Load(AppPaths.Settings, out var problem);
         _settings = File.Exists(AppPaths.Settings) && problem is null ? onDisk : current;
@@ -802,6 +803,17 @@ public partial class SettingsWindow : Window
         Close();
         _setupGuide();
     }
+
+    private readonly Action _sendFeedback;
+
+    /// <summary>Closes Settings so the keyboard can be used, and puts the main window into feedback mode.</summary>
+    private void SendFeedback_Click(object sender, RoutedEventArgs e)
+    {
+        Close();
+        _sendFeedback();
+    }
+
+    private void FeedbackOnGitHub_Click(object sender, RoutedEventArgs e) => FeedbackSender.OpenGitHubPage();
 
     // ---------- updates ----------
 

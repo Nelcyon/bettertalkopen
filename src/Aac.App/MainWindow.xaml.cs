@@ -862,6 +862,10 @@ public partial class MainWindow : Window
 
     private void EditDone_Click(object sender, RoutedEventArgs e) => EditDoneRequested?.Invoke();
 
+    public event Action? FeedbackCancelRequested;
+
+    private void FeedbackCancel_Click(object sender, RoutedEventArgs e) => FeedbackCancelRequested?.Invoke();
+
     private void Cell_Click(object sender, RoutedEventArgs e)
     {
         _lastInputWasNavigationKey = false;

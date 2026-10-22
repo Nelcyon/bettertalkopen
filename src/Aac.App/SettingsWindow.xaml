@@ -384,6 +384,14 @@
                         <TextBlock Style="{StaticResource Hint}"
                                    Text="Every update first keeps a snapshot of the version you had, with its settings, buttons, panel layout and learned words. If you do not like the new version, go back to it here; changes made since the update are replaced by the snapshot. You can update again whenever you like."/>
                         <Button x:Name="GoBack" Padding="12,8" HorizontalAlignment="Left" Click="GoBack_Click"/>
+
+                        <TextBlock Style="{StaticResource Label}" Text="Send feedback"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Tell the makers of BetterTalk what works, what does not, or what you would like. Send feedback closes this window and turns the main window into a feedback box: type with BetterTalk's own keyboard, then press Send feedback where Speak usually is. Nothing is spoken or learned, and your unfinished message comes back afterwards. Only your feedback words, the BetterTalk version and the Windows version are sent; no account is needed. Without internet it is kept on this PC and sent later."/>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="✉ Send feedback…" Padding="12,8" FontWeight="SemiBold" Click="SendFeedback_Click"/>
+                            <Button Content="Write on GitHub instead (opens the browser)" Padding="12,8" Margin="8,0,0,0" Click="FeedbackOnGitHub_Click"/>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
