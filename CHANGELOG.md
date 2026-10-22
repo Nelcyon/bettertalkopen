@@ -2,6 +2,13 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.4.1
+
+- **Stop and quick phrases are dependable with the downloaded voices.** Pressing a quick phrase, a red button or
+  an Itch word while a downloaded voice (Piper, Kokoro) was still speaking could leave the new phrase silent and
+  BetterTalk stuck as "speaking" (with other sounds kept turned down) until you pressed Stop. Each thing
+  BetterTalk says now has its own stop, so stopping one can never be undone by the next one starting.
+
 ## 0.4.0
 
 - **Other sounds get quieter while BetterTalk speaks.** Music, videos, calls and every other program's sound on

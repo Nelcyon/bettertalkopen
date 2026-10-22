@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -98,18 +97,14 @@ public static class VoicePacks
 /// </summary>
 public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDisposable
 {
-    private readonly BlockingCollection<Utterance> _queue = new();
+    private readonly UtteranceQueue _queue = new();
     private readonly Task<OfflineTts> _tts;
     private readonly SynchronizationContext? _context = SynchronizationContext.Current;
     private readonly Thread _worker;
     private readonly float _speed;
     private readonly float _volume;
     private readonly int _speaker;
-    private volatile bool _cancel;
     private volatile WaveOutEvent? _playing;
-    private Utterance? _current;
-    private bool _currentEnded;
-    private readonly object _gate = new();
     private volatile bool _disposed;
 
     public NaturalSpeechEngine(VoiceChoice voice, SpeechSettings settings)
@@ -188,50 +183,38 @@ public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDispo
     public void Speak(Utterance utterance)
     {
         if (_disposed) return;
-        _cancel = false;
         _queue.Add(utterance);
     }
 
     /// <summary>Stop: the sound stops at once, and the utterance ends now (not when the voice finishes its sentence).</summary>
     public void CancelAll()
     {
-        _cancel = true;
+        // Only the utterances there now are stopped, each by its own signal: one spoken right after this
+        // (a quick phrase or word cutting in) starts fresh and cannot bring a stopped one back.
+        var stopped = _queue.StopAll();
         try { _playing?.Stop(); } catch (InvalidOperationException) { }
-        lock (_gate)
-        {
-            if (_current is { } current && !_currentEnded)
-            {
-                _currentEnded = true;
-                RaiseEnded(current.Id, true);
-            }
-        }
-        while (_queue.TryTake(out var skipped)) RaiseEnded(skipped.Id, true);
+        foreach (var u in stopped) RaiseEnded(u.Id, true);
     }
 
     private void Run()
     {
-        foreach (var utterance in _queue.GetConsumingEnumerable())
+        while (_queue.Next() is { } job)
         {
-            lock (_gate) { _current = utterance; _currentEnded = false; }
             var cancelled = true;
-            try { cancelled = !Play(utterance); }
+            try { cancelled = !Play(job.Utterance, job.Stopped); }
             catch (Exception ex) { Trace.WriteLine($"Natural voice failed: {ex}"); }
-            lock (_gate)
-            {
-                if (!_currentEnded) RaiseEnded(utterance.Id, cancelled);
-                _current = null;
-            }
+            if (_queue.Finish(job)) RaiseEnded(job.Utterance.Id, cancelled || job.IsStopped);
         }
     }
 
     /// <summary>Makes and plays one utterance; false if it was stopped.</summary>
-    private bool Play(Utterance utterance)
+    private bool Play(Utterance utterance, CancellationToken stop)
     {
         var clock = Stopwatch.StartNew();
-        if (_cancel) return false;
+        if (stop.IsCancellationRequested) return false;
         OfflineTts tts;
         try { tts = _tts.GetAwaiter().GetResult(); }
-        catch (Exception ex) { return PlayWithWindowsVoice(utterance, ex.Message); }
+        catch (Exception ex) { return PlayWithWindowsVoice(utterance, ex.Message, stop); }
         var buffer = new BufferedWaveProvider(new WaveFormat(tts.SampleRate, 16, 1))
         {
             BufferDuration = TimeSpan.FromMinutes(5),
@@ -265,7 +248,7 @@ public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDispo
                 var within = Math.Clamp((played - piece.Start) / (double)Math.Max(1, piece.Samples), 0, 1);
                 position = piece.CharStart + (int)(within * piece.CharLength);
             }
-            if (position == lastPosition || _cancel) return;
+            if (position == lastPosition || stop.IsCancellationRequested) return;
             lastPosition = position;
             var args = new SpeechProgressEventArgs(utterance.Id, position);
             if (_context is null) Progress?.Invoke(this, args);
@@ -274,7 +257,7 @@ public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDispo
 
         var parts = SpeechPauses.Split(utterance.SpokenText);
         if (parts.Count == 0) parts = new[] { (utterance.SpokenText, 0) };
-        for (var part = 0; part < parts.Count && !_cancel; part++)
+        for (var part = 0; part < parts.Count && !stop.IsCancellationRequested; part++)
         {
             var (text, offset) = parts[part];
             if (part > 0)
@@ -294,7 +277,7 @@ public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDispo
             var chunk = 0;
             tts.GenerateWithCallback(text, _speed, _speaker, (samples, n) =>
             {
-                if (_cancel) return 0; // stop making the rest
+                if (stop.IsCancellationRequested) return 0; // stop making the rest
                 if (pcm.Length < n * 2) pcm = new byte[n * 2];
                 var floats = new float[n];
                 Marshal.Copy(samples, floats, 0, n);
@@ -311,7 +294,7 @@ public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDispo
                     pieces.Add((made, n, sentence.Start, sentence.Length));
                     made += n;
                 }
-                if (!started && !_cancel)
+                if (!started && !stop.IsCancellationRequested)
                 {
                     output.Play();
                     started = true;
@@ -321,21 +304,21 @@ public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDispo
             });
         }
 
-        if (!started) { _playing = null; return !_cancel; }
+        if (!started) { _playing = null; return !stop.IsCancellationRequested; }
         // Let what is queued play out (plus the device's own buffers), unless the user presses Stop.
-        while (!_cancel && buffer.BufferedBytes > 0) Thread.Sleep(15);
-        if (!_cancel) Thread.Sleep(output.DesiredLatency);
+        while (!stop.IsCancellationRequested && buffer.BufferedBytes > 0) Thread.Sleep(15);
+        if (!stop.IsCancellationRequested) Thread.Sleep(output.DesiredLatency);
         _playing = null;
         output.Stop();
         PerfLog.Record("voice.utterance", clock);
-        return !_cancel;
+        return !stop.IsCancellationRequested;
     }
 
     /// <summary>
     /// If the natural voice could not be loaded (a damaged or deleted download), the user still gets speech:
     /// the Windows voice says it instead, and a notice says why.
     /// </summary>
-    private bool PlayWithWindowsVoice(Utterance utterance, string reason)
+    private bool PlayWithWindowsVoice(Utterance utterance, string reason, CancellationToken stop)
     {
         if (_fallback is null)
         {
@@ -350,10 +333,10 @@ public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDispo
         var prompt = _fallback.SpeakAsync(utterance.SpokenText);
         while (!prompt.IsCompleted)
         {
-            if (_cancel) { _fallback.SpeakAsyncCancelAll(); return false; }
+            if (stop.IsCancellationRequested) { _fallback.SpeakAsyncCancelAll(); return false; }
             Thread.Sleep(15);
         }
-        return !_cancel;
+        return !stop.IsCancellationRequested;
     }
 
     private void RaiseEnded(long id, bool cancelled)
@@ -366,8 +349,7 @@ public sealed class NaturalSpeechEngine : ISpeechEngine, ISpeechProgress, IDispo
     public void Dispose()
     {
         _disposed = true;
-        _cancel = true;
-        _queue.CompleteAdding();
+        _queue.Close();
         if (_tts.IsCompletedSuccessfully) _tts.Result.Dispose();
         _fallback?.Dispose();
     }
