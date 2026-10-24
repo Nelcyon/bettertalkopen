@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BetterTalk: a free talking keyboard for Windows</title>
+<meta name="description" content="BetterTalk is a free Windows app that speaks for people who cannot speak, such as people living with ALS. Large keys, word suggestions and natural voices that work offline.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316a34a'/%3E%3Cpath d='M14 18h36a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H30l-10 8v-8h-6a4 4 0 0 1-4-4V22a4 4 0 0 1 4-4z' fill='%23fff'/%3E%3C/svg%3E">
+<!--
+  This page is the friendly front door for people who just want to download BetterTalk.
+  README.md stays the full written guide: when the install steps, the safety points or the feedback
+  steps change there, change them here too. The {{...}} values are filled in from the newest release
+  by .github/workflows/site.yml (site/build.py). No scripts, fonts, trackers or cookies: keep it that way.
+-->
+<style>
+  :root {
+    --bg: #f7f7f4;
+    --surface: #ffffff;
+    --text: #1c1c1a;
+    --muted: #55554f;
+    --line: #dcdcd4;
+    --accent: #15803d;
+    --accent-text: #ffffff;
+    --accent-hover: #116b33;
+    --note-bg: #fff7e0;
+    --note-line: #e0b440;
+    --link: #0b5cad;
+    --ss-blue: #1366c2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141513;
+      --surface: #1d1f1c;
+      --text: #f0f0ea;
+      --muted: #b7b8ae;
+      --line: #34372f;
+      --accent: #22a356;
+      --accent-text: #06130a;
+      --accent-hover: #2bbd65;
+      --note-bg: #2a2412;
+      --note-line: #8a6d1d;
+      --link: #7cb8ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1.2rem;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 46rem; margin: 0 auto; padding: 0 1rem; }
+  a { color: var(--link); text-underline-offset: 0.15em; }
+  h1, h2, h3 { line-height: 1.25; margin: 0 0 0.6rem; }
+  h1 { font-size: 2.4rem; letter-spacing: -0.01em; }
+  h2 { font-size: 1.7rem; margin-top: 0.4rem; }
+  h3 { font-size: 1.25rem; }
+  p { margin: 0 0 1rem; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.4rem; }
+  li { margin-bottom: 0.5rem; }
+  strong { font-weight: 650; }
+
+  header { padding: 2.5rem 0 1rem; }
+  .brand { display: flex; align-items: center; gap: 0.7rem; font-weight: 700; font-size: 1.35rem; margin-bottom: 1.6rem; }
+  .brand svg { width: 2.4rem; height: 2.4rem; flex: none; }
+  .lead { font-size: 1.35rem; color: var(--text); }
+
+  .download { margin: 1.6rem 0 0.6rem; }
+  .button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.7rem;
+    width: 100%; max-width: 30rem; min-height: 4.2rem; padding: 0.9rem 1.6rem;
+    background: var(--accent); color: var(--accent-text);
+    border-radius: 0.9rem; text-decoration: none; font-weight: 700; font-size: 1.45rem;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+  }
+  .button:hover { background: var(--accent-hover); }
+  .button:focus-visible { outline: 4px solid var(--link); outline-offset: 3px; }
+  .button svg { width: 1.6rem; height: 1.6rem; flex: none; }
+  .fine { color: var(--muted); font-size: 1.05rem; }
+
+  section { padding: 2rem 0; border-top: 1px solid var(--line); }
+  .shot { margin: 1.6rem 0 0.4rem; }
+  .shot img { display: block; width: 100%; height: auto; border-radius: 0.6rem; border: 1px solid var(--line); background: #000; }
+  .shot figcaption { color: var(--muted); font-size: 1rem; margin-top: 0.5rem; }
+
+  .note {
+    background: var(--note-bg); border-left: 6px solid var(--note-line);
+    border-radius: 0.5rem; padding: 1rem 1.2rem; margin: 1.4rem 0 0.4rem;
+  }
+  .note p:last-child { margin-bottom: 0; }
+
+  .steps { list-style: none; padding: 0; counter-reset: step; }
+  .steps > li { position: relative; padding-left: 3.4rem; margin-bottom: 1.6rem; counter-increment: step; }
+  .steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: -0.1rem;
+    width: 2.4rem; height: 2.4rem; border-radius: 50%;
+    background: var(--accent); color: var(--accent-text);
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+
+  /* A drawing of the Windows SmartScreen box, so people recognise it when it appears. */
+  .smartscreen {
+    background: var(--ss-blue); color: #fff; border-radius: 0.3rem;
+    padding: 1.1rem 1.2rem 1rem; margin: 0.9rem 0 0.4rem; max-width: 30rem;
+    font-family: "Segoe UI", system-ui, sans-serif; font-size: 1rem; line-height: 1.45;
+  }
+  .smartscreen .ss-title { font-size: 1.45rem; font-weight: 300; margin-bottom: 0.5rem; }
+  .smartscreen .ss-link { text-decoration: underline; font-weight: 600; outline: 3px solid #ffd54a; outline-offset: 2px; border-radius: 2px; }
+  .smartscreen .ss-buttons { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; }
+  .smartscreen .ss-btn { border: 2px solid #fff; padding: 0.3rem 1rem; font-size: 0.95rem; }
+  .smartscreen .ss-btn.hi { outline: 3px solid #ffd54a; outline-offset: 2px; font-weight: 600; }
+  .smartscreen .ss-btn.off { opacity: 0.75; }
+  .ss-caption { color: var(--muted); font-size: 1rem; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; margin: 1rem 0; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 0.8rem; padding: 1.1rem 1.2rem; }
+  .card h3 { margin-bottom: 0.35rem; }
+  .card p { margin: 0; color: var(--muted); font-size: 1.1rem; }
+
+  .checksum { font-family: Consolas, "Cascadia Mono", Menlo, monospace; font-size: 0.95rem; word-break: break-all; background: var(--surface); border: 1px solid var(--line); border-radius: 0.4rem; padding: 0.15rem 0.4rem; }
+
+  .checksum.command { word-break: normal; white-space: nowrap; }
+
+  footer { border-top: 1px solid var(--line); padding: 2rem 0 3rem; color: var(--muted); font-size: 1.05rem; }
+  footer h2 { font-size: 1.3rem; color: var(--text); }
+
+  @media (max-width: 30rem) {
+    body { font-size: 1.12rem; }
+    h1 { font-size: 1.95rem; }
+    h2 { font-size: 1.5rem; }
+    .lead { font-size: 1.2rem; }
+    .button { font-size: 1.3rem; }
+    .steps > li { padding-left: 3rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="brand">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#16a34a"/><path d="M14 18h36a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H30l-10 8v-8h-6a4 4 0 0 1-4-4V22a4 4 0 0 1 4-4z" fill="#fff"/></svg>
+    BetterTalk
+  </div>
+  <h1>A free talking keyboard for people who cannot speak</h1>
+  <p class="lead">BetterTalk is a Windows program that says out loud what you type or pick. It was made for a friend living
+  with ALS, and works with a QuadStick, a head or mouth switch, a mouse, or an eye tracker that moves the mouse.</p>
+
+  <div class="download">
+    <a class="button" href="https://github.com/Nelcyon/bettertalkopen/releases/latest/download/BetterTalk-Setup.exe">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M6.5 10 12 15.5 17.5 10"/><path d="M4 20h16"/></svg>
+      Download for Windows
+    </a>
+  </div>
+  <p class="fine">Free. {{VERSION_LINE}}Windows 10 or 11 (64-bit), about {{SIZE_MB}} MB. No account needed.
+  Then follow <a href="#install">the three steps to install it</a>.</p>
+
+  <figure class="shot">
+    <img src="main-window.png" width="1100" height="700"
+      alt="The BetterTalk window: a row of red buttons for urgent phrases at the top, a row of green word suggestions, a large keyboard with a Speak button, and the message box at the bottom.">
+    <figcaption>What BetterTalk looks like: urgent phrases in red, word suggestions in green, big keys, and Speak.</figcaption>
+  </figure>
+
+  <div class="note">
+    <p><strong>BetterTalk is new (early beta).</strong> Very few people have used it so far. Please use it alongside an
+    existing way of communicating, not instead of one, until you have checked it works reliably for you (a speech
+    and language therapist can help). If something goes wrong, <a href="#feedback">please tell us</a>.</p>
+  </div>
+</header>
+
+<main>
+<section class="wrap" id="what">
+  <h2>What it does</h2>
+  <div class="cards">
+    <div class="card"><h3>Big keys</h3><p>A large on-screen keyboard where every key is the same size, and nothing moves while you type.</p></div>
+    <div class="card"><h3>Guesses your next word</h3><p>Six word suggestions that get better as BetterTalk learns the words you use.</p></div>
+    <div class="card"><h3>Urgent phrases, one press</h3><p>Help!, I need the bathroom., I'm in pain., Yes., No. Change them to your own.</p></div>
+    <div class="card"><h3>Natural voices</h3><p>Dozens of free, natural-sounding voices that work without the internet after a one-time download.</p></div>
+    <div class="card"><h3>Show where it itches</h3><p>Click the spot on a 3D figure and BetterTalk says exactly where, like "my left inner thigh, just above the knee".</p></div>
+    <div class="card"><h3>Heard over the TV</h3><p>Music and videos on the computer get quieter while BetterTalk speaks, then come back up.</p></div>
+  </div>
+  <p><strong>Who it is for:</strong> people who use Windows with limited movement and want a quick way to speak, and the
+  family and carers who set it up. <strong>What it is not:</strong> a medical device, a replacement for a dedicated
+  speech device, or an app for phones, iPads or Macs (Windows 10 and 11 only, for now).</p>
+</section>
+
+<section class="wrap" id="install">
+  <h2>How to install it</h2>
+  <ol class="steps">
+    <li>
+      <strong>Download it</strong> with the green button above. Your browser saves a file called
+      <strong>BetterTalk-Setup.exe</strong>, usually in your Downloads folder.
+    </li>
+    <li>
+      <strong>Double-click that file.</strong> Windows will probably show a blue box like this one:
+      <div class="smartscreen" role="img" aria-label="Drawing of the blue Windows box titled Windows protected your PC, with the More info link highlighted, and then the Run anyway button highlighted.">
+        <div class="ss-title">Windows protected your PC</div>
+        <div>Microsoft Defender SmartScreen prevented an unrecognized app from starting. Running this app might put your PC at risk.</div>
+        <div style="margin-top:0.5rem"><span class="ss-link">More info</span></div>
+        <div class="ss-buttons"><span class="ss-btn hi">Run anyway</span><span class="ss-btn off">Don't run</span></div>
+      </div>
+      <p class="ss-caption">Click <strong>More info</strong>. A <strong>Run anyway</strong> button appears: click it.</p>
+      <p>This box is not a virus warning. Windows shows it for any new program from a maker it does not know yet,
+      because BetterTalk is not signed with a paid certificate. <a href="#safe">Why it is safe</a>.</p>
+    </li>
+    <li>
+      <strong>Click Install.</strong> No administrator password is needed. BetterTalk opens by itself and puts an icon
+      on the Desktop and in the Start menu. A short set-up guide (about a minute) asks a few questions; you can
+      skip it and change everything later in Settings.
+    </li>
+  </ol>
+  <p>The program starts with the standard Windows voice. To pick a more natural one, open
+  <strong>Settings → Voice &amp; speaking</strong>: each voice downloads once and then works with no internet.</p>
+  <p>To remove BetterTalk: Windows Settings → Apps → Installed apps → BetterTalk → Uninstall.</p>
+</section>
+
+<section class="wrap" id="updates">
+  <h2>Getting new versions</h2>
+  <p>In BetterTalk, open <strong>Settings → Updates → Check for updates</strong>. It shows what is new and offers to
+  update. Your buttons, settings and learned words are always kept, and you can go back to the version you had.
+  BetterTalk never updates or goes online by itself.</p>
+</section>
+
+<section class="wrap" id="safe">
+  <h2>Is this safe?</h2>
+  <ul>
+    <li><strong>Free, with nothing to sign up for.</strong> No account, no ads, no payments.</li>
+    <li><strong>It stays on your computer.</strong> No cloud and no tracking. It never records audio. It only uses the
+      internet when you download a voice, press Check for updates, or send feedback. What it learns about your words
+      is stored encrypted on your own PC.</li>
+    <li><strong>No AI chatbots.</strong> BetterTalk has no connection to ChatGPT, Gemini, Claude or any other AI model.
+      Word suggestions come from a plain list of common words plus the words you use.</li>
+    <li><strong>Open for anyone to check.</strong> All of its code is public, and each installer is built
+      automatically by GitHub from that public code, not on someone's own computer.</li>
+    <li><strong>You can check your download.</strong> Each version lists a checksum, a code that only matches the real
+      file.{{CHECKSUM_LINE}}</li>
+    <li><strong>Why Windows warns about it.</strong> Signing a program costs money every year, and BetterTalk is free.
+      The blue box is about an unknown maker, not about anything found in the file.</li>
+  </ul>
+  <p class="fine">This page has no cookies, no trackers and no ads either.</p>
+</section>
+
+<section class="wrap" id="feedback">
+  <h2>Tell us what goes wrong, or what would help</h2>
+  <p>The easiest way is from inside BetterTalk: open <strong>Settings → Updates → Send feedback</strong> (or
+  right-click the BetterTalk icon near the clock and choose <em>Send feedback to the makers</em>). Type your message
+  with BetterTalk's own keyboard and press <strong>Send feedback</strong>. No account or email is needed. Only your
+  words, the BetterTalk version and the Windows version are sent.</p>
+  <p>It helps to say how you control the computer (QuadStick, switch, mouse, eye tracker) and what happened just
+  before the problem. Please never include anything private that was typed or said.</p>
+</section>
+</main>
+
+<footer class="wrap">
+  <h2>For the curious</h2>
+  <p>BetterTalk is open source under the GPL-3.0 licence. The <a href="https://github.com/Nelcyon/bettertalkopen#readme">full
+  guide</a> covers every setting and key; the <a href="https://github.com/Nelcyon/bettertalkopen">code and files</a>,
+  <a href="https://github.com/Nelcyon/bettertalkopen/releases">every version with its checksum</a> and
+  <a href="https://github.com/Nelcyon/bettertalkopen/actions">how each installer was built</a> are all on GitHub.
+  You can also report problems there as <a href="https://github.com/Nelcyon/bettertalkopen/issues/new/choose">GitHub issues</a>
+  (needs a free GitHub account).</p>
+</footer>
+
+</body>
+</html>
