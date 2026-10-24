@@ -74,7 +74,8 @@ def main():
     os.makedirs(out, exist_ok=True)
     with open(os.path.join(out, "index.html"), "w", encoding="utf-8") as f:
         f.write(page)
-    shutil.copyfile(os.path.join(ROOT, "docs", "main-window.png"), os.path.join(out, "main-window.png"))
+    for image in ("main-window.png", "itch.png"):
+        shutil.copyfile(os.path.join(ROOT, "docs", image), os.path.join(out, image))
     # Served as plain files, never run through Jekyll.
     open(os.path.join(out, ".nojekyll"), "w").close()
     # A custom domain for GitHub Pages, if one is ever added, lives in site/CNAME.

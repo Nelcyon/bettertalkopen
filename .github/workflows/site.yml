@@ -5,7 +5,7 @@ name: site
 on:
   push:
     branches: [main]
-    paths: ['site/**', 'docs/main-window.png', '.github/workflows/site.yml']
+    paths: ['site/**', 'docs/main-window.png', 'docs/itch.png', '.github/workflows/site.yml']
   workflow_run:
     workflows: [release]
     types: [completed]
