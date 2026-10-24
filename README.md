@@ -260,6 +260,8 @@ keyboard and message box never move.
   words on the buttons" is on. Settings → Itch doll picks how they look: blue with a red outline (the usual),
   orange with a blue outline, or the colours of the Itch button.
 
+![The Itch screen: words for the person scratching in the top strip, the 3D figure beside the keyboard, and the Move the figure buttons](docs/itch.png)
+
 **Itch** again closes the panel and brings the urgent buttons back.
 
 ### How updates work
