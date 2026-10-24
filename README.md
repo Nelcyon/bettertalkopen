@@ -11,7 +11,7 @@ it out loud with a choice of free, natural-sounding voices that run entirely off
 
 > **Status: early beta.** BetterTalk is new and has been used by very few people so far. Use it alongside an
 > existing, proven AAC system, not instead of one, until the user (and ideally their speech-language
-> pathologist) have checked that it is reliable for them. Please tell us what goes wrong: see
+> pathologist) have checked that it is reliable for them. Please tell me what goes wrong: see
 > [Report a problem or an idea](#report-a-problem-or-an-idea).
 
 ![BetterTalk main window: urgent red buttons, green word suggestions, number row, keyboard, Speak and Stop, and the message box](docs/main-window.png)
