@@ -1,0 +1,37 @@
+name: site
+# Builds the download page (site/) and puts it on the gh-pages branch, which GitHub Pages and
+# Cloudflare Pages both serve as-is. It runs when the page changes, after every release (so the
+# version and checksum on the page are the newest), and by hand.
+on:
+  push:
+    branches: [main]
+    paths: ['site/**', 'docs/main-window.png', '.github/workflows/site.yml']
+  workflow_run:
+    workflows: [release]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: site
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Build the page
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 site/build.py _site
+      - name: Put it on the gh-pages branch
+        working-directory: _site
+        run: |
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Download page from ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
