@@ -12,7 +12,9 @@
     <AssemblyName>BetterTalk</AssemblyName>
     <RootNamespace>Aac.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.4.3</Version>
+    <!-- The yellow speech bubble, drawn by installer/make_icon.py: the exe, its windows, shortcuts and the installer. -->
+    <ApplicationIcon>Assets\BetterTalk.ico</ApplicationIcon>
+    <Version>0.4.4</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
@@ -27,6 +29,8 @@
   <ItemGroup>
     <!-- The Itch figure: Blender Studio's "Human Base Meshes" male body (CC0 1.0), as a gzipped OBJ. -->
     <EmbeddedResource Include="Assets/body.obj.gz" LogicalName="body.obj.gz" />
+    <!-- The same icon for the tray, picked at the size the notification area wants. -->
+    <EmbeddedResource Include="Assets/BetterTalk.ico" LogicalName="BetterTalk.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Aac.Core\Aac.Core.csproj" />

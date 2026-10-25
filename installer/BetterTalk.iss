@@ -22,6 +22,9 @@ OutputBaseFilename=BetterTalk-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+; The yellow speech bubble (made by make_icon.py) on the installer itself; the program, its shortcuts and its
+; entry in Installed apps take it from BetterTalk.exe.
+SetupIconFile=..\src\Aac.App\Assets\BetterTalk.ico
 UninstallDisplayIcon={app}\BetterTalk.exe
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -33,8 +36,8 @@ RestartApplications=yes
 Source: "..\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autoprograms}\BetterTalk"; Filename: "{app}\BetterTalk.exe"
-Name: "{autodesktop}\BetterTalk"; Filename: "{app}\BetterTalk.exe"
+Name: "{autoprograms}\BetterTalk"; Filename: "{app}\BetterTalk.exe"; IconFilename: "{app}\BetterTalk.exe"
+Name: "{autodesktop}\BetterTalk"; Filename: "{app}\BetterTalk.exe"; IconFilename: "{app}\BetterTalk.exe"
 
 [Run]
 Filename: "{app}\BetterTalk.exe"; Description: "Start BetterTalk now"; Flags: nowait postinstall skipifsilent

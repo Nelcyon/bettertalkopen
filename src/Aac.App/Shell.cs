@@ -23,7 +23,7 @@ public sealed class TrayIcon : IDisposable
     public TrayIcon(Action show, Action hide, Action openSettings, Action openSettingsFile, Action exit, Action<bool> setEditMode,
         Action<bool> setArranging, Action putPanelsBack, Action setupGuide, Action sendFeedback)
     {
-        _image = DrawIcon();
+        _image = LoadIcon();
         var menu = new Forms.ContextMenuStrip { ShowItemToolTips = true };
         menu.Items.Add(new Forms.ToolStripMenuItem("Show BetterTalk", null, (_, _) => show())
             { ToolTipText = "Opens the BetterTalk window (you can also left-click this icon)" });
@@ -79,25 +79,11 @@ public sealed class TrayIcon : IDisposable
     /// <summary>Keeps the menu's tick in step when move mode is switched on or off elsewhere.</summary>
     public bool ArrangingChecked { set { if (_arrangeItem.Checked != value) _arrangeItem.Checked = value; } }
 
-    /// <summary>A speech bubble drawn at runtime, so no image file has to ship with the app.</summary>
-    private static Drawing.Icon DrawIcon()
+    /// <summary>The app's yellow speech bubble (Assets/BetterTalk.ico), at the tray's own size so it stays sharp.</summary>
+    private static Drawing.Icon LoadIcon()
     {
-        using var bmp = new Drawing.Bitmap(32, 32);
-        using (var g = Drawing.Graphics.FromImage(bmp))
-        {
-            g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            g.Clear(Drawing.Color.Transparent);
-            using var fill = new Drawing.SolidBrush(Drawing.Color.FromArgb(255, 212, 0));
-            g.FillEllipse(fill, 1, 2, 30, 22);
-            g.FillPolygon(fill, new[] { new Drawing.Point(7, 19), new Drawing.Point(4, 30), new Drawing.Point(15, 22) });
-            using var dot = new Drawing.SolidBrush(Drawing.Color.Black);
-            g.FillEllipse(dot, 8, 11, 4, 4);
-            g.FillEllipse(dot, 14, 11, 4, 4);
-            g.FillEllipse(dot, 20, 11, 4, 4);
-        }
-        var handle = bmp.GetHicon();
-        try { return (Drawing.Icon)Drawing.Icon.FromHandle(handle).Clone(); }
-        finally { DestroyIcon(handle); }
+        using var stream = typeof(TrayIcon).Assembly.GetManifestResourceStream("BetterTalk.ico")!;
+        return new Drawing.Icon(stream, Forms.SystemInformation.SmallIconSize);
     }
 
     public void Dispose()
@@ -106,9 +92,6 @@ public sealed class TrayIcon : IDisposable
         _icon.Dispose();
         _image.Dispose();
     }
-
-    [DllImport("user32.dll")]
-    private static extern bool DestroyIcon(IntPtr handle);
 }
 
 /// <summary>

@@ -2,6 +2,13 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.4.4
+
+- **BetterTalk has its own icon now:** the same yellow speech bubble as the icon near the clock. You see it on
+  the installer, the desktop and Start menu shortcuts, the taskbar, and in Windows' list of installed apps,
+  instead of the plain Windows program picture. (If a shortcut still shows the old picture, it changes after
+  the next restart of Windows.)
+
 ## 0.4.3
 
 - **Clicking the corner to open BetterTalk no longer clicks the program underneath.** Before, that click also
