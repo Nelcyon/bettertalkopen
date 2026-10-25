@@ -126,6 +126,14 @@
 
   .checksum.command { word-break: normal; white-space: nowrap; }
 
+  .updates { list-style: none; padding: 0; }
+  .updates > li { padding: 1rem 0; border-bottom: 1px solid var(--line); margin: 0; }
+  .updates > li:first-child { padding-top: 0.2rem; }
+  .updates h3 { margin-bottom: 0.4rem; }
+  .updates .when { color: var(--muted); font-weight: 400; font-size: 1rem; margin-left: 0.4rem; }
+  .updates ul { margin: 0; }
+  .updates ul li { color: var(--text); font-size: 1.1rem; }
+
   footer { border-top: 1px solid var(--line); padding: 2rem 0 3rem; color: var(--muted); font-size: 1.05rem; }
   footer h2 { font-size: 1.3rem; color: var(--text); }
 
@@ -228,6 +236,14 @@
   <p>In BetterTalk, open <strong>Settings → Updates → Check for updates</strong>. It shows what is new and offers to
   update. Your buttons, settings and learned words are always kept, and you can go back to the version you had.
   BetterTalk never updates or goes online by itself.</p>
+</section>
+
+<section class="wrap" id="recent">
+  <h2>Recent updates</h2>
+  <ul class="updates">
+{{RECENT_UPDATES}}
+  </ul>
+  <p><a href="https://github.com/Nelcyon/bettertalkopen/releases">All updates</a>, back to the first version.</p>
 </section>
 
 <section class="wrap" id="safe">
