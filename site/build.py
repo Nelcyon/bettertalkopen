@@ -6,6 +6,7 @@ points people to the releases page for the checksum.
 
     python3 site/build.py <output folder>
 """
+import datetime
 import html
 import json
 import os
@@ -50,6 +51,48 @@ def latest_release():
     return version, size_mb, sha256
 
 
+def inline(markdown):
+    """Release-note markdown (one bullet) as safe HTML: **bold** kept, links and `code` reduced to text."""
+    text = html.escape(markdown, quote=False)
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"`([^`]+)`", r"\1", text)
+    return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+
+
+def recent_updates(count=5):
+    """The newest releases as HTML: version and date, then each change in plain words.
+
+    The notes are each version's section of CHANGELOG.md, which is written for the people using BetterTalk.
+    """
+    try:
+        releases = json.loads(get(f"https://api.github.com/repos/{REPO}/releases?per_page={count + 5}"))
+    except Exception as error:  # noqa: BLE001
+        print(f"Could not read the releases: {error}")
+        return ""
+    items = []
+    for release in releases:
+        if release.get("draft") or release.get("prerelease"):
+            continue
+        notes = (release.get("body") or "").replace("\r", "").split("\n---", 1)[0]
+        bullets = []
+        for line in notes.split("\n"):
+            if line.startswith("- "):
+                bullets.append(line[2:].strip())
+            elif bullets and line.strip():
+                bullets[-1] += " " + line.strip()
+        if not bullets:
+            continue
+        published = datetime.datetime.fromisoformat(release["published_at"].replace("Z", "+00:00"))
+        changes = "\n".join(f"        <li>{inline(b)}</li>" for b in bullets)
+        items.append(
+            f'    <li>\n      <h3>Version {html.escape(release["tag_name"].lstrip("v"))}'
+            f' <span class="when">{published.day} {published:%B %Y}</span></h3>\n'
+            f'      <ul>\n{changes}\n      </ul>\n    </li>')
+        if len(items) == count:
+            break
+    return "\n".join(items)
+
+
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "_site")
     version, size_mb, sha256 = latest_release()
@@ -67,7 +110,8 @@ def main():
     page = (page
             .replace("{{VERSION_LINE}}", f"Version {html.escape(version)}. " if version else "")
             .replace("{{SIZE_MB}}", str(size_mb or 60))
-            .replace("{{CHECKSUM_LINE}}", checksum))
+            .replace("{{CHECKSUM_LINE}}", checksum)
+            .replace("{{RECENT_UPDATES}}", recent_updates()))
     if re.search(r"\{\{[A-Z_]+\}\}", page):
         sys.exit("site/index.html has a {{...}} value that build.py does not fill in")
 
