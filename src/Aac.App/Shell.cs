@@ -113,14 +113,16 @@ public sealed class TrayIcon : IDisposable
 
 /// <summary>
 /// Opens the app from the corner of the screen it sits in (see <see cref="CornerSpot"/>). In click mode a
-/// left click released with the pointer in the corner fires (a low-level mouse hook, so even very fast clicks count; the click
-/// still reaches whatever is under it). The hook runs on its own background thread with its own message
-/// loop: Windows waits for a low-level hook before moving the cursor, so it must never wait on the
+/// left click released with the pointer in the corner fires (a low-level mouse hook, so even very fast clicks count). That
+/// click is kept from whatever is under it, so a full-screen video or game does not pause or react to it; a click on one
+/// of BetterTalk's own windows in the corner goes through as normal. The hook runs on its own background thread with its
+/// own message loop: Windows waits for a low-level hook before moving the cursor, so it must never wait on the
 /// app's UI thread. In rest mode the pointer has to stay in the corner for the dwell time.
 /// </summary>
 public sealed class HotCorner : IDisposable
 {
-    private const int WhMouseLl = 14, WmLButtonUp = 0x0202, WmQuit = 0x0012;
+    private const int WhMouseLl = 14, WmLButtonDown = 0x0201, WmLButtonUp = 0x0202, WmLButtonDblClk = 0x0203, WmQuit = 0x0012;
+    private static readonly uint OwnProcessId = (uint)Environment.ProcessId;
     private readonly Func<int, int, bool> _inCorner;
     private readonly Action _onTrigger;
     private readonly Dispatcher _dispatcher = Dispatcher.CurrentDispatcher;
@@ -131,6 +133,7 @@ public sealed class HotCorner : IDisposable
     private uint _hookThreadId;
     private DateTime? _enteredAt;
     private bool _fired;
+    private bool _swallowing; // the button went down in the corner and was kept back, so its release is kept back too
 
     public HotCorner(Aac.Core.Storage.CornerTrigger trigger, int dwellMs, Func<int, int, bool> inCorner, Action onTrigger)
     {
@@ -179,7 +182,21 @@ public sealed class HotCorner : IDisposable
             {
                 var info = Marshal.PtrToStructure<MouseHookInfo>(lParam);
                 if (PerfLog.Enabled) PerfLog.Record("mouse hook delay", unchecked((uint)Environment.TickCount - info.Time));
-                if (wParam == WmLButtonUp && _inCorner(info.X, info.Y)) _dispatcher.BeginInvoke(_onTrigger);
+                var message = (int)wParam;
+                if (message is WmLButtonDown or WmLButtonDblClk)
+                {
+                    _swallowing = _inCorner(info.X, info.Y) && !OverOwnWindow(info.X, info.Y);
+                    if (_swallowing) return (IntPtr)1;
+                }
+                else if (message == WmLButtonUp)
+                {
+                    if (_inCorner(info.X, info.Y)) _dispatcher.BeginInvoke(_onTrigger);
+                    if (_swallowing)
+                    {
+                        _swallowing = false;
+                        return (IntPtr)1;
+                    }
+                }
             }
         }
         catch (Exception ex)
@@ -188,6 +205,15 @@ public sealed class HotCorner : IDisposable
             App.LogLifecycle($"corner hook error: {ex.GetType().Name}");
         }
         return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
+    }
+
+    /// <summary>True when one of BetterTalk's own windows is under the point: then the click is for it and goes through.</summary>
+    private static bool OverOwnWindow(int x, int y)
+    {
+        var hwnd = WindowFromPoint(new Point { X = x, Y = y });
+        if (hwnd == IntPtr.Zero) return false;
+        GetWindowThreadProcessId(hwnd, out var pid);
+        return pid == OwnProcessId;
     }
 
     private void Tick()
@@ -226,6 +252,12 @@ public sealed class HotCorner : IDisposable
 
     [DllImport("user32.dll")]
     private static extern bool GetCursorPos(out Point point);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr WindowFromPoint(Point point);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelMouseProc proc, IntPtr module, uint threadId);

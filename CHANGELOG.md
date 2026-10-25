@@ -2,6 +2,13 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.4.3
+
+- **Clicking the corner to open BetterTalk no longer clicks the program underneath.** Before, that click also
+  reached whatever was in the corner, so a full-screen video (Peacock, Netflix, YouTube and the like) could
+  pause or a game could react. Now BetterTalk keeps the click for itself and only opens. When BetterTalk is
+  already showing in that corner, clicks on its own keys work exactly as before.
+
 ## 0.4.2
 
 - **The last word is never cut short.** With the downloaded voices (Piper, Kokoro), the end of a message could
