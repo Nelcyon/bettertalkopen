@@ -6,7 +6,9 @@
 <title>BetterTalk: a free talking keyboard for Windows</title>
 <meta name="description" content="BetterTalk is a free Windows app that speaks for people who cannot speak, such as people living with ALS. Large keys, word suggestions and natural voices that work offline.">
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316a34a'/%3E%3Cpath d='M14 18h36a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H30l-10 8v-8h-6a4 4 0 0 1-4-4V22a4 4 0 0 1 4-4z' fill='%23fff'/%3E%3C/svg%3E">
+<!-- The app's yellow speech bubble (src/Aac.App/Assets/BetterTalk.ico, drawn by installer/make_icon.py). -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3C<ellipse cx='16' cy='13' rx='15' ry='11' fill='%23ffd400'/%3E%3Cpolygon points='7,19 4,30 15,22' fill='%23ffd400'/%3E%3Ccircle cx='10' cy='13' r='2'/%3E%3Ccircle cx='16' cy='13' r='2'/%3E%3Ccircle cx='22' cy='13' r='2'/%3E%3C/svg%3E">
+<link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
 <!--
   This page is the friendly front door for people who just want to download BetterTalk.
   README.md stays the full written guide: when the install steps, the safety points or the feedback
@@ -66,8 +68,8 @@
   strong { font-weight: 650; }
 
   header { padding: 2.5rem 0 1rem; }
-  .brand { display: flex; align-items: center; gap: 0.7rem; font-weight: 700; font-size: 1.35rem; margin-bottom: 1.6rem; }
-  .brand svg { width: 2.4rem; height: 2.4rem; flex: none; }
+  .brand { display: flex; align-items: center; gap: 0.7rem; font-weight: 700; font-size: 1.7rem; margin-bottom: 1.6rem; }
+  .brand svg { width: 3rem; height: 3rem; flex: none; }
   .lead { font-size: 1.35rem; color: var(--text); }
 
   .download { margin: 1.6rem 0 0.6rem; }
@@ -151,7 +153,7 @@
 
 <header class="wrap">
   <div class="brand">
-    <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#16a34a"/><path d="M14 18h36a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H30l-10 8v-8h-6a4 4 0 0 1-4-4V22a4 4 0 0 1 4-4z" fill="#fff"/></svg>
+    <svg viewBox="0 0 32 32" aria-hidden="true"><ellipse cx="16" cy="13" rx="15" ry="11" fill="#ffd400"/><polygon points="7,19 4,30 15,22" fill="#ffd400"/><circle cx="10" cy="13" r="2"/><circle cx="16" cy="13" r="2"/><circle cx="22" cy="13" r="2"/></svg>
     BetterTalk
   </div>
   <h1>A free talking keyboard for people who cannot speak</h1>
