@@ -120,6 +120,7 @@ def main():
         f.write(page)
     for image in ("main-window.png", "itch.png"):
         shutil.copyfile(os.path.join(ROOT, "docs", image), os.path.join(out, image))
+    shutil.copyfile(os.path.join(ROOT, "src", "Aac.App", "Assets", "BetterTalk.ico"), os.path.join(out, "favicon.ico"))
     # Served as plain files, never run through Jekyll.
     open(os.path.join(out, ".nojekyll"), "w").close()
     # A custom domain for GitHub Pages, if one is ever added, lives in site/CNAME.
