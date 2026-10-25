@@ -3,9 +3,9 @@
 **To download BetterTalk, or to send it to someone: [bettertalkopen.pages.dev](https://bettertalkopen.pages.dev)**
 (a simple page with the download button and plain install steps; this page is the full guide).
 
-A free, open-source Windows communication app (AAC) for people who cannot speak and control a computer with a
-QuadStick, a head or mouth switch, a mouse, or an eye tracker that moves the mouse, for example people living
-with ALS. The user builds a message by typing on a large on-screen keyboard (with word suggestions that learn
+A free, open-source Windows communication app (AAC) for people living with ALS and other conditions that affect
+speech, who control a computer with a QuadStick, a head or mouth switch, a mouse, or an eye tracker that moves
+the mouse. The user builds a message by typing on a large on-screen keyboard (with word suggestions that learn
 from them) or by choosing a stored phrase, can point to exactly where they itch on a 3D figure, and the app says
 it out loud with a choice of free, natural-sounding voices that run entirely offline.
 
