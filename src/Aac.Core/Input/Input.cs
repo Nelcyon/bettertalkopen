@@ -44,6 +44,8 @@ public enum InputAction
     Quick,
     Phrases,
     Itch,
+    /// <summary>Say the last message again (the Last said key).</summary>
+    SayLastAgain,
 }
 
 /// <summary>What a system-wide hotkey (one that works while another program has focus) can do.</summary>
@@ -81,6 +83,7 @@ public static class ActionCatalog
     {
         new ActionInfo(nameof(InputAction.Speak), "Speak the message", OpenGroup),
         new ActionInfo(nameof(InputAction.StopVoice), "Stop speaking", OpenGroup),
+        new ActionInfo(nameof(InputAction.SayLastAgain), "Say the last message again", OpenGroup),
         new ActionInfo(nameof(InputAction.DeleteLetter), "Delete a letter", OpenGroup),
         new ActionInfo(nameof(InputAction.DeleteWord), "Delete a word", OpenGroup),
         new ActionInfo(nameof(InputAction.Space), "Type a space", OpenGroup),
