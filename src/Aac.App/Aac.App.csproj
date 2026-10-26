@@ -14,7 +14,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- The yellow speech bubble, drawn by installer/make_icon.py: the exe, its windows, shortcuts and the installer. -->
     <ApplicationIcon>Assets\BetterTalk.ico</ApplicationIcon>
-    <Version>0.4.4</Version>
+    <Version>0.4.5</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />

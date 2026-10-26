@@ -639,6 +639,7 @@ public sealed class CommunicationSession : INotifyPropertyChanged
             // Approve is kept as a key name for older settings files; it now just speaks.
             case InputAction.Approve or InputAction.Speak: Speak(); break;
             case InputAction.StopVoice: StopVoice(); break;
+            case InputAction.SayLastAgain: SayLastAgain(); break;
             case InputAction.DeleteLetter: DeleteLetter(); break;
             case InputAction.Undo: Undo(); break;
             case InputAction.Home: CloseDrawer(); break;
@@ -743,6 +744,24 @@ public sealed class CommunicationSession : INotifyPropertyChanged
         Rebuild();
     }
 
+    /// <summary>The last message or quick phrase said out loud (not single words), for the Last said key.</summary>
+    public string? LastSaid { get; private set; }
+
+    /// <summary>Says the last message again. The message being written stays as it is, and nothing is learned twice.</summary>
+    public void SayLastAgain()
+    {
+        if (LastSaid is not { } text) { StatusText = "Nothing said yet."; return; }
+        var outcome = _speech.SpeakMessage(text);
+        StatusText = outcome switch
+        {
+            SpeakOutcome.Started => $"Saying again: {text}",
+            SpeakOutcome.CoolingDown => "Just spoke. Wait a moment.",
+            SpeakOutcome.Busy => "Still speaking.",
+            _ => StatusText,
+        };
+        Rebuild();
+    }
+
     public void StopVoice()
     {
         _speech.Stop();
@@ -840,6 +859,7 @@ public sealed class CommunicationSession : INotifyPropertyChanged
             case CommandId.GoPhrases: Toggle(Drawer.Phrases); break;
             case CommandId.Speak: Speak(); break;
             case CommandId.StopVoice: StopVoice(); break;
+            case CommandId.SayLastAgain: SayLastAgain(); break;
             case CommandId.Space: SetDraft(Draft.Length == 0 || Draft.EndsWith(' ') ? Draft : Draft + " ", typed: true); break;
             case CommandId.DeleteLetter: DeleteLetter(); break;
             case CommandId.DeleteWord: DeleteWord(); break;
@@ -982,6 +1002,7 @@ public sealed class CommunicationSession : INotifyPropertyChanged
 
     private void CompleteMessage(string text, MessageKind kind)
     {
+        LastSaid = text.Trim();
         var started = _messageStartedAt ?? _clock.Now;
         _metrics.Add(new MessageMetric(_actionsThisMessage, _clock.Now - started, text.Length, kind));
         _actionsThisMessage = 0;
@@ -1042,6 +1063,10 @@ public sealed class CommunicationSession : INotifyPropertyChanged
                     : new Cell("speak", "Speak", CellKind.Command, CommandId.Speak, IsEnabled: hasText && !IsSpeaking, Icon: "🔊", Span: 2, Part: KeyPart.Start));
                 keys.Add(new Cell("stop", "Stop speaking", CellKind.Command, CommandId.StopVoice, IsEnabled: IsSpeaking, Icon: "■", Caption: "Stop", Span: 0.5, Part: KeyPart.End));
             }
+            // Last said fills the space after ? under Speak, so the row is as wide as the others.
+            if (i == 2)
+                keys.Add(new Cell("say-last", "Say the last message again", CellKind.Command, CommandId.SayLastAgain,
+                    IsEnabled: LastSaid is not null && !IsSpeaking && !FeedbackMode, Icon: "↻", Caption: "Last said", Span: 1.5));
             rows.Add(KeyRow($"keys-{i}", keys.ToArray()));
         }
 

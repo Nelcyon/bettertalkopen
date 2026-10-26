@@ -56,6 +56,8 @@ public enum CommandId
     ItchPanLeft,
     ItchPanRight,
     OpenSettings,
+    /// <summary>Says the last message (or quick phrase) again, leaving the message being written as it is.</summary>
+    SayLastAgain,
 }
 
 /// <summary>
