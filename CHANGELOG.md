@@ -2,6 +2,14 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.4.5
+
+- **New Last said key:** it sits under Speak, right of the question mark. Press it and BetterTalk says your last
+  message again, for when someone did not hear or asks "what?". Whatever you are typing stays in the message box
+  as it is. It also repeats the last quick phrase or red-strip button. The key stays grey until something has
+  been said, and while BetterTalk is speaking. You can give it a key of its own in Settings → Hotkeys
+  ("Say the last message again").
+
 ## 0.4.4
 
 - **BetterTalk has its own icon now:** the same yellow speech bubble as the icon near the clock. You see it on
