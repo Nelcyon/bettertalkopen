@@ -208,7 +208,7 @@
                         <CheckBox x:Name="AlwaysOnTop" Content="Keep BetterTalk on top of other programs"/>
                         <TextBlock Style="{StaticResource Label}" Text="Window size"/>
                         <TextBlock Style="{StaticResource Hint}"
-                                   Text="These buttons change the size at once, and the keys grow or shrink with the window. BetterTalk stays in its corner. They work even when the size is locked. While the size is not locked, you can also drag any edge of the window."/>
+                                   Text="These buttons change the size at once, and the keys grow or shrink with the window. BetterTalk stays in its corner. They always work. Dragging the window's edges only works while the UI is unlocked (see Move the panels below), so the size never changes by accident."/>
                         <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                             <Button Content="Smaller" Padding="16,8" Margin="0,0,8,0" Click="WindowSmaller_Click"/>
                             <Button Content="Bigger" Padding="16,8" Margin="0,0,8,0" Click="WindowBigger_Click"/>
@@ -216,7 +216,7 @@
                         </StackPanel>
                         <CheckBox x:Name="LockSize" Content="Lock the window size" Margin="0,10,0,0"/>
                         <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,0"
-                                   Text="Stops the edges being dragged and F11 full screen, so the size cannot change by accident. Untick it and press Save and restart to drag the edges again."/>
+                                   Text="The edges then cannot be dragged even while the UI is unlocked, and F11 full screen is off. Only the buttons above change the size."/>
                         <CheckBox x:Name="StartWithWindows" Content="Start BetterTalk when I sign in to Windows"/>
                         <CheckBox x:Name="StartHidden" Content="Start hidden (do not show the window when BetterTalk starts)"/>
                         <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,6"
@@ -224,7 +224,7 @@
 
                         <TextBlock Style="{StaticResource Label}" Text="Move the panels"/>
                         <TextBlock Style="{StaticResource Hint}"
-                                   Text="The Itch figure and its controls usually sit beside the keyboard. Untick Lock UI to move them: each panel gets a dashed outline, its buttons stop working, and you drag it anywhere on any screen. Panels snap to and slide along the edges of the keyboard and of each other, and a pulled-out panel can be resized by its edges. Press Lock UI (on the screen, or tick it here) when they are where you want them. BetterTalk remembers where you put them."/>
+                                   Text="The Itch figure and its controls usually sit beside the keyboard. Untick Lock UI to move them: each panel gets a dashed outline, its buttons stop working, and you drag it anywhere on any screen. While the UI is unlocked, the window's own edges can be dragged to resize it too. Panels snap to and slide along the edges of the keyboard and of each other, and a pulled-out panel can be resized by its edges. Press Lock UI (on the screen, or tick it here) when they are where you want them. BetterTalk remembers where you put them."/>
                         <CheckBox x:Name="LockUi" Content="🔒 Lock UI (the panels stay where they are)" Click="LockUi_Click"/>
                         <Button Content="Put the panels back beside the keyboard" Padding="12,8" Margin="0,10,0,0" HorizontalAlignment="Left" Click="PutPanelsBack_Click"
                                 ToolTip="Every panel back beside the keyboard at its usual width"/>

@@ -4,8 +4,12 @@ Each version's notes here are shown in Settings → Updates when you press Check
 
 ## 0.4.7
 
-- Same as 0.4.6 (the Smaller, Bigger and Back to the usual size buttons), with the version number inside the
-  program set right, so Check for updates no longer offers 0.4.6 again after installing it.
+- **The window size can no longer change by accident.** The window's edges can only be dragged while the UI is
+  unlocked (tray → "Unlock UI to move the panels", or untick Lock UI in Settings → Screen & window). Press
+  Lock UI when you are done and the size stays put. F11 full screen also only works while the UI is unlocked.
+  The Smaller, Bigger and Back to the usual size buttons from 0.4.6 always work.
+- The version number inside the program is right again, so Check for updates no longer offers 0.4.6 after
+  installing it.
 
 ## 0.4.6
 
