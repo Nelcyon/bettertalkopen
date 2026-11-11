@@ -70,7 +70,6 @@ public partial class MainWindow : Window
         ShowMessage();
         Topmost = settings.AlwaysOnTop;
         UpdateFocusFrame();
-        ApplyWindowResizing();
         // Stay docked in the corner of the chosen screen when screens, resolution or scaling change.
         EventHandler displayChanged = (_, _) => Dispatcher.BeginInvoke(Dock);
         Microsoft.Win32.SystemEvents.DisplaySettingsChanged += displayChanged;
@@ -269,13 +268,23 @@ public partial class MainWindow : Window
     {
         var hwnd = new WindowInteropHelper(this).Handle;
         // Note when the window is being dragged or resized, so auto-hide never fires mid-drag.
-        HwndSource.FromHwnd(hwnd)?.AddHook((IntPtr _, int msg, IntPtr _, IntPtr _, ref bool _) =>
+        HwndSource.FromHwnd(hwnd)?.AddHook((IntPtr _, int msg, IntPtr wParam, IntPtr lParam, ref bool _) =>
         {
-            if (msg == 0x0231) _movingOrSizing = true;       // WM_ENTERSIZEMOVE
+            if (msg == 0x0214 && _resizingWindow) KeepProportions(wParam, lParam);   // WM_SIZING
+            if (msg == 0x0231)                               // WM_ENTERSIZEMOVE
+            {
+                _movingOrSizing = true;
+                _sizingRatio = ActualHeight > 0 ? ActualWidth / ActualHeight : 0;
+            }
             else if (msg == 0x0232)                          // WM_EXITSIZEMOVE: back flush in the corner after a resize by hand
             {
                 _movingOrSizing = false;
-                Dispatcher.BeginInvoke(Dock);
+                Dispatcher.BeginInvoke(() =>
+                {
+                    Dock();
+                    if (_resizingWindow && WindowState == WindowState.Normal && !_fullscreen)
+                        WindowSizeStore.Save(Width - _itchExtra, Height - _drawerExtra);
+                });
             }
             return IntPtr.Zero;
         });
@@ -298,7 +307,7 @@ public partial class MainWindow : Window
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.F11 && !e.IsRepeat && WindowResizable)
+        if (e.Key == Key.F11 && !e.IsRepeat && _resizingWindow)
         {
             SetFullscreen(!_fullscreen);
             e.Handled = true;
@@ -631,27 +640,72 @@ public partial class MainWindow : Window
         foreach (var cover in _covers.Values) cover.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
         MoveBadge.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
         foreach (var w in _floating.Values) w.SetArranging(on);
-        ApplyWindowResizing();
+        if (on && _resizingWindow) SetWindowResizing(false);   // one mode at a time
         if (on && !_session.ItchOpen) _session.OpenItch(true);
     }
 
     /// <summary>
-    /// The window's edges (and F11 full screen, and Windows' maximize) only work while the UI is unlocked, and never
-    /// with "Keep the window size fixed" ticked, so a stray press or drag can never change the size. Settings' Smaller,
-    /// Bigger and Back to the usual size buttons always work, because they are always meant.
+    /// Window resize mode, separate from moving the Itch panels: an orange bar at the bottom with Smaller, Bigger,
+    /// Usual size and Done. The window's edges never resize it (no stray drag can change the size); F11 full screen
+    /// works only in this mode. Settings' size buttons always work, because they are always meant.
     /// </summary>
-    private bool WindowResizable => _arranging && !_settings.LockWindowSize;
+    private bool _resizingWindow;
 
-    private void ApplyWindowResizing()
+    public bool IsResizingWindow => _resizingWindow;
+
+    public void SetWindowResizing(bool on)
     {
-        var on = WindowResizable;
+        if (on && _arranging) LockUiRequested?.Invoke();       // one mode at a time
+        _resizingWindow = on;
+        SizeBadge.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+        SizeFrame.Visibility = SizeBadge.Visibility;
+        // Only in this mode can the edges be dragged; they are thick enough to grab, and the frame shows where they are.
         ResizeMode = on ? ResizeMode.CanResize : ResizeMode.CanMinimize;
-        Chrome.ResizeBorderThickness = on ? new Thickness(10) : new Thickness(0);
+        Chrome.ResizeBorderThickness = on ? new Thickness(14) : new Thickness(0);
+        if (on) ShowFromTray();
+        _session.ShowNotice(on
+            ? "Resizing the window: press Smaller or Bigger on the orange bar at the bottom until it is right, then Done."
+            : "Window size kept.");
     }
+
+    /// <summary>Width ÷ height when an edge drag began; the drag keeps it, so everything scales together.</summary>
+    private double _sizingRatio;
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct SizingRect { public int Left, Top, Right, Bottom; }
+
+    /// <summary>
+    /// While an edge or corner is dragged in resize mode, the other side follows so the window keeps its shape and the
+    /// keys simply grow or shrink, as in a picture editor. Never smaller than the minimum or bigger than the screen.
+    /// </summary>
+    private void KeepProportions(IntPtr edge, IntPtr rectPtr)
+    {
+        if (_sizingRatio <= 0) return;
+        var r = System.Runtime.InteropServices.Marshal.PtrToStructure<SizingRect>(rectPtr);
+        var scale = WindowPlacement.Scale(this);
+        var work = Screens.Choose(_settings.Screen).WorkArea;
+        double w = r.Right - r.Left, h = r.Bottom - r.Top;
+        var byHeight = (int)edge is 3 or 6;                    // WMSZ_TOP, WMSZ_BOTTOM: the height leads
+        if (byHeight) w = h * _sizingRatio; else h = w / _sizingRatio;
+        // Limits: the minimum size, and the screen.
+        var f = Math.Max(Math.Max(1, MinWidth * scale / w), MinHeight * scale / h);
+        w *= f; h *= f;
+        var g = Math.Min(Math.Min(1, work.Width / w), work.Height / h);
+        w *= g; h *= g;
+        // Grow away from the edge being dragged; Dock puts the window back in its corner afterwards.
+        if ((int)edge is 1 or 4 or 7) r.Left = r.Right - (int)Math.Round(w); else r.Right = r.Left + (int)Math.Round(w);
+        if ((int)edge is 3 or 4 or 5) r.Top = r.Bottom - (int)Math.Round(h); else r.Bottom = r.Top + (int)Math.Round(h);
+        System.Runtime.InteropServices.Marshal.StructureToPtr(r, rectPtr, false);
+    }
+
+    private void SizeSmaller_Click(object sender, RoutedEventArgs e) => ResizeWindow(0.9);
+    private void SizeBigger_Click(object sender, RoutedEventArgs e) => ResizeWindow(1.1);
+    private void SizeUsual_Click(object sender, RoutedEventArgs e) => ResizeWindow(null);
+    private void SizeDone_Click(object sender, RoutedEventArgs e) => SetWindowResizing(false);
 
     public bool IsArranging => _arranging;
 
-    /// <summary>The Lock UI button on the move-mode label.</summary>
+    /// <summary>The Lock panels button on the Itch panel move-mode label.</summary>
     public event Action? LockUiRequested;
 
     private void LockUi_Click(object sender, RoutedEventArgs e) => LockUiRequested?.Invoke();

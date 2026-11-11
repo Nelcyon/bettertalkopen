@@ -2,6 +2,20 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.4.9
+
+- **Resizing is simple now, and the main window and the Itch panels are kept apart.** Settings has a new
+  **Resize** tab with two separate boxes:
+  - **Main window:** press "Resize the main window". An orange frame goes round BetterTalk: drag any edge or
+    corner and everything grows or shrinks together, keeping its shape, or press Smaller and Bigger on the
+    orange bar. Press Done. Outside this mode the window size cannot change at all. Smaller, Bigger and Back to
+    the usual size buttons are in the box too.
+  - **Itch panels:** press "Move or resize the Itch panels" to drag the figure and its buttons around and resize
+    them. Pressing Lock panels ends it. This never changes the main window.
+- The tray icon's menu has both: "Resize the main window" and "Unlock the Itch panels to move or resize them".
+- The lock settings that were mixed into Screen & window and the "Keep the window size fixed" box are gone; they
+  are not needed any more.
+
 ## 0.4.8
 
 - **Clearer lock settings.** Settings → Screen & window now has one section, "Moving and resizing: Lock UI".

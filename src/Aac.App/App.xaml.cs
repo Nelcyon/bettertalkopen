@@ -139,7 +139,7 @@ public partial class App : Application
         window.LockUiRequested += () => SetArranging(session, window, false);
         _tray = new TrayIcon(window.ShowFromTray, window.HideToTray, OpenSettings, OpenSettingsFile, () => Quit(restart: false, "Exit chosen in the tray menu"),
             on => SetEditMode(session, window, on), on => SetArranging(session, window, on), window.PutAllPanelsBack, OpenSetupGuide,
-            () => SetFeedbackMode(session, window, true), () => { window.ShowFromTray(); window.ResizeWindow(null); });
+            () => SetFeedbackMode(session, window, true), () => { window.ShowFromTray(); window.ResizeWindow(null); }, () => window.SetWindowResizing(true));
         _session = session;
         // For checking the Settings window on a test copy (it is otherwise opened from the tray icon).
         if (Environment.GetEnvironmentVariable("BETTERTALK_OPEN_SETTINGS") == "1" && Environment.GetEnvironmentVariable("BETTERTALK_DATA_DIR") is { Length: > 0 })
@@ -229,8 +229,8 @@ public partial class App : Application
         if (on) window.ShowFromTray();
         window.SetArranging(on);
         session.ShowNotice(on
-            ? "UI unlocked: drag any outlined panel to move it, or drag an edge of the window to resize it. Press Lock UI at the bottom when you are done."
-            : "UI locked. The panels and the window size stay as they are.");
+            ? "Itch panels unlocked: drag a panel to move it. Pull it away from the keyboard to move it freely and resize it by its edges. Press Lock panels at the bottom when you are done."
+            : "Itch panels locked in place.");
     }
 
     /// <summary>Opens the edit box for a button and applies the result.</summary>
@@ -271,7 +271,8 @@ public partial class App : Application
             () => { if (MainWindow is MainWindow w) w.PutAllPanelsBack(); },
             OpenSetupGuide, () => Quit(restart: false, "closing for an update or going back to the version before"),
             () => { if (_session is not null && MainWindow is MainWindow w) SetFeedbackMode(_session, w, true); },
-            factor => { if (MainWindow is MainWindow w) w.ResizeWindow(factor); });
+            factor => { if (MainWindow is MainWindow w) w.ResizeWindow(factor); },
+            () => { if (MainWindow is MainWindow w) w.SetWindowResizing(true); });
         _settingsWindow.Show();
         _settingsWindow.Activate();
     }

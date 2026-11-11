@@ -7,8 +7,9 @@
         AllowsTransparency="True" Background="Transparent" Foreground="{StaticResource Fg}"
         FontFamily="Segoe UI" WindowStartupLocation="Manual" ResizeMode="CanMinimize"
         WindowStyle="None">
-    <!-- No title bar: the window sits flush in its corner. Its edges can be dragged to resize it ONLY while the UI is
-         unlocked (move mode), so the size can never change by accident; Alt+F4, Hide, the tray and any hotkey hide it. -->
+    <!-- No title bar: the window sits flush in its corner. Its edges never resize it, so the size can never change by
+         accident: only the size buttons do (Settings, or the orange bar of window resize mode). Alt+F4, Hide, the tray and
+         any hotkey hide it. -->
     <WindowChrome.WindowChrome>
         <WindowChrome x:Name="Chrome" CaptionHeight="0" ResizeBorderThickness="0" GlassFrameThickness="0"
                       UseAeroCaptionButtons="False" CornerRadius="0"/>
@@ -439,14 +440,28 @@
                 <Button Style="{StaticResource BadgeButton}" Content="Cancel" FontSize="16" FontWeight="Bold" Padding="16,2" Click="FeedbackCancel_Click"/>
             </StackPanel>
         </Border>
-        <!-- Move mode (UI unlocked): a label on the bottom edge with Lock UI, so there is always a way back. -->
+        <!-- Window resize mode: an orange frame round the whole window shows the edges to drag. -->
+        <Border x:Name="SizeFrame" Grid.RowSpan="2" Grid.ColumnSpan="5" Margin="-14" BorderBrush="#FFB45C" BorderThickness="6"
+                IsHitTestVisible="False" Panel.ZIndex="50" Visibility="Collapsed"/>
+        <!-- Window resize mode: its own orange bar with big one-click size buttons and Done. Nothing to do with the Itch panels. -->
+        <Border x:Name="SizeBadge" Grid.RowSpan="2" Grid.Column="2" Margin="0,0,0,-14" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                Background="#9A4A00" BorderBrush="#FFB45C" BorderThickness="2,2,2,0" CornerRadius="10,10,0,0" Padding="16,2,6,2" Panel.ZIndex="52" Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="RESIZING THE WINDOW" FontSize="17" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                <Button Style="{StaticResource BadgeButton}" Content="－ Smaller" FontSize="16" FontWeight="Bold" Padding="14,2" Margin="0,0,6,0" Click="SizeSmaller_Click"/>
+                <Button Style="{StaticResource BadgeButton}" Content="＋ Bigger" FontSize="16" FontWeight="Bold" Padding="14,2" Margin="0,0,6,0" Click="SizeBigger_Click"/>
+                <Button Style="{StaticResource BadgeButton}" Content="Usual size" FontSize="16" Padding="12,2" Margin="0,0,6,0" Click="SizeUsual_Click"/>
+                <Button Style="{StaticResource BadgeButton}" Content="✔ Done" FontSize="16" FontWeight="Bold" Padding="16,2" Click="SizeDone_Click"/>
+            </StackPanel>
+        </Border>
+        <!-- Itch panel move mode: a label on the bottom edge with Lock panels, so there is always a way back. -->
         <Border x:Name="MoveBadge" Grid.RowSpan="2" Grid.Column="2" Margin="0,0,0,-14" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                 Background="#2F5F95" BorderBrush="#7CC4FF" BorderThickness="2,2,2,0" CornerRadius="10,10,0,0" Padding="16,2,6,2" Panel.ZIndex="51" Visibility="Collapsed">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="UI UNLOCKED" FontSize="17" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
-                <TextBlock Text="drag a panel to move it · drag any edge to resize" FontSize="15" Foreground="White" VerticalAlignment="Center" Margin="12,0,14,0"/>
+                <TextBlock Text="ITCH PANELS UNLOCKED" FontSize="17" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                <TextBlock Text="drag a panel to move it · pull it away from the keyboard, then drag its edges to resize it" FontSize="15" Foreground="White" VerticalAlignment="Center" Margin="12,0,14,0"/>
                 <Button Style="{StaticResource BadgeButton}" Content="Put panels back" FontSize="16" Padding="12,2" Margin="0,0,6,0" Click="PutBack_Click"/>
-                <Button Style="{StaticResource BadgeButton}" Content="🔒 Lock UI" FontSize="16" FontWeight="Bold" Padding="16,2" Click="LockUi_Click"/>
+                <Button Style="{StaticResource BadgeButton}" Content="🔒 Lock panels" FontSize="16" FontWeight="Bold" Padding="16,2" Click="LockUi_Click"/>
             </StackPanel>
         </Border>
     </Grid>

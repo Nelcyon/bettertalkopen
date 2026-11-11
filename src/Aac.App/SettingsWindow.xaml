@@ -211,27 +211,47 @@
                         <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,6"
                                    Text="It then waits as an icon near the clock until you open it (from the corner, by clicking that icon, or with a hotkey you set in the Hotkeys tab)."/>
 
-                        <!-- One section for everything that moves or resizes, so there is only one lock to think about. -->
-                        <TextBlock Style="{StaticResource Label}" Text="Moving and resizing: Lock UI" Margin="0,16,0,0"/>
-                        <TextBlock Style="{StaticResource Hint}"
-                                   Text="While the UI is locked, nothing can be moved or resized by accident: not the window, not the panels. Keep it locked for everyday use."/>
-                        <CheckBox x:Name="LockUi" Content="🔒 Lock UI (nothing can be moved or resized)" Click="LockUi_Click"/>
-                        <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,0"
-                                   Text="Untick it to move or resize things. This window closes and a blue UI UNLOCKED label appears at the bottom of BetterTalk. Then drag a panel to move it, or drag any edge of the window to resize it. Press Lock UI on that label when you are done. BetterTalk remembers it all."/>
-                        <Button Content="Put the panels back beside the keyboard" Padding="12,8" Margin="0,10,0,0" HorizontalAlignment="Left" Click="PutPanelsBack_Click"
-                                ToolTip="Every panel back beside the keyboard at its usual width"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
 
-                        <TextBlock Style="{StaticResource Label}" Text="Window size"/>
-                        <TextBlock Style="{StaticResource Hint}"
-                                   Text="One click changes the size at once, even while the UI is locked. The keys grow or shrink with the window and BetterTalk stays in its corner."/>
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <Button Content="Smaller" Padding="16,8" Margin="0,0,8,0" Click="WindowSmaller_Click"/>
-                            <Button Content="Bigger" Padding="16,8" Margin="0,0,8,0" Click="WindowBigger_Click"/>
-                            <Button Content="Back to the usual size" Padding="16,8" Click="WindowUsual_Click"/>
-                        </StackPanel>
-                        <CheckBox x:Name="LockSize" Content="Keep the window size fixed even when the UI is unlocked" Margin="0,10,0,0"/>
-                        <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,0"
-                                   Text="For extra safety: the window's edges and F11 full screen then never work, and only the three buttons above change the size. Panels can still be moved. Takes effect after Save and restart."/>
+            <!-- ================= Resize ================= -->
+            <!-- Its own tab so it is easy to find, with the main window and the Itch panels in two separate boxes:
+                 they never affect each other. -->
+            <TabItem Header="Resize">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="14,4,14,14">
+                        <TextBlock Style="{StaticResource Intro}"
+                                   Text="Nothing changes size by accident. Sizes only change here, or in the resize modes these buttons start."/>
+
+                        <Border BorderBrush="#FFB45C" BorderThickness="2" CornerRadius="8" Padding="14,10" Margin="0,10,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Main window (the keyboard)" FontSize="20" FontWeight="Bold" Foreground="#FFB45C"/>
+                                <TextBlock Style="{StaticResource Hint}"
+                                           Text="Everything on the keyboard grows or shrinks together, and BetterTalk stays in its corner."/>
+                                <Button Content="Resize the main window" FontSize="17" FontWeight="SemiBold" Padding="18,10" Margin="0,8,0,0" HorizontalAlignment="Left" Click="ResizeOnScreen_Click"/>
+                                <TextBlock Style="{StaticResource Hint}" Margin="0,4,0,0"
+                                           Text="This window closes and an orange frame goes round BetterTalk. Drag any edge or corner, or press Smaller and Bigger on the orange bar at the bottom. Press Done when it looks right."/>
+                                <TextBlock Style="{StaticResource Label}" Text="Or change it right here, one step at a time:"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <Button Content="－ Smaller" Padding="16,8" Margin="0,0,8,0" Click="WindowSmaller_Click"/>
+                                    <Button Content="＋ Bigger" Padding="16,8" Margin="0,0,8,0" Click="WindowBigger_Click"/>
+                                    <Button Content="Back to the usual size" Padding="16,8" Click="WindowUsual_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border BorderBrush="#7CC4FF" BorderThickness="2" CornerRadius="8" Padding="14,10" Margin="0,16,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Itch panels (the figure and its buttons)" FontSize="20" FontWeight="Bold" Foreground="#7CC4FF"/>
+                                <TextBlock Style="{StaticResource Hint}"
+                                           Text="Move them and change their size. This never changes the main window."/>
+                                <Button Content="Move or resize the Itch panels" FontSize="17" FontWeight="SemiBold" Padding="18,10" Margin="0,8,0,0" HorizontalAlignment="Left" Click="UnlockPanels_Click"/>
+                                <TextBlock Style="{StaticResource Hint}" Margin="0,4,0,0"
+                                           Text="This window closes, Itch opens, and each panel gets a blue dashed outline. Drag a panel to move it. Close to the keyboard it sticks to the keyboard's edge; pull it further away and it moves freely. Once it is away from the keyboard, drag its edges to resize it. Press Lock panels on the blue bar at the bottom when you are done."/>
+                                <Button Content="Put the Itch panels back beside the keyboard" Padding="12,8" Margin="0,10,0,0" HorizontalAlignment="Left" Click="PutPanelsBack_Click"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

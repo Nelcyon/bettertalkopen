@@ -278,15 +278,17 @@ Only the newest snapshot is kept.
 
 Out of the box the panels sit beside the keyboard and the window grows for them. Only the keyboard and the
 panels are drawn: the window around them is see-through, so a panel is exactly as big as what is in it.
-**Unlock UI to move or resize** (the tray menu), or unticking **Lock UI** in Settings → Screen & window, turns
+**Unlock the Itch panels to move or resize them** (the tray menu), or **Move or resize the Itch panels** in Settings → Resize, turns
 on move mode: every panel gets a dashed outline, its buttons and the figure stop reacting, and pressing anywhere
 on a panel drags it, anywhere on any screen. A dragged panel snaps to the edges of the keyboard, the other
 panels and the screen, and slides along an edge it is held against. A panel that has been dragged out can be
-resized by its edges (the controls panel always stays as tall as its buttons), and so can the main window: its
-edges can only be dragged while the UI is unlocked, so its size never changes by accident (Settings → Screen &
-window also has Smaller, Bigger and Back to the usual size buttons that always work). **Lock UI** on the label at the
+resized by its edges (the controls panel always stays as tall as its buttons). **Lock panels** on the label at the
 bottom ends move mode; **Put panels back** returns everything beside the keyboard. Floating panels never take
 the keyboard from BetterTalk, and they hide and show with it. The arrangement is kept in `layout.json`.
+
+The main window's size is separate: it only changes in **Resize the main window** (Settings → Resize, or the
+tray menu), where an orange frame shows the edges to drag (everything keeps its shape) and an orange bar has
+Smaller, Bigger, Usual size and Done.
 
 The body is the male "realistic" base mesh from Blender Studio's
 [Human Base Meshes](https://www.blender.org/download/demo-files/#assets) bundle v1.4.1, released under
