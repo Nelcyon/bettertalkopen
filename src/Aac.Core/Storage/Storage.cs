@@ -63,7 +63,7 @@ public sealed class AppSettings
     public bool SuggestionsFromMiddle { get; set; } = true;
     /// <summary>How the words that replace the urgent strip while Itch is open are coloured.</summary>
     public SpokenLook SpokenButtonLook { get; set; } = SpokenLook.BlueRedOutline;
-    /// <summary>Stop the window being resized or maximized (its saved size is kept); fullscreen (F11) is ignored too.</summary>
+    /// <summary>No longer used (0.4.9+: the window's edges never resize it); kept so older settings files still load.</summary>
     public bool LockWindowSize { get; set; }
 
     public InputGateOptions Input { get; set; } = new();

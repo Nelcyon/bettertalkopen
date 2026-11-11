@@ -211,27 +211,29 @@
                         <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,6"
                                    Text="It then waits as an icon near the clock until you open it (from the corner, by clicking that icon, or with a hotkey you set in the Hotkeys tab)."/>
 
-                        <!-- One section for everything that moves or resizes, so there is only one lock to think about. -->
-                        <TextBlock Style="{StaticResource Label}" Text="Moving and resizing: Lock UI" Margin="0,16,0,0"/>
-                        <TextBlock Style="{StaticResource Hint}"
-                                   Text="While the UI is locked, nothing can be moved or resized by accident: not the window, not the panels. Keep it locked for everyday use."/>
-                        <CheckBox x:Name="LockUi" Content="🔒 Lock UI (nothing can be moved or resized)" Click="LockUi_Click"/>
-                        <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,0"
-                                   Text="Untick it to move or resize things. This window closes and a blue UI UNLOCKED label appears at the bottom of BetterTalk. Then drag a panel to move it, or drag any edge of the window to resize it. Press Lock UI on that label when you are done. BetterTalk remembers it all."/>
-                        <Button Content="Put the panels back beside the keyboard" Padding="12,8" Margin="0,10,0,0" HorizontalAlignment="Left" Click="PutPanelsBack_Click"
-                                ToolTip="Every panel back beside the keyboard at its usual width"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
 
-                        <TextBlock Style="{StaticResource Label}" Text="Window size"/>
+            <!-- ================= Edit UI ================= -->
+            <!-- Its own tab so it is easy to find: one mode for all resizing and moving. -->
+            <TabItem Header="Edit UI">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="14,4,14,14">
+                        <TextBlock Style="{StaticResource Intro}"
+                                   Text="Nothing on screen can be resized or moved by accident. To change the size or layout, use Edit UI."/>
+                        <Button Content="✏ Edit UI (resize and move)" FontSize="18" FontWeight="SemiBold" Padding="20,12" Margin="0,10,0,0" HorizontalAlignment="Left" Click="EditUi_Click"/>
+                        <TextBlock Style="{StaticResource Hint}" Margin="0,6,0,0"
+                                   Text="This window closes. An orange frame goes round BetterTalk and an orange bar appears at the bottom."/>
+                        <TextBlock Style="{StaticResource Label}" Text="In Edit UI"/>
                         <TextBlock Style="{StaticResource Hint}"
-                                   Text="One click changes the size at once, even while the UI is locked. The keys grow or shrink with the window and BetterTalk stays in its corner."/>
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <Button Content="Smaller" Padding="16,8" Margin="0,0,8,0" Click="WindowSmaller_Click"/>
-                            <Button Content="Bigger" Padding="16,8" Margin="0,0,8,0" Click="WindowBigger_Click"/>
-                            <Button Content="Back to the usual size" Padding="16,8" Click="WindowUsual_Click"/>
-                        </StackPanel>
-                        <CheckBox x:Name="LockSize" Content="Keep the window size fixed even when the UI is unlocked" Margin="0,10,0,0"/>
-                        <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,0"
-                                   Text="For extra safety: the window's edges and F11 full screen then never work, and only the three buttons above change the size. Panels can still be moved. Takes effect after Save and restart."/>
+                                   Text="• Resize BetterTalk: drag any orange edge or corner, or press Smaller, Bigger or Usual size on the bar. Everything grows or shrinks together and keeps its shape."/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="• Move an Itch panel (the figure or its buttons): drag it. Close to the keyboard it sticks to the keyboard's edge; pull it further away and it moves freely."/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="• Resize an Itch panel: once it is away from the keyboard, drag its edges."/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="• Put panels back on the bar returns the Itch panels beside the keyboard. Press Done when it looks right: everything is locked again and remembered."/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

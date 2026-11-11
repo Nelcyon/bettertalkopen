@@ -23,10 +23,8 @@ public partial class SettingsWindow : Window
 
     private readonly Action _editButtons;
     private readonly Action<bool> _setUnlocked;
-    private readonly Action _putPanelsBack;
     private readonly Action _setupGuide;
     private readonly Action _quit;
-    private readonly Action<double?> _resizeWindow;
 
     public SettingsWindow(AppSettings current, Action restart, Action editButtons, Action<bool> setUnlocked, bool unlocked, Action putPanelsBack, Action setupGuide, Action quit, Action sendFeedback, Action<double?> resizeWindow)
     {
@@ -40,12 +38,9 @@ public partial class SettingsWindow : Window
         _restart = restart;
         _editButtons = editButtons;
         _setUnlocked = setUnlocked;
-        LockUi.IsChecked = !unlocked;
-        _putPanelsBack = putPanelsBack;
         _setupGuide = setupGuide;
         _quit = quit;
         _sendFeedback = sendFeedback;
-        _resizeWindow = resizeWindow;
         // Start from what is on disk so hand edits made while the app was running are not lost.
         var onDisk = SettingsStore.Load(AppPaths.Settings, out var problem);
         _settings = File.Exists(AppPaths.Settings) && problem is null ? onDisk : current;
@@ -82,7 +77,6 @@ public partial class SettingsWindow : Window
         CornerRest.Value = Math.Clamp(Math.Round(_settings.CornerDwellMs / 100.0) / 10.0, 0.1, 3);
         StartWithWindows.IsChecked = _settings.StartWithWindows;
         StartHidden.IsChecked = _settings.StartHidden;
-        LockSize.IsChecked = _settings.LockWindowSize;
         AutoHide.IsChecked = _settings.AutoHideWhenMouseLeaves;
         AutoHideSeconds.Value = Math.Clamp(Math.Round(_settings.AutoHideAfterMs / 1000.0), 1, 10);
         AlwaysOnTop.IsChecked = _settings.AlwaysOnTop;
@@ -154,7 +148,6 @@ public partial class SettingsWindow : Window
         _settings.CornerDwellMs = (int)Math.Round(CornerRest.Value * 1000);
         _settings.StartWithWindows = StartWithWindows.IsChecked == true;
         _settings.StartHidden = StartHidden.IsChecked == true;
-        _settings.LockWindowSize = LockSize.IsChecked == true;
         _settings.AutoHideWhenMouseLeaves = AutoHide.IsChecked == true;
         _settings.AutoHideAfterMs = (int)AutoHideSeconds.Value * 1000;
         _settings.AlwaysOnTop = AlwaysOnTop.IsChecked == true;
@@ -794,20 +787,14 @@ public partial class SettingsWindow : Window
         _editButtons();
     }
 
-    /// <summary>Takes effect at once (no restart): unticked closes this window so the panels can be dragged.</summary>
-    private void LockUi_Click(object sender, RoutedEventArgs e)
+    /// <summary>Takes effect at once (no restart): closes this window and starts Edit UI.</summary>
+    private void EditUi_Click(object sender, RoutedEventArgs e)
     {
-        var locked = LockUi.IsChecked == true;
-        if (!locked) Close();
-        _setUnlocked(!locked);
+        Close();
+        _setUnlocked(true);
     }
 
-    private void PutPanelsBack_Click(object sender, RoutedEventArgs e) => _putPanelsBack();
 
-    // The window size buttons act at once (no Save needed) and work even when the size is locked.
-    private void WindowSmaller_Click(object sender, RoutedEventArgs e) => _resizeWindow(0.9);
-    private void WindowBigger_Click(object sender, RoutedEventArgs e) => _resizeWindow(1.1);
-    private void WindowUsual_Click(object sender, RoutedEventArgs e) => _resizeWindow(null);
 
     private void SetupGuide_Click(object sender, RoutedEventArgs e)
     {

@@ -222,15 +222,15 @@ public partial class App : Application
         });
     }
 
-    /// <summary>Move mode ("Unlock UI") on or off (the tray menu or Settings), with the tray's tick kept in step.</summary>
+    /// <summary>Edit UI mode on or off (the tray menu or Settings), with the tray's tick kept in step.</summary>
     private void SetArranging(CommunicationSession session, MainWindow window, bool on)
     {
         if (_tray is not null) _tray.ArrangingChecked = on;
         if (on) window.ShowFromTray();
         window.SetArranging(on);
         session.ShowNotice(on
-            ? "UI unlocked: drag any outlined panel to move it, or drag an edge of the window to resize it. Press Lock UI at the bottom when you are done."
-            : "UI locked. The panels and the window size stay as they are.");
+            ? "Edit UI: drag the orange edges to resize BetterTalk, or use Smaller and Bigger. Drag an Itch panel to move it; pulled away from the keyboard, drag its edges to resize it. Press Done when finished."
+            : "Done. Everything is locked in place again.");
     }
 
     /// <summary>Opens the edit box for a button and applies the result.</summary>

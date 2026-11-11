@@ -2,6 +2,18 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.4.9
+
+- **One simple Edit UI mode for all resizing and moving.** Turn it on from Settings → Edit UI, or from the icon
+  near the clock ("Edit UI (resize and move)"). An orange frame goes round BetterTalk and an orange bar appears
+  at the bottom:
+  - drag any orange edge or corner to resize BetterTalk; everything grows or shrinks together and keeps its
+    shape (or press Smaller, Bigger or Usual size on the bar);
+  - drag an Itch panel to move it, and once it is away from the keyboard, drag its edges to resize it;
+  - press **Done** and everything is locked again.
+- Outside Edit UI nothing can be resized or moved. All the other ways (Lock UI, the size buttons and lock boxes in
+  Settings, the tray's put-back items) are gone, so there is only one place to look.
+
 ## 0.4.8
 
 - **Clearer lock settings.** Settings → Screen & window now has one section, "Moving and resizing: Lock UI".
