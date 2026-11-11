@@ -36,8 +36,8 @@ public sealed class TrayIcon : IDisposable
             ToolTipText = "Tick this, then tap any button on the screen to rename, add or delete it. Untick it when you are done" };
         _editItem.CheckedChanged += (_, _) => setEditMode(_editItem.Checked);
         menu.Items.Add(_editItem);
-        _arrangeItem = new Forms.ToolStripMenuItem("Unlock UI to move the panels") { CheckOnClick = true,
-            ToolTipText = "Tick this, then drag the outlined Itch panels anywhere; they snap to each other's edges. Press Lock UI (or untick this) when you are done" };
+        _arrangeItem = new Forms.ToolStripMenuItem("Unlock UI to move or resize") { CheckOnClick = true,
+            ToolTipText = "Tick this, then drag the outlined panels anywhere, or drag an edge of the window to resize it. Press Lock UI (or untick this) when you are done" };
         _arrangeItem.CheckedChanged += (_, _) => setArranging(_arrangeItem.Checked);
         menu.Items.Add(_arrangeItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
