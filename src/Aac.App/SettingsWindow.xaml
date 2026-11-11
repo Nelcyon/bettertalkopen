@@ -206,9 +206,17 @@
                                 IsEnabled="{Binding IsChecked, ElementName=AutoHide}"/>
 
                         <CheckBox x:Name="AlwaysOnTop" Content="Keep BetterTalk on top of other programs"/>
-                        <CheckBox x:Name="LockSize" Content="Lock the window size"/>
+                        <TextBlock Style="{StaticResource Label}" Text="Window size"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="These buttons change the size at once, and the keys grow or shrink with the window. BetterTalk stays in its corner. They work even when the size is locked. While the size is not locked, you can also drag any edge of the window."/>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <Button Content="Smaller" Padding="16,8" Margin="0,0,8,0" Click="WindowSmaller_Click"/>
+                            <Button Content="Bigger" Padding="16,8" Margin="0,0,8,0" Click="WindowBigger_Click"/>
+                            <Button Content="Back to the usual size" Padding="16,8" Click="WindowUsual_Click"/>
+                        </StackPanel>
+                        <CheckBox x:Name="LockSize" Content="Lock the window size" Margin="0,10,0,0"/>
                         <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,0"
-                                   Text="Stops the window being made bigger, smaller or full screen by accident."/>
+                                   Text="Stops the edges being dragged and F11 full screen, so the size cannot change by accident. Untick it and press Save and restart to drag the edges again."/>
                         <CheckBox x:Name="StartWithWindows" Content="Start BetterTalk when I sign in to Windows"/>
                         <CheckBox x:Name="StartHidden" Content="Start hidden (do not show the window when BetterTalk starts)"/>
                         <TextBlock Style="{StaticResource Hint}" Margin="22,2,0,6"
