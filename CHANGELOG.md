@@ -4,17 +4,15 @@ Each version's notes here are shown in Settings → Updates when you press Check
 
 ## 0.4.9
 
-- **Resizing is simple now, and the main window and the Itch panels are kept apart.** Settings has a new
-  **Resize** tab with two separate boxes:
-  - **Main window:** press "Resize the main window". An orange frame goes round BetterTalk: drag any edge or
-    corner and everything grows or shrinks together, keeping its shape, or press Smaller and Bigger on the
-    orange bar. Press Done. Outside this mode the window size cannot change at all. Smaller, Bigger and Back to
-    the usual size buttons are in the box too.
-  - **Itch panels:** press "Move or resize the Itch panels" to drag the figure and its buttons around and resize
-    them. Pressing Lock panels ends it. This never changes the main window.
-- The tray icon's menu has both: "Resize the main window" and "Unlock the Itch panels to move or resize them".
-- The lock settings that were mixed into Screen & window and the "Keep the window size fixed" box are gone; they
-  are not needed any more.
+- **One simple Edit UI mode for all resizing and moving.** Turn it on from Settings → Edit UI, or from the icon
+  near the clock ("Edit UI (resize and move)"). An orange frame goes round BetterTalk and an orange bar appears
+  at the bottom:
+  - drag any orange edge or corner to resize BetterTalk; everything grows or shrinks together and keeps its
+    shape (or press Smaller, Bigger or Usual size on the bar);
+  - drag an Itch panel to move it, and once it is away from the keyboard, drag its edges to resize it;
+  - press **Done** and everything is locked again.
+- Outside Edit UI nothing can be resized or moved. All the other ways (Lock UI, the size buttons and lock boxes in
+  Settings, the tray's put-back items) are gone, so there is only one place to look.
 
 ## 0.4.8
 

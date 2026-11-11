@@ -23,13 +23,10 @@ public partial class SettingsWindow : Window
 
     private readonly Action _editButtons;
     private readonly Action<bool> _setUnlocked;
-    private readonly Action _putPanelsBack;
     private readonly Action _setupGuide;
     private readonly Action _quit;
-    private readonly Action<double?> _resizeWindow;
-    private readonly Action _resizeOnScreen;
 
-    public SettingsWindow(AppSettings current, Action restart, Action editButtons, Action<bool> setUnlocked, bool unlocked, Action putPanelsBack, Action setupGuide, Action quit, Action sendFeedback, Action<double?> resizeWindow, Action resizeOnScreen)
+    public SettingsWindow(AppSettings current, Action restart, Action editButtons, Action<bool> setUnlocked, bool unlocked, Action putPanelsBack, Action setupGuide, Action quit, Action sendFeedback, Action<double?> resizeWindow)
     {
         InitializeComponent();
         // Wide enough for the whole QuadStick card and every tab heading in one row, but never bigger than the screen.
@@ -41,12 +38,9 @@ public partial class SettingsWindow : Window
         _restart = restart;
         _editButtons = editButtons;
         _setUnlocked = setUnlocked;
-        _putPanelsBack = putPanelsBack;
         _setupGuide = setupGuide;
         _quit = quit;
         _sendFeedback = sendFeedback;
-        _resizeWindow = resizeWindow;
-        _resizeOnScreen = resizeOnScreen;
         // Start from what is on disk so hand edits made while the app was running are not lost.
         var onDisk = SettingsStore.Load(AppPaths.Settings, out var problem);
         _settings = File.Exists(AppPaths.Settings) && problem is null ? onDisk : current;
@@ -793,25 +787,14 @@ public partial class SettingsWindow : Window
         _editButtons();
     }
 
-    /// <summary>Takes effect at once (no restart): closes this window so the Itch panels can be dragged.</summary>
-    private void UnlockPanels_Click(object sender, RoutedEventArgs e)
+    /// <summary>Takes effect at once (no restart): closes this window and starts Edit UI.</summary>
+    private void EditUi_Click(object sender, RoutedEventArgs e)
     {
         Close();
         _setUnlocked(true);
     }
 
-    private void PutPanelsBack_Click(object sender, RoutedEventArgs e) => _putPanelsBack();
 
-    // The window size buttons act at once (no Save needed) and work even when the size is locked.
-    private void WindowSmaller_Click(object sender, RoutedEventArgs e) => _resizeWindow(0.9);
-    private void WindowBigger_Click(object sender, RoutedEventArgs e) => _resizeWindow(1.1);
-    private void WindowUsual_Click(object sender, RoutedEventArgs e) => _resizeWindow(null);
-
-    private void ResizeOnScreen_Click(object sender, RoutedEventArgs e)
-    {
-        Close();
-        _resizeOnScreen();
-    }
 
     private void SetupGuide_Click(object sender, RoutedEventArgs e)
     {

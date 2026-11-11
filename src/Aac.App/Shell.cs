@@ -21,7 +21,7 @@ public sealed class TrayIcon : IDisposable
     private readonly Forms.ToolStripMenuItem _arrangeItem;
 
     public TrayIcon(Action show, Action hide, Action openSettings, Action openSettingsFile, Action exit, Action<bool> setEditMode,
-        Action<bool> setArranging, Action putPanelsBack, Action setupGuide, Action sendFeedback, Action usualWindowSize, Action resizeWindow)
+        Action<bool> setArranging, Action putPanelsBack, Action setupGuide, Action sendFeedback, Action usualWindowSize)
     {
         _image = LoadIcon();
         var menu = new Forms.ContextMenuStrip { ShowItemToolTips = true };
@@ -36,10 +36,8 @@ public sealed class TrayIcon : IDisposable
             ToolTipText = "Tick this, then tap any button on the screen to rename, add or delete it. Untick it when you are done" };
         _editItem.CheckedChanged += (_, _) => setEditMode(_editItem.Checked);
         menu.Items.Add(_editItem);
-        menu.Items.Add(new Forms.ToolStripMenuItem("Resize the main window", null, (_, _) => resizeWindow())
-            { ToolTipText = "Shows an orange bar with Smaller, Bigger, Usual size and Done at the bottom of BetterTalk" });
-        _arrangeItem = new Forms.ToolStripMenuItem("Unlock the Itch panels to move or resize them") { CheckOnClick = true,
-            ToolTipText = "Tick this, then drag the outlined Itch panels anywhere; pulled away from the keyboard they can be resized by their edges. Press Lock panels (or untick this) when you are done" };
+        _arrangeItem = new Forms.ToolStripMenuItem("Edit UI (resize and move)") { CheckOnClick = true,
+            ToolTipText = "Resize BetterTalk by its orange edges and move or resize the Itch panels. Press Done (or untick this) when you are finished" };
         _arrangeItem.CheckedChanged += (_, _) => setArranging(_arrangeItem.Checked);
         menu.Items.Add(_arrangeItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
@@ -49,10 +47,6 @@ public sealed class TrayIcon : IDisposable
         var advanced = new Forms.ToolStripMenuItem("Set-up and tools") { ToolTipText = "Options for the person setting BetterTalk up" };
         advanced.DropDownItems.Add(new Forms.ToolStripMenuItem("Run the set-up guide", null, (_, _) => setupGuide())
             { ToolTipText = "A few questions that set the main choices at once: pointing, opening, screen and corner, hiding, voice" });
-        advanced.DropDownItems.Add(new Forms.ToolStripMenuItem("Put the Itch panels back beside the keyboard", null, (_, _) => putPanelsBack())
-            { ToolTipText = "Every Itch panel back beside the keyboard at its usual width" });
-        advanced.DropDownItems.Add(new Forms.ToolStripMenuItem("Put the window back to its usual size", null, (_, _) => usualWindowSize())
-            { ToolTipText = "For a window made too big or too small. Settings > Screen & window has Bigger and Smaller too" });
         advanced.DropDownItems.Add(new Forms.ToolStripMenuItem("Open the settings file in Notepad", null, (_, _) => openSettingsFile())
             { ToolTipText = "Every setting as plain text. Close BetterTalk's Settings window before editing it" });
         menu.Items.Add(advanced);

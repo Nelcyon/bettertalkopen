@@ -630,8 +630,8 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Move mode ("Unlock UI"): every panel gets a cover that takes the presses, so its buttons and the figure cannot
-    /// be used, and pressing anywhere on it drags it; floating panels can also be resized by their edges. Lock UI ends it.
+    /// Edit UI mode: the window's edges resize it (see ApplyWindowResizing), and every panel gets a cover that takes the presses, so its buttons and the figure cannot
+    /// be used, and pressing anywhere on it drags it; floating panels can also be resized by their edges. Done ends it.
     /// </summary>
     public void SetArranging(bool on)
     {
@@ -640,32 +640,22 @@ public partial class MainWindow : Window
         foreach (var cover in _covers.Values) cover.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
         MoveBadge.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
         foreach (var w in _floating.Values) w.SetArranging(on);
-        if (on && _resizingWindow) SetWindowResizing(false);   // one mode at a time
+        ApplyWindowResizing();
         if (on && !_session.ItchOpen) _session.OpenItch(true);
     }
 
     /// <summary>
-    /// Window resize mode, separate from moving the Itch panels: an orange bar at the bottom with Smaller, Bigger,
-    /// Usual size and Done. The window's edges never resize it (no stray drag can change the size); F11 full screen
-    /// works only in this mode. Settings' size buttons always work, because they are always meant.
+    /// Edit UI mode resizes the window too: an orange frame shows the edges, and dragging one keeps the window's shape so
+    /// the keys simply grow or shrink. Outside Edit UI the edges never resize it; F11 full screen also only works here.
     /// </summary>
-    private bool _resizingWindow;
+    private bool _resizingWindow => _arranging;
 
-    public bool IsResizingWindow => _resizingWindow;
-
-    public void SetWindowResizing(bool on)
+    private void ApplyWindowResizing()
     {
-        if (on && _arranging) LockUiRequested?.Invoke();       // one mode at a time
-        _resizingWindow = on;
-        SizeBadge.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
-        SizeFrame.Visibility = SizeBadge.Visibility;
-        // Only in this mode can the edges be dragged; they are thick enough to grab, and the frame shows where they are.
+        var on = _arranging;
+        SizeFrame.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
         ResizeMode = on ? ResizeMode.CanResize : ResizeMode.CanMinimize;
         Chrome.ResizeBorderThickness = on ? new Thickness(14) : new Thickness(0);
-        if (on) ShowFromTray();
-        _session.ShowNotice(on
-            ? "Resizing the window: press Smaller or Bigger on the orange bar at the bottom until it is right, then Done."
-            : "Window size kept.");
     }
 
     /// <summary>Width ÷ height when an edge drag began; the drag keeps it, so everything scales together.</summary>
@@ -701,11 +691,10 @@ public partial class MainWindow : Window
     private void SizeSmaller_Click(object sender, RoutedEventArgs e) => ResizeWindow(0.9);
     private void SizeBigger_Click(object sender, RoutedEventArgs e) => ResizeWindow(1.1);
     private void SizeUsual_Click(object sender, RoutedEventArgs e) => ResizeWindow(null);
-    private void SizeDone_Click(object sender, RoutedEventArgs e) => SetWindowResizing(false);
 
     public bool IsArranging => _arranging;
 
-    /// <summary>The Lock panels button on the Itch panel move-mode label.</summary>
+    /// <summary>The Done button on the Edit UI bar.</summary>
     public event Action? LockUiRequested;
 
     private void LockUi_Click(object sender, RoutedEventArgs e) => LockUiRequested?.Invoke();
