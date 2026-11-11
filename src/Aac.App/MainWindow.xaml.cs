@@ -70,11 +70,7 @@ public partial class MainWindow : Window
         ShowMessage();
         Topmost = settings.AlwaysOnTop;
         UpdateFocusFrame();
-        if (settings.LockWindowSize)
-        {
-            ResizeMode = ResizeMode.CanMinimize; // no edge dragging, no maximize
-            Chrome.ResizeBorderThickness = new Thickness(0);
-        }
+        ApplyWindowResizing();
         // Stay docked in the corner of the chosen screen when screens, resolution or scaling change.
         EventHandler displayChanged = (_, _) => Dispatcher.BeginInvoke(Dock);
         Microsoft.Win32.SystemEvents.DisplaySettingsChanged += displayChanged;
@@ -302,7 +298,7 @@ public partial class MainWindow : Window
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.F11 && !e.IsRepeat && !_settings.LockWindowSize)
+        if (e.Key == Key.F11 && !e.IsRepeat && WindowResizable)
         {
             SetFullscreen(!_fullscreen);
             e.Handled = true;
@@ -635,7 +631,22 @@ public partial class MainWindow : Window
         foreach (var cover in _covers.Values) cover.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
         MoveBadge.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
         foreach (var w in _floating.Values) w.SetArranging(on);
+        ApplyWindowResizing();
         if (on && !_session.ItchOpen) _session.OpenItch(true);
+    }
+
+    /// <summary>
+    /// The window's edges (and F11 full screen, and Windows' maximize) only work while the UI is unlocked, and never
+    /// with "Lock the window size" ticked, so a stray press or drag can never change the size. Settings' Smaller,
+    /// Bigger and Back to the usual size buttons always work, because they are always meant.
+    /// </summary>
+    private bool WindowResizable => _arranging && !_settings.LockWindowSize;
+
+    private void ApplyWindowResizing()
+    {
+        var on = WindowResizable;
+        ResizeMode = on ? ResizeMode.CanResize : ResizeMode.CanMinimize;
+        Chrome.ResizeBorderThickness = on ? new Thickness(10) : new Thickness(0);
     }
 
     public bool IsArranging => _arranging;

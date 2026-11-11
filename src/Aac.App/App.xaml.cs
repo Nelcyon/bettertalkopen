@@ -229,8 +229,8 @@ public partial class App : Application
         if (on) window.ShowFromTray();
         window.SetArranging(on);
         session.ShowNotice(on
-            ? "UI unlocked: drag any outlined panel to move it; it snaps to the edges of the others. Press Lock UI at the bottom when you are done."
-            : "UI locked. The panels stay where you put them.");
+            ? "UI unlocked: drag any outlined panel to move it, or drag an edge of the window to resize it. Press Lock UI at the bottom when you are done."
+            : "UI locked. The panels and the window size stay as they are.");
     }
 
     /// <summary>Opens the edit box for a button and applies the result.</summary>
