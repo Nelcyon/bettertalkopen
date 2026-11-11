@@ -2,6 +2,14 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.4.8
+
+- **Clearer lock settings.** Settings → Screen & window now has one section, "Moving and resizing: Lock UI".
+  While Lock UI is ticked nothing can be moved or resized by accident. It explains how to unlock, move or
+  resize, and lock again. The Smaller, Bigger and Back to the usual size buttons sit right under it. The old
+  "Lock the window size" box is now called "Keep the window size fixed even when the UI is unlocked", which is
+  what it does.
+
 ## 0.4.7
 
 - **The window size can no longer change by accident.** The window's edges can only be dragged while the UI is

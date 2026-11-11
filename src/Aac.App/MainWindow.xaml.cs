@@ -637,7 +637,7 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// The window's edges (and F11 full screen, and Windows' maximize) only work while the UI is unlocked, and never
-    /// with "Lock the window size" ticked, so a stray press or drag can never change the size. Settings' Smaller,
+    /// with "Keep the window size fixed" ticked, so a stray press or drag can never change the size. Settings' Smaller,
     /// Bigger and Back to the usual size buttons always work, because they are always meant.
     /// </summary>
     private bool WindowResizable => _arranging && !_settings.LockWindowSize;
