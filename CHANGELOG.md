@@ -2,6 +2,14 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.4.6
+
+- **Easy ways to change the window size.** Settings → Screen & window now has **Smaller**, **Bigger** and
+  **Back to the usual size** buttons. They work at once with a single click, so nobody has to grab the thin edge
+  of the window, and they work even when "Lock the window size" is ticked. The keys grow and shrink with the
+  window and BetterTalk stays in its corner. The icon near the clock has the same reset under Set-up and tools →
+  "Put the window back to its usual size".
+
 ## 0.4.5
 
 - **New Last said key:** it sits under Speak, right of the question mark. Press it and BetterTalk says your last

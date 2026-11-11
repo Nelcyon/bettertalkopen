@@ -935,6 +935,52 @@ public partial class MainWindow : Window
     private static bool OwnedWindowsOpen() =>
         Application.Current.Windows.Cast<Window>().Any(w => w is not (MainWindow or PanelWindow) && w.IsVisible);
 
+    /// <summary>The size a fresh install starts at (WPF units, keyboard only); "Usual size" goes back to it.</summary>
+    private const double UsualWidth = 1100, UsualHeight = 700;
+
+    /// <summary>
+    /// Makes the window bigger or smaller by <paramref name="factor"/>, or (null) puts it back to its usual size.
+    /// For people who cannot drag a window edge, and for when the size is locked: the corner stays put, any open
+    /// panel or drawer keeps its share, and the keys scale with the window. Full screen ends first. The new size
+    /// is remembered at once.
+    /// </summary>
+    public void ResizeWindow(double? factor)
+    {
+        if (_fullscreen || WindowState == WindowState.Maximized)
+        {
+            // Leaving full screen is the size change; the window needs a moment to settle before measuring it again.
+            if (_fullscreen) SetFullscreen(false); else WindowState = WindowState.Normal;
+            if (factor is null) Dispatcher.BeginInvoke(() => ResizeWindow(null), System.Windows.Threading.DispatcherPriority.Loaded);
+            return;
+        }
+        var work = Screens.Choose(_settings.Screen).WorkArea;
+        var scale = WindowPlacement.Scale(this);
+        double maxW = work.Width / scale, maxH = work.Height / scale;
+        if (double.IsNaN(_baseWidth) || double.IsNaN(_baseHeight) || _baseWidth <= 0 || _baseHeight <= 0)
+        {
+            // Not laid out yet (never shown): only the usual size makes sense.
+            if (factor is null) { Width = Math.Min(UsualWidth, maxW); Height = Math.Min(UsualHeight, maxH); WindowSizeStore.Save(Width, Height); }
+            return;
+        }
+        var baseW = factor is { } f ? _baseWidth * f : UsualWidth;
+        var baseH = factor is { } g ? _baseHeight * g : UsualHeight;
+        // Never smaller than the window's minimum, never (with any open panel or drawer) bigger than the screen.
+        var fx = Math.Max(MinWidth, baseW) / _baseWidth;
+        var fy = Math.Max(MinHeight, baseH) / _baseHeight;
+        var width = Math.Min(maxW, ActualWidth * fx);
+        var height = Math.Min(maxH, ActualHeight * fy);
+        if (Math.Abs(width - ActualWidth) < 1 && Math.Abs(height - ActualHeight) < 1)
+        {
+            _session.ShowNotice(factor is > 1 ? "BetterTalk is already as big as the screen allows." : factor is < 1 ? "BetterTalk is already as small as it goes." : "BetterTalk is already its usual size.");
+            return;
+        }
+        SetAnchoredSize(width, height);
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (WindowState == WindowState.Normal && !_fullscreen) WindowSizeStore.Save(Width - _itchExtra, Height - _drawerExtra);
+        }, System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
     /// <summary>Puts the window's anchored corner exactly on that corner of the chosen screen's work area (above or beside any taskbar), at its current size.</summary>
     private void Dock()
     {

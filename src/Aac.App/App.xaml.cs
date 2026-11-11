@@ -139,7 +139,7 @@ public partial class App : Application
         window.LockUiRequested += () => SetArranging(session, window, false);
         _tray = new TrayIcon(window.ShowFromTray, window.HideToTray, OpenSettings, OpenSettingsFile, () => Quit(restart: false, "Exit chosen in the tray menu"),
             on => SetEditMode(session, window, on), on => SetArranging(session, window, on), window.PutAllPanelsBack, OpenSetupGuide,
-            () => SetFeedbackMode(session, window, true));
+            () => SetFeedbackMode(session, window, true), () => { window.ShowFromTray(); window.ResizeWindow(null); });
         _session = session;
         // For checking the Settings window on a test copy (it is otherwise opened from the tray icon).
         if (Environment.GetEnvironmentVariable("BETTERTALK_OPEN_SETTINGS") == "1" && Environment.GetEnvironmentVariable("BETTERTALK_DATA_DIR") is { Length: > 0 })
@@ -270,7 +270,8 @@ public partial class App : Application
             MainWindow is MainWindow { IsArranging: true },
             () => { if (MainWindow is MainWindow w) w.PutAllPanelsBack(); },
             OpenSetupGuide, () => Quit(restart: false, "closing for an update or going back to the version before"),
-            () => { if (_session is not null && MainWindow is MainWindow w) SetFeedbackMode(_session, w, true); });
+            () => { if (_session is not null && MainWindow is MainWindow w) SetFeedbackMode(_session, w, true); },
+            factor => { if (MainWindow is MainWindow w) w.ResizeWindow(factor); });
         _settingsWindow.Show();
         _settingsWindow.Activate();
     }

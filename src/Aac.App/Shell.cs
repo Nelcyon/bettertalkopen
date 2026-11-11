@@ -21,7 +21,7 @@ public sealed class TrayIcon : IDisposable
     private readonly Forms.ToolStripMenuItem _arrangeItem;
 
     public TrayIcon(Action show, Action hide, Action openSettings, Action openSettingsFile, Action exit, Action<bool> setEditMode,
-        Action<bool> setArranging, Action putPanelsBack, Action setupGuide, Action sendFeedback)
+        Action<bool> setArranging, Action putPanelsBack, Action setupGuide, Action sendFeedback, Action usualWindowSize)
     {
         _image = LoadIcon();
         var menu = new Forms.ContextMenuStrip { ShowItemToolTips = true };
@@ -49,6 +49,8 @@ public sealed class TrayIcon : IDisposable
             { ToolTipText = "A few questions that set the main choices at once: pointing, opening, screen and corner, hiding, voice" });
         advanced.DropDownItems.Add(new Forms.ToolStripMenuItem("Put the panels back beside the keyboard", null, (_, _) => putPanelsBack())
             { ToolTipText = "Every Itch panel back beside the keyboard at its usual width" });
+        advanced.DropDownItems.Add(new Forms.ToolStripMenuItem("Put the window back to its usual size", null, (_, _) => usualWindowSize())
+            { ToolTipText = "For a window made too big or too small. Settings > Screen & window has Bigger and Smaller too" });
         advanced.DropDownItems.Add(new Forms.ToolStripMenuItem("Open the settings file in Notepad", null, (_, _) => openSettingsFile())
             { ToolTipText = "Every setting as plain text. Close BetterTalk's Settings window before editing it" });
         menu.Items.Add(advanced);

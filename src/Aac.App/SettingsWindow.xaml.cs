@@ -26,8 +26,9 @@ public partial class SettingsWindow : Window
     private readonly Action _putPanelsBack;
     private readonly Action _setupGuide;
     private readonly Action _quit;
+    private readonly Action<double?> _resizeWindow;
 
-    public SettingsWindow(AppSettings current, Action restart, Action editButtons, Action<bool> setUnlocked, bool unlocked, Action putPanelsBack, Action setupGuide, Action quit, Action sendFeedback)
+    public SettingsWindow(AppSettings current, Action restart, Action editButtons, Action<bool> setUnlocked, bool unlocked, Action putPanelsBack, Action setupGuide, Action quit, Action sendFeedback, Action<double?> resizeWindow)
     {
         InitializeComponent();
         // Wide enough for the whole QuadStick card and every tab heading in one row, but never bigger than the screen.
@@ -44,6 +45,7 @@ public partial class SettingsWindow : Window
         _setupGuide = setupGuide;
         _quit = quit;
         _sendFeedback = sendFeedback;
+        _resizeWindow = resizeWindow;
         // Start from what is on disk so hand edits made while the app was running are not lost.
         var onDisk = SettingsStore.Load(AppPaths.Settings, out var problem);
         _settings = File.Exists(AppPaths.Settings) && problem is null ? onDisk : current;
@@ -801,6 +803,11 @@ public partial class SettingsWindow : Window
     }
 
     private void PutPanelsBack_Click(object sender, RoutedEventArgs e) => _putPanelsBack();
+
+    // The window size buttons act at once (no Save needed) and work even when the size is locked.
+    private void WindowSmaller_Click(object sender, RoutedEventArgs e) => _resizeWindow(0.9);
+    private void WindowBigger_Click(object sender, RoutedEventArgs e) => _resizeWindow(1.1);
+    private void WindowUsual_Click(object sender, RoutedEventArgs e) => _resizeWindow(null);
 
     private void SetupGuide_Click(object sender, RoutedEventArgs e)
     {
