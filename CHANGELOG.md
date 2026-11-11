@@ -2,6 +2,11 @@
 
 Each version's notes here are shown in Settings → Updates when you press Check for updates.
 
+## 0.4.7
+
+- Same as 0.4.6 (the Smaller, Bigger and Back to the usual size buttons), with the version number inside the
+  program set right, so Check for updates no longer offers 0.4.6 again after installing it.
+
 ## 0.4.6
 
 - **Easy ways to change the window size.** Settings → Screen & window now has **Smaller**, **Bigger** and
